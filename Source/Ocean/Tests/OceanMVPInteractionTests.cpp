@@ -188,4 +188,34 @@ bool FOceanMVPInteractionSkipsNearUnpickableTest::RunTest(const FString& Paramet
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanMVPInteractionChoosesNearestValidTest, "Ocean.MVP.Interaction.ChoosesNearestValid", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanMVPInteractionChoosesNearestValidTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateInteractionTestWorld();
+	TestNotNull(TEXT("[TDD] OceanInteraction_TestWorld"), World);
+	if (!World)
+	{
+		return false;
+	}
+
+	AActor* Interactor = World->SpawnActor<AActor>(FVector::ZeroVector, FRotator::ZeroRotator);
+	UOceanInventoryComponent* Inventory = AddInventoryForTest(Interactor);
+	UOceanInteractionComponent* Interaction = AddInteractionForTest(Interactor, 500.0f);
+
+	AOceanResourceNode* NearValidNode = World->SpawnActor<AOceanResourceNode>(FVector(140.0f, 0.0f, 0.0f), FRotator::ZeroRotator);
+	AOceanResourceNode* FarValidNode = World->SpawnActor<AOceanResourceNode>(FVector(320.0f, 0.0f, 0.0f), FRotator::ZeroRotator);
+	World->Tick(ELevelTick::LEVELTICK_All, 0.0f);
+
+	FText Message;
+	TestEqual(TEXT("[TDD] OceanInteraction_ChoosesNearestValidTarget"), Interaction->FindBestInteractable(), static_cast<AActor*>(NearValidNode));
+	TestTrue(TEXT("[TDD] OceanInteraction_InteractNearestValidTarget"), Interaction->TryInteract(Message));
+	TestEqual(TEXT("[TDD] OceanInteraction_NearestPickupMessage"), Message.ToString(), FString(TEXT("已拾取资源")));
+	TestEqual(TEXT("[TDD] OceanInteraction_NearPickupAmount"), Inventory->GetResourceAmount(NearValidNode->GetResourceStack().ResourceType), 1);
+	TestEqual(TEXT("[TDD] OceanInteraction_FarNodeStillAvailable"), FarValidNode->GetResourceStack().Amount, 1);
+
+	DestroyInteractionTestWorld(World);
+	return true;
+}
+
 #endif
