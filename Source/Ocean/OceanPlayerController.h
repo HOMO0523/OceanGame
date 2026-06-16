@@ -93,6 +93,7 @@ protected:
 	void OnMoveTriggered(const FInputActionValue& Value);
 	void OnMoveCompleted(const FInputActionValue& Value);
 	void OnInteractTriggered(const FInputActionValue& Value);
+	void TryOceanInteract();
 	void OnToggleBuildTriggered(const FInputActionValue& Value);
 	void OnRotateBuildTriggered(const FInputActionValue& Value);
 

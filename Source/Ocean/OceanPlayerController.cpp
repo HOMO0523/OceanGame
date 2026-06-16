@@ -2,8 +2,10 @@
 
 #include "OceanPlayerController.h"
 #include "OceanPrototype/OceanInputMath.h"
+#include "OceanPrototype/OceanInteractionComponent.h"
 #include "GameFramework/Pawn.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "InputCoreTypes.h"
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
 #include "OceanCharacter.h"
@@ -68,7 +70,7 @@ void AOceanPlayerController::SetupInputComponent()
 
 			if (InteractAction)
 			{
-				EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AOceanPlayerController::OnInteractTriggered);
+				EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AOceanPlayerController::OnInteractTriggered);
 			}
 
 			if (ToggleBuildAction)
@@ -84,6 +86,11 @@ void AOceanPlayerController::SetupInputComponent()
 		else
 		{
 			UE_LOG(LogOcean, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		}
+
+		if (!InteractAction && InputComponent)
+		{
+			InputComponent->BindKey(EKeys::F, IE_Pressed, this, &AOceanPlayerController::TryOceanInteract);
 		}
 	}
 }
@@ -167,6 +174,23 @@ void AOceanPlayerController::OnMoveCompleted(const FInputActionValue& Value)
 
 void AOceanPlayerController::OnInteractTriggered(const FInputActionValue& Value)
 {
+	TryOceanInteract();
+}
+
+void AOceanPlayerController::TryOceanInteract()
+{
+	APawn* ControlledPawn = GetPawn();
+	if (!ControlledPawn)
+	{
+		return;
+	}
+
+	if (UOceanInteractionComponent* Interaction = ControlledPawn->FindComponentByClass<UOceanInteractionComponent>())
+	{
+		FText Message;
+		Interaction->TryInteract(Message);
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanInteractResult: %s"), *Message.ToString());
+	}
 }
 
 void AOceanPlayerController::OnToggleBuildTriggered(const FInputActionValue& Value)

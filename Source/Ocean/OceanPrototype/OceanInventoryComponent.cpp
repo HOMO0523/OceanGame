@@ -27,6 +27,21 @@ bool UOceanInventoryComponent::AddResource(FOceanResourceStack Stack)
 	return true;
 }
 
+bool UOceanInventoryComponent::CanAcceptResource(FOceanResourceStack Stack) const
+{
+	if (Stack.Amount <= 0)
+	{
+		return false;
+	}
+
+	if (FindStack(Stack.ResourceType))
+	{
+		return true;
+	}
+
+	return Stacks.Num() < MaxSlots;
+}
+
 bool UOceanInventoryComponent::CanAfford(const TArray<FOceanResourceStack>& Cost) const
 {
 	TMap<EOceanResourceType, int32> AggregatedCost;

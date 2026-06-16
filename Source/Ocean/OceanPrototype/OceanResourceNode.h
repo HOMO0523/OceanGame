@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "OceanInteractableInterface.h"
 #include "OceanResourceTypes.h"
 #include "OceanResourceNode.generated.h"
 
@@ -10,7 +11,7 @@ class USphereComponent;
 class UStaticMeshComponent;
 
 UCLASS(Blueprintable)
-class OCEAN_API AOceanResourceNode : public AActor
+class OCEAN_API AOceanResourceNode : public AActor, public IOceanInteractableInterface
 {
 	GENERATED_BODY()
 
@@ -31,6 +32,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Resources")
 	void SetPlaceholderMesh(UStaticMesh* NewMesh);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ocean|Interaction")
+	FText GetOceanInteractionText(AActor* Interactor) const;
+	virtual FText GetOceanInteractionText_Implementation(AActor* Interactor) const override;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ocean|Interaction")
+	bool CanOceanInteract(AActor* Interactor, FText& FailureReason) const;
+	virtual bool CanOceanInteract_Implementation(AActor* Interactor, FText& FailureReason) const override;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ocean|Interaction")
+	bool ExecuteOceanInteraction(AActor* Interactor, FText& OutMessage);
+	virtual bool ExecuteOceanInteraction_Implementation(AActor* Interactor, FText& OutMessage) override;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ocean|Resources")

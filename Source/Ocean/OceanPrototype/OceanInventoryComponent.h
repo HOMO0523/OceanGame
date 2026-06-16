@@ -17,6 +17,9 @@ public:
 	bool AddResource(FOceanResourceStack Stack);
 
 	UFUNCTION(BlueprintPure, Category = "Ocean|Inventory")
+	bool CanAcceptResource(FOceanResourceStack Stack) const;
+
+	UFUNCTION(BlueprintPure, Category = "Ocean|Inventory")
 	bool CanAfford(const TArray<FOceanResourceStack>& Cost) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Inventory")

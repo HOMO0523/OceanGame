@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "OceanCharacter.h"
+#include "OceanPrototype/OceanInteractionComponent.h"
 #include "OceanPrototype/OceanInventoryComponent.h"
 #include "OceanPrototype/OceanSurvivalComponent.h"
 #include "UObject/ConstructorHelpers.h"
@@ -46,6 +47,7 @@ AOceanCharacter::AOceanCharacter()
 
 	OceanInventoryComponent = CreateDefaultSubobject<UOceanInventoryComponent>(TEXT("OceanInventory"));
 	OceanSurvivalComponent = CreateDefaultSubobject<UOceanSurvivalComponent>(TEXT("OceanSurvival"));
+	OceanInteractionComponent = CreateDefaultSubobject<UOceanInteractionComponent>(TEXT("OceanInteraction"));
 
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
