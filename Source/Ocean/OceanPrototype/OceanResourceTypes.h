@@ -7,7 +7,9 @@ UENUM(BlueprintType)
 enum class EOceanResourceType : uint8
 {
 	Wood UMETA(DisplayName = "Wood"),
-	Scrap UMETA(DisplayName = "Scrap")
+	Scrap UMETA(DisplayName = "Scrap"),
+	Food UMETA(DisplayName = "Food"),
+	Water UMETA(DisplayName = "Water")
 };
 
 USTRUCT(BlueprintType)

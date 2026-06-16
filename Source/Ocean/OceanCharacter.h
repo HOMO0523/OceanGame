@@ -7,6 +7,8 @@
 #include "OceanCharacter.generated.h"
 
 class UCameraComponent;
+class UOceanInventoryComponent;
+class UOceanSurvivalComponent;
 class USpringArmComponent;
 
 /**
@@ -27,6 +29,12 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> CameraBoom;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UOceanInventoryComponent> OceanInventoryComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UOceanSurvivalComponent> OceanSurvivalComponent;
+
 public:
 
 	/** Constructor */
@@ -43,6 +51,12 @@ public:
 
 	/** Returns the Camera Boom component **/
 	USpringArmComponent* GetCameraBoom() const { return CameraBoom.Get(); }
+
+	UFUNCTION(BlueprintPure, Category = "Ocean|Inventory")
+	UOceanInventoryComponent* GetInventoryComponent() const { return OceanInventoryComponent.Get(); }
+
+	UFUNCTION(BlueprintPure, Category = "Ocean|Survival")
+	UOceanSurvivalComponent* GetSurvivalComponent() const { return OceanSurvivalComponent.Get(); }
 
 };
 

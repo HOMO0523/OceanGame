@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "OceanCharacter.h"
+#include "OceanPrototype/OceanInventoryComponent.h"
+#include "OceanPrototype/OceanSurvivalComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "Components/DecalComponent.h"
@@ -41,6 +43,9 @@ AOceanCharacter::AOceanCharacter()
 
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false;
+
+	OceanInventoryComponent = CreateDefaultSubobject<UOceanInventoryComponent>(TEXT("OceanInventory"));
+	OceanSurvivalComponent = CreateDefaultSubobject<UOceanSurvivalComponent>(TEXT("OceanSurvival"));
 
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
