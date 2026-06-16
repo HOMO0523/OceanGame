@@ -105,3 +105,9 @@
 - 做了什么：同步生产单元文档中的 source commit、验证结果和 active unit 数量。
 - 证明了什么：开发记录和实际提交保持一致，方便答辩追溯。
 - 答辩价值：可展示完整的工程留痕与阶段验收记录。
+
+### `docs: define Ocean minimal loop workflow` — 本次文档规划提交
+
+- 做了什么：阅读《洋流》DOCX 与当前 Ocean MVP，整理 `BP_OceanSurvivorCharacter` / `BP_TopDownCharacter` 的 Pawn 边界风险，并冻结下一步最小循环文档。
+- 证明了什么：项目进入代码前先明确饥饿/脱水回复、背包、合成、拖拽、事件、放置区域、船体漂流和终点通关的边界。
+- 答辩价值：可展示“GPT 负责 Spec/TDD 策略，用户确认后 DS 编码”的自动化协作流程。

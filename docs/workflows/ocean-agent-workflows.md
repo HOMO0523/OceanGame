@@ -42,6 +42,20 @@ Use this loop for gameplay systems:
 
 For Ocean phase one, preferred early tests are C++ automation tests for grid math, footprint rotation, overlap checks, and resource-cost validation. PIE or bridge tests should cover map, Water, PCG, and component presence once editor asset generation is available.
 
+## GPT / DS Handoff Workflow
+
+Use this workflow when the user asks GPT to clarify scope and stop before code:
+
+1. **GPT context pass**: read `AGENTS.md`, memory-bank docs, active production units, relevant specs/plans, and any user design documents.
+2. **GPT spec freeze**: write the user-visible semantics, edge cases, deferred scope, and acceptance criteria under `docs/superpowers/specs` or the active `docs/production` unit.
+3. **GPT TDD strategy**: list the automation tests, `[TDD]` probes, bridge checks, and manual review gates required for the eventual code work.
+4. **Stop before code**: do not modify C++/Blueprint/map assets until the user confirms the scope and chooses the DS/code executor.
+5. **DS execution**: implement from the approved plan, test-first, one subsystem at a time.
+6. **Automation gate**: save dirty editor packages, close the editor, cold compile, relaunch, run PIE/automation, capture logs, then sync docs.
+7. **Git record**: run doc sync, `git diff --check`, commit a scoped summary, and push the branch.
+
+For the current minimal loop, GPT owns the layout/spec/TDD documents and DS should start only after the user confirms the open questions in `docs/superpowers/specs/2026-06-16-ocean-minimal-loop-spec-and-workflow.md`.
+
 ## Production Unit Files
 
 For larger features, create a production unit under `docs/production/{date}-{unit}` with:

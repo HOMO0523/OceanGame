@@ -77,23 +77,23 @@
 <!-- DOC_SYNC_HOOK:START -->
 ### Doc Sync Hook Snapshot
 
-- generated_at: 2026-06-16T23:47:32
+- generated_at: 2026-06-17T00:04:06
 - phase: `pre-commit`
-- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260616-234732-doc-sync.md`
-- active_units: `2026-06-16-automation-migration`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`
-- doc_targets: `docs/production`, `memory-bank/architecture.md`
+- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-000406-doc-sync.md`
+- active_units: `2026-06-16-automation-migration`, `2026-06-16-minimal-loop-workflow`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`
+- doc_targets: `docs/production`, `docs/superpowers/specs`
 - validator: success=`True` errors=`0` warnings=`0`
 
 **Video flow status:**
-- 00 context and rules: covered
+- 00 context and rules: touched
 - 01 production unit split: touched
 - 02 semantic freeze: covered
 - 03 infrastructure audit: covered
 - 04 implementation plan: covered
-- 05 test design: touched
+- 05 test design: covered
 - 06 implementation log: covered
 - 07 verification and repair: covered
-- 08 review: touched
+- 08 review: covered
 - 09 memory and registry update: covered
 
 **Next documentation actions:**
