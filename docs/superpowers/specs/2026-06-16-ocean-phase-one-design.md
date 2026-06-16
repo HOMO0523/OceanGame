@@ -1,197 +1,252 @@
-# Ocean Phase One Design
+# 《洋流》第一阶段 MVP 设计冻结
 
-## Context
+## 1. 项目定位
 
-`Ocean` is currently a UE 5.7 single-player prototype project based on Epic template content. The active project module is `Ocean`, the default map is still `/Game/TopDown/Lvl_TopDown`, and the enabled plugins are template-level editor/gameplay plugins plus StateTree. There is no existing Ocean-specific gameplay layer, Water setup, PCG graph, floating-platform logic, or build-system code.
+《洋流》是 UE 5.7 单人生存休闲原型。玩家以固定 45–60 度俯视第三人称视角，扮演海难后的幸存者，在小船/漂浮平台上维持生存状态、拾取海面资源，并逐步扩展平台。
 
-Phase one establishes a playable vertical slice for a sea-survival base prototype: a visible ocean, an initial floating platform, grid-based construction where modules are groups of cells, and procedurally scattered resource nodes around the platform.
+第一阶段不追求完整开放海洋，而是建立一个可演示、可测试、可扩展的核心闭环：
 
-## Goals
+```text
+海面出生 → 移动与拾取 → 背包获得资源 → 状态随时间变化 → 建造扩展平台 → 继续拾取资源
+```
 
-- Create an isolated prototype area under `Content/OceanPrototype` so existing template maps and assets remain usable.
-- Enable UE 5.7 Water and PCG plugin support for ocean visuals and resource scattering.
-- Build a grid construction model where individual deck cells and larger modules share the same placement rules.
-- Let the player preview, rotate, validate, and place modules on or adjacent to a floating platform.
-- Scatter collectable resources in the surrounding ocean using PCG, with clear exclusion zones around the starting platform.
-- Keep physics simple: platform logic uses a stable grid plane while visuals can show light floating motion.
+该阶段采用“玩法闭环优先 + 建造系统作为成长线”的组合方案：
 
-## Non-Goals
+- A 小船生存主循环是主目标。
+- C 建造优先版作为技术亮点和成长系统进入 MVP。
+- 钓鱼、潜水、上岛探索暂不进入第一阶段实现，列为后续待做内容。
 
-- No multiplayer, save/load, storms, boats, enemies, or long-term economy in phase one.
-- No fully simulated buoyancy for the platform grid. The grid remains stable for construction reliability.
-- No full UI inventory panel. A debug HUD or lightweight resource counter is enough.
-- No final art pass. Use LevelPrototyping meshes and simple materials until the core loop works.
+## 2. 第一阶段目标
 
-## Plugin And Project Setup
+- 在 `/Game/OceanPrototype/Maps/L_WaterOcean` 上形成小船海面生存原型。
+- 保留左键点地移动，并新增 WASD 精细移动。
+- 增加统一 `F` 交互，用于拾取、储物、建造等第一阶段交互。
+- 建立三条状态：体力、水分、饱食度。
+- 建立简单背包与初始物资。
+- 建立漂浮资源散播、拾取、资源入包流程。
+- 建立小船平台扩展建造流程。
+- 保持“模块 = 格子组”的建造规则。
+- 缺少正式模型时使用立方体占位，但水上 Actor 必须保留浮力组件路径。
 
-The project should enable these plugins in `Ocean.uproject`:
+## 3. 非目标与待做
 
-- `Water`: provides `WaterZone` and `WaterBodyOcean` for ocean rendering. In this UE 5.7 install it is an experimental plugin at `D:\UE_5.7\Engine\Plugins\Experimental\Water\Water.uplugin`.
-- `PCG`: provides PCG graphs/components for procedural resource placement. In this UE 5.7 install it is at `D:\UE_5.7\Engine\Plugins\PCG\PCG.uplugin`.
+### 第一阶段明确不做
 
-If C++ code directly includes Water or PCG runtime types, add `Water` and `PCG` to `PublicDependencyModuleNames` in `Source/Ocean/Ocean.Build.cs`. If phase-one PCG work remains entirely in editor-authored PCG Graph assets, the C++ dependency can wait until direct type usage is needed.
+- 不做可玩邮轮搜刮开场；开局直接发放一组初始物资。
+- 不做钓鱼能力、钓鱼交互、钓鱼 UI 或钓鱼掉落表。
+- 不做潜水能力、潜水交互、水下移动、水下相机或氧气机制。
+- 不做完整岛屿探索、海底场景、邮轮场景切换。
+- 不做复杂天气、风暴、敌人、疾病、温度、睡眠、耐久、复杂合成树。
+- 不做多人、存档、长期经济或完整新手教程。
 
-The default map should eventually point to `/Game/OceanPrototype/Maps/L_OceanPrototype`, but the first implementation pass can keep the existing template default until the map has been created and verified.
+### 后续待做列表
 
-## Content Layout
+| 待做项 | 内容 | 进入时机 |
+|---|---|---|
+| `TODO-Fishing` | 钓鱼点、鱼类资源、体力消耗、随机结果表、钓鱼 UI。 | 小船生存闭环稳定后。 |
+| `TODO-Diving` | 潜水入口、水下场景、氧气机制、水下资源采集。 | 基础状态/背包/事件框架稳定后。 |
+| `TODO-IslandEvent` | 上岛入口、短流程探索、岛屿资源获取。 | 事件系统可复用后。 |
+| `TODO-EventExpansion` | 将钓鱼、潜水、上岛统一接入事件系统。 | 三个事件至少有一个完成原型后。 |
+| `TODO-CruiseIntro` | 邮轮搜刮开场、海难过场、物资继承。 | 主循环已经可玩后。 |
 
-Create new project-owned assets under:
+## 4. 输入与角色控制
 
-- `Content/OceanPrototype/Maps`: `L_OceanPrototype`, the first playable ocean map.
-- `Content/OceanPrototype/Build`: module definitions, preview materials, placed-module blueprints, and platform assets.
-- `Content/OceanPrototype/Resources`: resource node actors, meshes, pickup effects, and PCG graph assets.
-- `Content/OceanPrototype/Input`: build-mode input actions if the existing TopDown input set is not enough.
-- `Content/OceanPrototype/UI`: a minimal build-mode/resource-counter widget if debug text becomes insufficient.
+### 角色
 
-Template folders such as `Content/TopDown`, `Content/Variant_Strategy`, and `Content/LevelPrototyping` may be referenced, but Ocean-specific assets should live in the OceanPrototype folder.
+第一阶段角色蓝图目标为 `BP_OceanSurvivorCharacter`。它可以先继承或复用 TopDown 模板角色，再逐步替换为 Ocean 专用角色。
 
-## Player Experience
+### 输入规则
 
-The player starts on a small floating platform in open water. Nearby drift resources are visible around the base. The player can collect resources, enter build mode, select a deck or module, move a ghost preview over the platform grid, rotate it in 90-degree increments, and place it when the preview is valid.
+| 输入 | 行为 | 边界 |
+|---|---|---|
+| 左键点地 | 保留 TopDown 点地移动。 | 只负责移动到可走地面，不负责拾取或事件。 |
+| WASD | 新增屏幕方向移动。 | 按下 WASD 会打断当前左键寻路目标。 |
+| F | 统一交互。 | 拾取、储物、建造、后续事件都走该入口。 |
+| ESC / 右键 | 取消 UI、建造预览或当前选择。 | 不删除左键移动能力。 |
 
-Construction uses an A+B model:
+WASD 采用固定俯视相机下的屏幕方向：
 
-- A single deck tile is a `1x1` module.
-- Larger structures are modules made from multiple occupied grid cells, such as `2x2` storage or `3x2` workshop modules.
-- All modules use the same occupancy, rotation, adjacency, and cost checks.
+- `W`：向屏幕上方移动。
+- `S`：向屏幕下方移动。
+- `A`：向屏幕左方移动。
+- `D`：向屏幕右方移动。
 
-The first playable loop is: collect resource → place deck/module → expanded platform changes valid build area → resources remain scattered outside the safe area.
+如果 UI 面板打开，角色移动应暂停或弱化，避免玩家在背包/建造操作时误移动。
 
-## Architecture
+## 5. 空间边界
 
-### `AOceanPrototypeGameMode`
+玩家第一阶段活动范围限定为：
 
-Owns phase-one rules and references the prototype player controller/pawn classes. It should be introduced only after the map can run without relying on the template TopDown blueprint game mode.
+- 小船/漂浮平台。
+- 平台周边可拾取漂浮资源。
+- 后续事件入口的占位 Actor。
 
-### `AOceanBuildPlayerController`
+海面不是玩家可自由行走区域。玩家移动依赖平台、岛屿地面或后续邮轮甲板的可走碰撞/NavMesh。掉进海里暂时用阻挡、软边界或回弹处理，不做自由游泳和溺水模拟。
 
-Handles mouse input, build-mode state, cursor-to-world projection, module rotation, preview confirmation, and cancellation. It should remain thin: input decisions live here, but grid validation lives on the platform/grid component.
+平台的逻辑建造网格必须稳定，不随水浪漂移。视觉层可以做轻微浮动，但不能改变格子坐标、占用状态或建造判断。
 
-### `AOceanFloatingPlatform`
+## 6. 交互边界
 
-Represents the logical base. It owns the build grid, initial core cells, placed module instances, and optional visual bobbing. Its logical plane should stay stable at a known Z height, even if visual child components animate slightly.
+所有可交互 Actor 使用统一交互语义：
 
-### `UOceanBuildGridComponent`
+- 显示名称。
+- 交互距离。
+- 是否可交互。
+- 交互失败原因。
+- 执行交互。
 
-Maintains the construction grid:
+交互优先级建议：
 
-- `CellSize`: world-space size of one build cell.
-- `GridOrigin`: world-space origin for grid coordinate conversion.
-- `OccupiedCells`: map/set from integer cell coordinates to placed module data.
-- Coordinate helpers: world to cell, cell to world, rotated footprint expansion.
-- Validation helpers: bounds, overlap, adjacency, foundation support, and placement reservation.
+1. 关键/危险/事件提示。
+2. 可拾取漂浮资源。
+3. 建造模块或储物设施。
+4. 普通说明提示。
 
-This component is the core gameplay boundary for construction. Other systems ask it whether a module can be placed; they do not duplicate grid math.
+交互失败必须反馈原因，例如：
 
-### `UOceanBuildModuleDefinition`
+- 距离不够。
+- 背包已满。
+- 体力不足。
+- 材料不足。
+- 当前状态不能交互。
 
-A data asset describing one buildable module:
+左键不承担交互，避免“点地移动”和“点资源拾取”冲突。
 
-- Display name.
-- Footprint cells before rotation.
-- Resource cost.
-- Preview mesh/material.
-- Placed actor or mesh class.
-- Placement rules such as requires adjacency, can start on water, or requires existing deck support.
+## 7. 生存系统边界
 
-The same definition system supports `1x1` deck pieces and larger modules.
+第一阶段只实现三条状态：
 
-### `AOceanBuildModuleActor`
+| 状态 | 作用 | 第一阶段规则 |
+|---|---|---|
+| 体力 | 限制行动和后续事件。 | 可随时间恢复少量，事件暂不实现。 |
+| 水分 | 表示缺水压力。 | 随时间下降，可由水类物品恢复。 |
+| 饱食度 | 表示饥饿压力。 | 随时间下降，可由食物类物品恢复。 |
 
-The spawned, placed representation of a module. It stores its module definition, occupied cells, rotation, and any later interaction hooks. Phase one only requires static placement.
+状态归零惩罚先简化：
 
-### `AOceanResourceNode`
+- 体力过低：移动变慢或建造/交互受限。
+- 水分/饱食度过低：持续扣生命或触发失败提示。
+- 第一阶段可以先用调试数值和 HUD 展示，不追求最终 UI 动效。
 
-A collectable resource actor with resource type, amount, and an interaction radius. It should support at least two resource types in phase one, for example wood and scrap, so costs can prove that the system is data-driven.
+## 8. 背包与物品
 
-### `AOceanResourceField`
+第一阶段背包是简单堆叠资源容器，不做复杂装备系统。
 
-An actor that owns or hosts the PCG component/graph for resource scattering. It defines generation bounds and exclusion settings around the starting platform.
+建议初始物品：
 
-## Build Placement Flow
+- 木材。
+- 塑料/碎片。
+- 食物。
+- 水。
 
-1. Player enters build mode and selects a `UOceanBuildModuleDefinition`.
-2. Controller traces from cursor to the platform/grid plane or existing platform collision.
-3. The hit world location converts to a grid cell through `UOceanBuildGridComponent`.
-4. The selected module footprint is rotated around its anchor cell.
-5. The grid component validates:
-   - every footprint cell is unoccupied;
-   - at least one required adjacency/support rule is satisfied;
-   - the player has enough resources;
-   - placement is not inside the reserved start/core exclusion area unless the module is allowed there.
-6. Preview actor updates location, rotation, and material color.
-7. Left click confirms valid placement, spends resources, spawns `AOceanBuildModuleActor`, and reserves occupied cells.
-8. Right click or ESC cancels the preview without changing inventory or grid state.
+建议漂浮资源：
 
-## Water Flow
+- 木材。
+- 塑料/碎片。
+- 补给包。
 
-1. Enable the Water plugin and restart the editor.
-2. Create `L_OceanPrototype`.
-3. Add a `WaterZone` actor large enough for the prototype arena.
-4. Add a `WaterBodyOcean` actor at sea level.
-5. Set the logical construction plane to a fixed value above water, for example `Z=120`.
-6. Keep player movement/navmesh on platform collision, not directly on the water surface.
-7. Add simple visual bobbing only to platform visual roots or resource nodes, not to the logical grid transform.
+背包边界：
 
-This avoids early instability where animated water, moving platform collision, and grid placement all fight each other.
+- 资源可堆叠。
+- 背包容量可以先用格子数或总堆叠上限表达。
+- 背包满时拾取失败并显示提示。
+- 数据最好走 DataAsset 或 DataTable，方便后续扩展钓鱼/潜水资源。
 
-## PCG Resource Scattering Flow
+## 9. 建造系统边界
 
-1. Create a PCG graph for ocean drift resources.
-2. Generate points in a ring or rectangular field around the initial platform.
-3. Reject points inside the platform safe radius and inside future reserved build-core space.
-4. Randomly select resource node classes based on weighted type data.
-5. Spawn `AOceanResourceNode` actors or static mesh instances plus lightweight interaction actors.
-6. Keep the first version editor-generated or BeginPlay-generated; runtime regeneration can wait until the resource loop is proven.
-7. Add a debug regeneration command or editor-exposed seed value so layout changes can be repeated.
+建造系统采用 A+B 模型：模块可以是单格，也可以是格子组。所有模块共享同一套占格、旋转、邻接、资源消耗规则。
 
-The first PCG pass should prioritize readable gameplay spacing over visual density.
+第一阶段建议模块：
 
-## Initial Module Set
+| 模块 | 格子 | 作用 |
+|---|---:|---|
+| 地板 | `1x1` | 扩展平台面积。 |
+| 储物箱 | `1x1` 或 `2x1` | 存放更多资源。 |
+| 集水器/简化水桶 | `1x1` | 作为水分系统的后续扩展入口，可先占位。 |
 
-Phase one should include only enough modules to prove the unified grid/module model:
+建造规则：
 
-- `Deck_1x1`: one-cell platform expansion, low wood cost, can attach to any existing deck edge.
-- `Storage_2x2`: larger occupied area, higher wood/scrap cost, requires support from existing deck cells.
-- `Workshop_3x2`: rectangular module that proves rotation and multi-cell footprint checks.
+- 放置必须消耗背包资源。
+- 放置必须邻接已有平台或满足模块特殊规则。
+- 放置不能覆盖已占用格子。
+- 建造预览必须显示可放/不可放状态。
+- 漂浮模块 Actor 必须保留 `UBuoyancyComponent` 或继承等价浮力路径。
+- 视觉模型缺失时使用立方体占位，后续可替换静态网格或蓝图外观。
 
-All three are modules. The deck tile is not a special system.
+## 10. 资源散播边界
 
-## Resource Model
+资源散播目标是 PCG，但第一阶段允许保留 deterministic fallback spawn，保证演示和测试稳定。
 
-Use a minimal resource inventory:
+散播规则：
 
-- `Wood`: common drift resource, used for deck expansion.
-- `Scrap`: less common resource, used for larger modules.
+- 资源生成在平台周边水面。
+- 避开玩家出生点和平台内部。
+- 资源 Actor 可高亮、可被 `F` 拾取。
+- 水上资源 Actor 必须保留浮力组件路径。
+- 测试需能确认资源数量、距离、类型和浮力组件存在。
 
-The player controller or a small player-state component can hold the counts in phase one. If inventory grows later, it can move into a dedicated component without changing grid placement rules.
+## 11. UI / UX 范围
 
-## Testing And Validation
+第一阶段 UI 必须服务核心闭环，不追求最终美术完成度。
 
-Phase one is valid when these checks pass in PIE:
+必做 UI：
 
-- The prototype map opens with a visible ocean and starting platform.
-- The player can move on the platform without falling through or relying on water collision.
-- Resource nodes spawn outside the starting platform exclusion zone.
-- The player can collect resources and see counts change.
-- `Deck_1x1` placement expands the platform by exactly one grid cell.
-- `Storage_2x2` and `Workshop_3x2` occupy all expected cells after rotation.
-- Invalid overlap previews are visibly rejected.
-- Placement fails when resource cost is not met.
-- Placed modules persist for the current PIE session and block subsequent placements.
+- 三条状态 HUD：体力、水分、饱食度。
+- 交互提示：例如 `F 拾取漂浮木板`。
+- 简单背包/资源数量显示。
+- 建造面板：显示可建模块、材料需求、能否建造。
+- 失败提示：材料不足、背包满、距离不够等。
 
-## Recommended Implementation Order
+不做 UI：
 
-1. Enable Water and PCG plugins, then restart/regenerate project files.
-2. Create `Content/OceanPrototype` folders and `L_OceanPrototype`.
-3. Add WaterZone, WaterBodyOcean, and a static starting platform.
-4. Add C++ grid coordinate and footprint validation.
-5. Add module data assets and three initial module definitions.
-6. Add preview placement interaction and resource-cost checks.
-7. Add resource node actor and collection logic.
-8. Add PCG graph for resource scattering with exclusion zone.
-9. Set prototype GameMode and map defaults after the vertical slice works.
+- 钓鱼面板。
+- 潜水氧气条。
+- 复杂拖拽背包。
+- 任务系统。
+- 邮轮搜刮 UI。
 
-## Open Decision
+## 12. 当前项目基础
 
-The project is not currently a git repository. The design is ready to implement either after initializing git for checkpoint commits or as an unversioned prototype pass. Initializing git is recommended before code changes so each phase can be rolled back cleanly.
+项目已有或正在建设的基础：
+
+- UE 5.7 项目。
+- `Water` 插件与 `WaterBodyCollision` 配置。
+- `PCG` 插件。
+- `Landmass` 辅助水体地形。
+- `/Game/OceanPrototype/Maps/L_WaterOcean` 水体测试地图。
+- 建造格子、模块定义、浮力模块、资源节点、资源场等 C++ 基础。
+- UnrealBridge 和 no-LiveCoding 自动化流程。
+
+第一阶段后续实现应在这些基础上补齐玩家输入、HUD、背包、拾取和建造 UI，而不是重做已有水体/格子系统。
+
+## 13. 验收标准
+
+第一阶段 MVP 可验收条件：
+
+- 打开 `L_WaterOcean` 后，玩家在小船/平台上出生。
+- 左键点地移动仍然可用。
+- WASD 可以按屏幕方向移动，并能打断左键寻路。
+- 靠近漂浮资源时显示 `F` 交互提示。
+- 按 `F` 可以拾取资源并进入背包。
+- HUD 显示体力、水分、饱食度。
+- 水分和饱食度会随时间下降。
+- 可通过建造面板消耗资源放置至少一种平台扩展模块。
+- 放置失败时有明确反馈。
+- 放置模块遵守格子占用和邻接规则。
+- 漂浮资源和水上模块保留浮力组件路径。
+
+## 14. 答辩表达
+
+第一阶段答辩可以用一句话概括：
+
+> 《洋流》第一阶段不是完整开放世界，而是一个“海面小船生存 + 资源拾取 + 平台扩展”的可玩闭环；它先证明玩家能活下去、资源能循环、建造能扩展，再把钓鱼、潜水、上岛和邮轮开场作为后续事件系统扩展。
+
+技术取舍可以这样解释：
+
+- 保留左键点地移动，降低休闲玩家操作门槛。
+- 增加 WASD，支持平台上的精细移动。
+- 统一 `F` 交互，避免点击移动和拾取冲突。
+- 先做三条状态，不做复杂生存属性，降低系统耦合。
+- 先用立方体占位，保证 Actor 组件契约稳定，后续可替换美术资产。
+- 建造逻辑使用稳定格子，视觉浮动和水浪表现不影响规则判断。
+- PCG 是目标方案，fallback spawn 是测试和演示稳定性的过渡方案。

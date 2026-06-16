@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>《洋流》毕设答辩可视化总结</title>
+  <style>
+    :root {
+      --bg: #061823;
+      --panel: rgba(255, 255, 255, 0.09);
+      --panel-strong: rgba(255, 255, 255, 0.15);
+      --text: #f2fbff;
+      --muted: #b8d6df;
+      --cyan: #35d3e8;
+      --blue: #1c7df2;
+      --green: #7ee082;
+      --yellow: #ffd166;
+      --orange: #ff9f43;
+      --red: #ff6b6b;
+      --shadow: 0 22px 70px rgba(0, 0, 0, 0.32);
+      --radius: 28px;
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(53, 211, 232, 0.42), transparent 32%),
+        radial-gradient(circle at 88% 20%, rgba(255, 209, 102, 0.22), transparent 26%),
+        linear-gradient(135deg, #042f45 0%, #065b74 42%, #0aa1b5 100%);
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      content: "";
+      background-image:
+        linear-gradient(120deg, rgba(255,255,255,0.08) 1px, transparent 1px),
+        linear-gradient(30deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 82px 82px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    }
+
+    main {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 48px 0 72px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 28px;
+      align-items: stretch;
+      min-height: 420px;
+    }
+
+    .card {
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .hero-copy {
+      padding: 44px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      margin: 0 0 22px;
+      border-radius: 999px;
+      color: #06313f;
+      background: linear-gradient(90deg, var(--yellow), #fff1a8);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(48px, 8vw, 104px);
+      line-height: 0.92;
+      letter-spacing: -0.08em;
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: clamp(28px, 4vw, 46px);
+      letter-spacing: -0.04em;
+    }
+
+    h3 {
+      margin: 0 0 12px;
+      font-size: 22px;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 16px;
+    }
+
+    .hero-copy p {
+      max-width: 680px;
+      margin-top: 22px;
+      font-size: 18px;
+    }
+
+    .hero-visual {
+      position: relative;
+      overflow: hidden;
+      min-height: 420px;
+      background:
+        radial-gradient(circle at 50% 16%, rgba(255,255,255,0.28), transparent 22%),
+        linear-gradient(160deg, rgba(3, 21, 30, 0.12), rgba(255,255,255,0.16));
+    }
+
+    .raft {
+      position: absolute;
+      left: 50%;
+      top: 52%;
+      display: grid;
+      grid-template-columns: repeat(4, 54px);
+      grid-auto-rows: 54px;
+      gap: 7px;
+      transform: translate(-50%, -50%) rotateX(55deg) rotateZ(45deg);
+      transform-style: preserve-3d;
+    }
+
+    .tile {
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f5c16a, #b36b2c);
+      border: 2px solid rgba(255,255,255,0.3);
+      box-shadow: 0 18px 25px rgba(0, 0, 0, 0.24);
+    }
+
+    .tile.empty {
+      opacity: 0.18;
+    }
+
+    .survivor {
+      position: absolute;
+      left: calc(50% - 12px);
+      top: calc(52% - 54px);
+      width: 28px;
+      height: 42px;
+      border-radius: 16px 16px 10px 10px;
+      background: #fff;
+      box-shadow: 18px 18px 0 rgba(0,0,0,0.24);
+    }
+
+    .resource {
+      position: absolute;
+      width: 34px;
+      height: 18px;
+      border-radius: 10px;
+      background: var(--yellow);
+      transform: rotate(-20deg);
+      box-shadow: 0 12px 20px rgba(0,0,0,0.22);
+    }
+
+    .resource.r1 { left: 18%; top: 22%; }
+    .resource.r2 { right: 16%; top: 64%; background: var(--green); }
+    .resource.r3 { left: 18%; bottom: 18%; background: var(--orange); }
+
+    section {
+      margin-top: 28px;
+      padding: 32px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid.cols-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .grid.cols-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mini {
+      padding: 22px;
+      border-radius: 22px;
+      background: var(--panel-strong);
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      margin-bottom: 14px;
+      border-radius: 999px;
+      color: #062b3a;
+      background: var(--cyan);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .tag.yellow { background: var(--yellow); }
+    .tag.green { background: var(--green); }
+    .tag.orange { background: var(--orange); }
+    .tag.red { background: var(--red); color: #270b0b; }
+
+    .loop {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .loop-step {
+      position: relative;
+      min-height: 126px;
+      padding: 18px;
+      border-radius: 22px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.2), rgba(255,255,255,0.08));
+      border: 1px solid rgba(255,255,255,0.16);
+    }
+
+    .loop-step strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .loop-step:not(:last-child)::after {
+      position: absolute;
+      right: -14px;
+      top: 50%;
+      content: "→";
+      color: var(--yellow);
+      font-size: 26px;
+      font-weight: 900;
+      transform: translateY(-50%);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    th, td {
+      padding: 15px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      text-align: left;
+      vertical-align: top;
+      line-height: 1.65;
+    }
+
+    th {
+      color: #06313f;
+      background: rgba(255, 209, 102, 0.92);
+      font-weight: 900;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .decision-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .decision {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .decision b {
+      display: inline-flex;
+      justify-content: center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      color: #042a38;
+      background: var(--green);
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 18px;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(0,0,0,0.16);
+      border-left: 5px solid var(--yellow);
+    }
+
+    code {
+      padding: 2px 7px;
+      border-radius: 8px;
+      color: #06313f;
+      background: rgba(255,255,255,0.82);
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      color: rgba(255,255,255,0.72);
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .grid.cols-2,
+      .grid.cols-3,
+      .loop,
+      .decision-list,
+      .timeline-item {
+        grid-template-columns: 1fr;
+      }
+
+      .loop-step:not(:last-child)::after {
+        right: 20px;
+        top: auto;
+        bottom: -24px;
+        transform: rotate(90deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div class="hero-copy card">
+        <div class="eyebrow">UE5.7 毕设原型 · Ocean Survival</div>
+        <h1>洋流</h1>
+        <p>一个以南海海难为背景的单人生存休闲原型。第一阶段聚焦“小船海面生存 + 资源拾取 + 平台扩展”，先建立可玩闭环，再扩展钓鱼、潜水、上岛和邮轮开场。</p>
+      </div>
+      <div class="hero-visual card" aria-label="小船平台示意图">
+        <div class="resource r1"></div>
+        <div class="resource r2"></div>
+        <div class="resource r3"></div>
+        <div class="raft">
+          <div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile empty"></div>
+          <div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div>
+          <div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div>
+          <div class="tile empty"></div><div class="tile"></div><div class="tile"></div><div class="tile empty"></div>
+        </div>
+        <div class="survivor"></div>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>第一阶段 MVP</h2>
+      <p>目标不是完整开放世界，而是让玩家能在小船平台上移动、维持三条状态、拾取漂浮资源、消耗资源扩展平台。</p>
+      <div class="loop">
+        <div class="loop-step"><strong>出生</strong><p>玩家带初始物资出现在海面小船平台。</p></div>
+        <div class="loop-step"><strong>移动</strong><p>左键点地 + WASD 精细移动并存。</p></div>
+        <div class="loop-step"><strong>拾取</strong><p>靠近漂浮资源，按 F 加入背包。</p></div>
+        <div class="loop-step"><strong>生存</strong><p>体力、水分、饱食度形成持续压力。</p></div>
+        <div class="loop-step"><strong>建造</strong><p>资源消耗换取平台扩展和设施占位。</p></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>范围边界 / 技术取舍</h2>
+      <div class="grid cols-2">
+        <div class="mini">
+          <span class="tag green">保留</span>
+          <h3>双移动方式</h3>
+          <p>左键点地移动不删除，保留休闲玩家熟悉的 TopDown 操作；新增 WASD 作为平台微操。WASD 按下时打断当前寻路目标，避免两套移动互相拉扯。</p>
+        </div>
+        <div class="mini">
+          <span class="tag">统一交互</span>
+          <h3>F 负责全部交互</h3>
+          <p>左键只负责移动，F 负责拾取、储物、建造和后续事件，避免“点地移动”和“点资源拾取”冲突。交互失败必须给出材料不足、背包满、距离不够等反馈。</p>
+        </div>
+        <div class="mini">
+          <span class="tag yellow">简化</span>
+          <h3>三条状态先行</h3>
+          <p>第一阶段只做体力、水分、饱食度。疾病、温度、睡眠、复杂死亡结算暂不做，降低系统耦合，让生存压力先可见、可调、可测试。</p>
+        </div>
+        <div class="mini">
+          <span class="tag orange">建造边界</span>
+          <h3>模块是格子组</h3>
+          <p>地板可以是 1x1，但建造系统不能退化成单格摆件。储物箱、集水器等模块可以占多个格子，统一使用占格、邻接、旋转和资源消耗规则。</p>
+        </div>
+        <div class="mini">
+          <span class="tag">水体边界</span>
+          <h3>逻辑稳定，视觉浮动</h3>
+          <p>水面、浮力和视觉波动服务表现；建造格子保持稳定，不随浪漂移。水上模块和资源 Actor 必须保留浮力组件路径，模型缺失时用立方体占位。</p>
+        </div>
+        <div class="mini">
+          <span class="tag red">暂不做</span>
+          <h3>钓鱼 / 潜水后移</h3>
+          <p>钓鱼能力、钓鱼交互、潜水能力、水下相机、氧气机制和海底采集不进入第一阶段，只作为后续事件系统扩展项列入待做。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>系统拆分</h2>
+      <table>
+        <thead>
+          <tr><th>系统</th><th>第一阶段职责</th><th>边界</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>角色输入</td><td><code>BP_OceanSurvivorCharacter</code> 支持左键点地、WASD、F。</td><td>不删除模板点地移动；WASD 打断寻路。</td></tr>
+          <tr><td>生存状态</td><td>体力、水分、饱食度随时间变化并显示 HUD。</td><td>不做疾病、温度、睡眠等复杂生存属性。</td></tr>
+          <tr><td>背包</td><td>堆叠木材、碎片、食物、水等基础资源。</td><td>不做装备栏、耐久和复杂合成树。</td></tr>
+          <tr><td>交互</td><td>靠近可交互 Actor 后按 F 执行。</td><td>左键不触发拾取，避免输入语义冲突。</td></tr>
+          <tr><td>建造</td><td>消耗资源放置平台扩展和基础设施模块。</td><td>模块必须是格子组，逻辑网格不随波浪移动。</td></tr>
+          <tr><td>资源散播</td><td>PCG 优先，fallback spawn 保证演示稳定。</td><td>资源避开出生点和平台内部，保留浮力路径。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>待做内容</h2>
+      <div class="grid cols-3">
+        <div class="mini">
+          <span class="tag red">TODO-Fishing</span>
+          <h3>钓鱼系统</h3>
+          <p>钓鱼点、鱼类资源、体力消耗、随机结果表、钓鱼 UI。主循环稳定后再接入。</p>
+        </div>
+        <div class="mini">
+          <span class="tag red">TODO-Diving</span>
+          <h3>潜水系统</h3>
+          <p>潜水入口、水下场景、氧气机制、水下移动和水下资源采集。暂不进入第一阶段。</p>
+        </div>
+        <div class="mini">
+          <span class="tag red">TODO-EventExpansion</span>
+          <h3>事件扩展</h3>
+          <p>将钓鱼、潜水、上岛统一进事件系统，形成消耗体力获得资源的探索支线。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>当前技术基础</h2>
+      <div class="decision-list">
+        <div class="decision"><b>Water</b><p>已启用水体插件，并保留 <code>WaterBodyCollision</code> 配置，支持海面原型和浮力路径。</p></div>
+        <div class="decision"><b>Landmass</b><p><code>L_WaterOcean</code> 使用地形/水体支持，避免 WaterBodyOcean 中间缺块等边界问题。</p></div>
+        <div class="decision"><b>PCG</b><p>作为资源散播目标方案；第一阶段允许 deterministic fallback 保障演示稳定。</p></div>
+        <div class="decision"><b>Grid</b><p>已有稳定建造格子和模块基础，后续重点补输入、UI、背包与交互闭环。</p></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>开发记录</h2>
+      <div class="timeline">
+        <div class="timeline-item"><strong>Initial Ocean UE prototype</strong><p>建立 UE5.7 原型项目基础。</p></div>
+        <div class="timeline-item"><strong>docs: add Ocean workflows and phase plan</strong><p>补充项目工作流和第一阶段规划。</p></div>
+        <div class="timeline-item"><strong>feat: add Ocean phase one foundations</strong><p>加入建造格子、浮力模块、资源节点与 PCG/fallback 基础。</p></div>
+        <div class="timeline-item"><strong>本次文档冻结</strong><p>冻结“小船生存主循环 + 轻建造扩展”MVP，并明确钓鱼/潜水后移。</p></div>
+      </div>
+    </section>
+
+    <p class="footer">《洋流》Ocean · UE5.7 · 第一阶段 MVP 答辩材料 · 2026-06-16</p>
+  </main>
+</body>
+</html>
