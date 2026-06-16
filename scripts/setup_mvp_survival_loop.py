@@ -11,6 +11,7 @@ Creates or updates:
     /Game/OceanPrototype/Input/IA_OceanRotateBuild
     /Game/OceanPrototype/Input/IMC_OceanMVP
     /Game/OceanPrototype/Blueprints/BP_OceanSurvivorCharacter
+    /Game/OceanPrototype/Blueprints/BP_OceanMVPPlayerController
     /Game/OceanPrototype/Blueprints/BP_OceanMVPGameMode
     /Game/OceanPrototype/Build/DA_BuildModule_Deck_1x1
     OceanFloatingPlatform_Starter
@@ -37,8 +38,11 @@ TOGGLE_BUILD_ACTION_PATH = f"{INPUT_DIR}/IA_OceanToggleBuild"
 ROTATE_BUILD_ACTION_PATH = f"{INPUT_DIR}/IA_OceanRotateBuild"
 INPUT_CONTEXT_PATH = f"{INPUT_DIR}/IMC_OceanMVP"
 SURVIVOR_BP_PATH = f"{BLUEPRINT_DIR}/BP_OceanSurvivorCharacter"
+PLAYER_CONTROLLER_BP_PATH = f"{BLUEPRINT_DIR}/BP_OceanMVPPlayerController"
 GAMEMODE_BP_PATH = f"{BLUEPRINT_DIR}/BP_OceanMVPGameMode"
 DECK_DEFINITION_PATH = f"{BUILD_DIR}/DA_BuildModule_Deck_1x1"
+SET_DESTINATION_CLICK_ACTION_PATH = "/Game/TopDown/Input/Actions/IA_SetDestination_Click"
+SET_DESTINATION_TOUCH_ACTION_PATH = "/Game/TopDown/Input/Actions/IA_SetDestination_Touch"
 
 STARTER_PLATFORM_LABEL = "OceanFloatingPlatform_Starter"
 STARTER_RESOURCE_FIELD_LABEL = "OceanResourceField_Starter"
@@ -176,6 +180,7 @@ def set_prop(obj, prop_names, value, required: bool = False, label: str = "") ->
     if isinstance(prop_names, str):
         prop_names = [prop_names]
 
+    errors = []
     for prop_name in prop_names:
         try:
             current_value = obj.get_editor_property(prop_name)
@@ -183,13 +188,14 @@ def set_prop(obj, prop_names, value, required: bool = False, label: str = "") ->
                 return True
             obj.set_editor_property(prop_name, value)
             return True
-        except Exception:
+        except Exception as exc:
+            errors.append(f"{prop_name}={exc}")
             continue
 
     if required:
         tdd(
             "MVPPropertySet",
-            f"target={label or obj.get_name()} props={','.join(prop_names)} result=FAIL",
+            f"target={label or obj.get_name()} props={','.join(prop_names)} error={' | '.join(errors)} result=FAIL",
             failed=True,
         )
     return False
@@ -211,14 +217,18 @@ def call_if_exists(obj, method_names, *args):
     if isinstance(method_names, str):
         method_names = [method_names]
 
+    errors = []
     for method_name in method_names:
         method = getattr(obj, method_name, None)
         if method is None:
             continue
         try:
             return True, method(*args)
-        except Exception:
+        except Exception as exc:
+            errors.append(f"{method_name}={exc}")
             continue
+    if errors:
+        tdd("MVPOptionalMethodCall", f"target={obj.get_name()} methods={','.join(method_names)} error={' | '.join(errors)} result=SKIP")
     return False, None
 
 
@@ -343,8 +353,20 @@ def mapping_matches(mapping, action, key_name_to_match: str) -> bool:
     return action_matches(mapped_action, action) and key_name(mapped_key) == key_name_to_match
 
 
+def get_input_context_mappings(mapping_context):
+    direct_mappings = list(get_prop(mapping_context, ["mappings", "Mappings"], []))
+    if direct_mappings:
+        return direct_mappings
+
+    default_mapping_data = get_prop(mapping_context, ["default_key_mappings", "DefaultKeyMappings"])
+    if default_mapping_data is not None:
+        return list(get_prop(default_mapping_data, ["mappings", "Mappings"], []))
+
+    return []
+
+
 def input_context_has_exact_mappings(mapping_context, desired_mappings) -> bool:
-    current_mappings = list(get_prop(mapping_context, ["mappings", "Mappings"], []))
+    current_mappings = get_input_context_mappings(mapping_context)
     if len(current_mappings) != len(desired_mappings):
         return False
 
@@ -372,7 +394,15 @@ def map_input_key(mapping_context, action, key_name: str) -> bool:
     return ok
 
 
-def ensure_input_mapping_context(move_action, interact_action, toggle_build_action, rotate_build_action):
+def ensure_required_asset(asset_path: str):
+    asset = load_asset(asset_path)
+    if asset is None:
+        tdd("MVPAssetExists", f"path={asset_path} result=FAIL", failed=True)
+        raise RuntimeError(f"Required asset is missing: {asset_path}")
+    return asset
+
+
+def ensure_input_mapping_context(move_action, interact_action, toggle_build_action, rotate_build_action, click_action, touch_action):
     mapping_context_class = getattr(unreal, "InputMappingContext", None) or get_class("/Script/EnhancedInput.InputMappingContext")
     factory_class = getattr(unreal, "InputMappingContextFactory", None) or getattr(unreal, "InputMappingContext_Factory", None)
     factory = factory_class() if factory_class is not None else None
@@ -390,6 +420,8 @@ def ensure_input_mapping_context(move_action, interact_action, toggle_build_acti
         (interact_action, "F"),
         (toggle_build_action, "B"),
         (rotate_build_action, "R"),
+        (click_action, "LeftMouseButton"),
+        (touch_action, "Touch1"),
     ]
 
     if input_context_has_exact_mappings(mapping_context, mappings):
@@ -405,13 +437,24 @@ def ensure_input_mapping_context(move_action, interact_action, toggle_build_acti
     return mapping_context
 
 
-def ensure_input_assets() -> None:
+def ensure_input_assets():
     ensure_folder(INPUT_DIR)
     move_action = ensure_input_action(MOVE_ACTION_PATH, "Axis2D")
     interact_action = ensure_input_action(INTERACT_ACTION_PATH, "Boolean")
     toggle_build_action = ensure_input_action(TOGGLE_BUILD_ACTION_PATH, "Boolean")
     rotate_build_action = ensure_input_action(ROTATE_BUILD_ACTION_PATH, "Boolean")
-    ensure_input_mapping_context(move_action, interact_action, toggle_build_action, rotate_build_action)
+    click_action = ensure_required_asset(SET_DESTINATION_CLICK_ACTION_PATH)
+    touch_action = ensure_required_asset(SET_DESTINATION_TOUCH_ACTION_PATH)
+    mapping_context = ensure_input_mapping_context(move_action, interact_action, toggle_build_action, rotate_build_action, click_action, touch_action)
+    return {
+        "move_action": move_action,
+        "interact_action": interact_action,
+        "toggle_build_action": toggle_build_action,
+        "rotate_build_action": rotate_build_action,
+        "click_action": click_action,
+        "touch_action": touch_action,
+        "mapping_context": mapping_context,
+    }
 
 
 def get_generated_class(blueprint_asset):
@@ -571,26 +614,59 @@ def ensure_deck_definition():
 
     footprint = get_prop(deck_definition, ["footprint_size", "FootprintSize"])
     cost = get_prop(deck_definition, ["build_cost", "BuildCost"], [])
-    cost_ok = len(cost) == 1 and get_prop(cost[0], ["amount", "Amount"], 0) == 2
+    cost_resource = get_prop(cost[0], ["resource_type", "ResourceType"]) if cost else None
+    cost_resource_ok = cost_resource == ocean_resource_type("Wood")
+    cost_ok = len(cost) == 1 and get_prop(cost[0], ["amount", "Amount"], 0) == 2 and cost_resource_ok
     footprint_ok = footprint == unreal.IntPoint(1, 1)
+    preview_mesh_ok = values_equal(get_prop(deck_definition, ["preview_mesh", "PreviewMesh"]), cube_mesh)
+    module_actor_ok = values_equal(get_prop(deck_definition, ["module_actor_class", "ModuleActorClass"]), module_actor_class)
     adjacency_ok = bool(get_prop(deck_definition, ["requires_adjacency", "b_requires_adjacency", "bRequiresAdjacency"], False))
 
     tdd("MVPDeckDefinitionFootprint", f"actual={footprint.x}x{footprint.y} expected=1x1 result={pass_fail(footprint_ok)}", failed=not footprint_ok)
     tdd("MVPDeckDefinitionCost", f"resource=Wood actual={get_prop(cost[0], ['amount', 'Amount'], 0) if cost else 0} expected=2 result={pass_fail(cost_ok)}", failed=not cost_ok)
+    tdd("MVPDeckDefinitionResourceType", f"actual={cost_resource} expected=Wood result={pass_fail(cost_resource_ok)}", failed=not cost_resource_ok)
+    tdd("MVPDeckDefinitionPreviewMesh", f"mesh=/Engine/BasicShapes/Cube result={pass_fail(preview_mesh_ok)}", failed=not preview_mesh_ok)
+    tdd("MVPDeckDefinitionModuleActorClass", f"class=/Script/Ocean.OceanBuildModuleActor result={pass_fail(module_actor_ok)}", failed=not module_actor_ok)
     tdd("MVPDeckDefinitionAdjacency", f"actual={adjacency_ok} expected=True result={pass_fail(adjacency_ok)}", failed=not adjacency_ok)
     return deck_definition
 
 
-def configure_game_mode_blueprint(game_mode_bp, survivor_bp) -> None:
+def configure_player_controller_blueprint(player_controller_bp, input_assets) -> None:
+    controller_class = get_generated_class(player_controller_bp)
+    if controller_class is None:
+        tdd("MVPPlayerControllerDefaults", "result=FAIL", failed=True)
+        return
+
+    cdo = unreal.get_default_object(controller_class)
+    checks = {
+        "DefaultMappingContext": set_prop(cdo, ["default_mapping_context", "DefaultMappingContext"], input_assets["mapping_context"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
+        "SetDestinationClickAction": set_prop(cdo, ["set_destination_click_action", "SetDestinationClickAction"], input_assets["click_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
+        "SetDestinationTouchAction": set_prop(cdo, ["set_destination_touch_action", "SetDestinationTouchAction"], input_assets["touch_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
+        "MoveAction": set_prop(cdo, ["move_action", "MoveAction"], input_assets["move_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
+        "InteractAction": set_prop(cdo, ["interact_action", "InteractAction"], input_assets["interact_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
+        "ToggleBuildAction": set_prop(cdo, ["toggle_build_action", "ToggleBuildAction"], input_assets["toggle_build_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
+        "RotateBuildAction": set_prop(cdo, ["rotate_build_action", "RotateBuildAction"], input_assets["rotate_build_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
+    }
+
+    all_ok = all(checks.values())
+    for prop_name, ok in checks.items():
+        tdd("MVPPlayerControllerInput", f"property={prop_name} result={pass_fail(ok)}", failed=not ok)
+    tdd("MVPPlayerControllerDefaults", f"path={PLAYER_CONTROLLER_BP_PATH} result={pass_fail(all_ok)}", failed=not all_ok)
+
+
+def configure_game_mode_blueprint(game_mode_bp, survivor_bp, player_controller_bp) -> None:
     game_mode_class = get_generated_class(game_mode_bp)
     survivor_class = get_generated_class(survivor_bp)
-    if game_mode_class is None or survivor_class is None:
+    player_controller_class = get_generated_class(player_controller_bp)
+    if game_mode_class is None or survivor_class is None or player_controller_class is None:
         tdd("MVPGameModeDefaults", "result=FAIL", failed=True)
         return
 
     cdo = unreal.get_default_object(game_mode_class)
-    ok = set_prop(cdo, ["default_pawn_class", "DefaultPawnClass"], survivor_class, required=True, label=GAMEMODE_BP_PATH)
-    tdd("MVPGameModeDefaultPawn", f"default_pawn={SURVIVOR_BP_PATH} result={pass_fail(ok)}", failed=not ok)
+    pawn_ok = set_prop(cdo, ["default_pawn_class", "DefaultPawnClass"], survivor_class, required=True, label=GAMEMODE_BP_PATH)
+    controller_ok = set_prop(cdo, ["player_controller_class", "PlayerControllerClass"], player_controller_class, required=True, label=GAMEMODE_BP_PATH)
+    tdd("MVPGameModeDefaultPawn", f"default_pawn={SURVIVOR_BP_PATH} result={pass_fail(pawn_ok)}", failed=not pawn_ok)
+    tdd("MVPGameModePlayerController", f"player_controller={PLAYER_CONTROLLER_BP_PATH} result={pass_fail(controller_ok)}", failed=not controller_ok)
 
     world = unreal.EditorLevelLibrary.get_editor_world()
     world_settings = world.get_world_settings() if world else None
@@ -599,12 +675,14 @@ def configure_game_mode_blueprint(game_mode_bp, survivor_bp) -> None:
         tdd("MVPMapGameMode", f"game_mode={GAMEMODE_BP_PATH} result={pass_fail(map_ok)}", failed=not map_ok)
 
 
-def ensure_blueprints_and_data() -> None:
+def ensure_blueprints_and_data(input_assets) -> None:
     ensure_folder(BLUEPRINT_DIR)
     survivor_bp = ensure_blueprint(SURVIVOR_BP_PATH, "/Script/Ocean.OceanCharacter")
+    player_controller_bp = ensure_blueprint(PLAYER_CONTROLLER_BP_PATH, "/Script/Ocean.OceanPlayerController")
     game_mode_bp = ensure_blueprint(GAMEMODE_BP_PATH, "/Script/Ocean.OceanGameMode")
     ensure_deck_definition()
-    configure_game_mode_blueprint(game_mode_bp, survivor_bp)
+    configure_player_controller_blueprint(player_controller_bp, input_assets)
+    configure_game_mode_blueprint(game_mode_bp, survivor_bp, player_controller_bp)
 
 
 def find_actor_by_label(label: str):
@@ -751,6 +829,7 @@ def save_and_verify() -> None:
         ROTATE_BUILD_ACTION_PATH,
         INPUT_CONTEXT_PATH,
         SURVIVOR_BP_PATH,
+        PLAYER_CONTROLLER_BP_PATH,
         GAMEMODE_BP_PATH,
         DECK_DEFINITION_PATH,
     ]
@@ -764,8 +843,8 @@ def save_and_verify() -> None:
 
 def main() -> None:
     load_map()
-    ensure_input_assets()
-    ensure_blueprints_and_data()
+    input_assets = ensure_input_assets()
+    ensure_blueprints_and_data(input_assets)
     ensure_map_actors()
     save_and_verify()
 

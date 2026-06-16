@@ -29,7 +29,7 @@
   - Saved asset exists at `Content/OceanPrototype/Maps/L_WaterOcean.umap`.
 - Created MVP survival-loop starter content:
   - `/Game/OceanPrototype/Input/IA_OceanMove`, `IA_OceanInteract`, `IA_OceanToggleBuild`, `IA_OceanRotateBuild`, and `IMC_OceanMVP`.
-  - `/Game/OceanPrototype/Blueprints/BP_OceanSurvivorCharacter` and `BP_OceanMVPGameMode`.
+  - `/Game/OceanPrototype/Blueprints/BP_OceanSurvivorCharacter`, `BP_OceanMVPPlayerController`, and `BP_OceanMVPGameMode`.
   - `/Game/OceanPrototype/Build/DA_BuildModule_Deck_1x1`.
   - `OceanFloatingPlatform_Starter`, `OceanResourceField_Starter`, `PlayerStart_MVP`, and 16 starter resource nodes in `L_WaterOcean`.
 
