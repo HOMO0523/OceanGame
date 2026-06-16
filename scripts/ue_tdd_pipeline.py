@@ -4,6 +4,7 @@ Ocean UE TDD No-LiveCoding Pipeline — automated save → close → build → r
 Usage:
     python scripts/ue_tdd_pipeline.py                    # Full cycle
     python scripts/ue_tdd_pipeline.py --no-build          # Skip build (editor already running; not compile proof)
+    python scripts/ue_tdd_pipeline.py --no-launch         # Build only; skip launch, PIE, and log capture
     python scripts/ue_tdd_pipeline.py --pie-duration 10   # Run PIE for 10 seconds
     python scripts/ue_tdd_pipeline.py --check-only        # Only capture/analyze logs (no build/launch)
 """
@@ -223,9 +224,12 @@ def run_tdd_cycle(
             result["error"] = "Build failed"
             return result
 
+    if not launch:
+        result["success"] = True
+        return result
+
     # Phase 4.3: Launch editor
-    if launch:
-        launch_editor()
+    launch_editor()
 
     # Phase 4.4: Wait for bridge
     client = wait_for_bridge()
@@ -335,7 +339,7 @@ def analyze_logs(tdd_lines: list[str]) -> dict:
 def main():
     parser = argparse.ArgumentParser(description="UE TDD No-LiveCoding Pipeline")
     parser.add_argument("--no-build", action="store_true", help="Skip build step")
-    parser.add_argument("--no-launch", action="store_true", help="Skip editor launch; not valid as compile proof with an open editor")
+    parser.add_argument("--no-launch", action="store_true", help="Skip editor launch, bridge wait, PIE, and log capture after build")
     parser.add_argument("--check-only", action="store_true", help="Only capture and analyze logs")
     parser.add_argument("--pie-duration", type=float, default=5.0, help="Seconds to run PIE (default: 5)")
     parser.add_argument("--log-lines", type=int, default=300, help="Log lines to capture (default: 300)")
@@ -374,6 +378,10 @@ def main():
         if not result.get("success"):
             print(f"\n[PIPELINE] FAILED: {result.get('error', 'Unknown error')}")
             sys.exit(1)
+
+        if args.no_launch:
+            print("\n[PIPELINE] Build-only mode complete; skipped editor launch, bridge wait, PIE, and log capture")
+            sys.exit(0)
 
         print(f"\n[PIPELINE] Captured {len(result['all_lines'])} log lines total")
         report = analyze_logs(result["tdd_lines"])
