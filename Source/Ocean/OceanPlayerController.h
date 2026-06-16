@@ -11,6 +11,7 @@ class UNiagaraSystem;
 class UInputMappingContext;
 class UInputAction;
 class UPathFollowingComponent;
+struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -49,6 +50,18 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> SetDestinationTouchAction;
 
+	UPROPERTY(EditAnywhere, Category="Input|Ocean")
+	TObjectPtr<UInputAction> MoveAction;
+
+	UPROPERTY(EditAnywhere, Category="Input|Ocean")
+	TObjectPtr<UInputAction> InteractAction;
+
+	UPROPERTY(EditAnywhere, Category="Input|Ocean")
+	TObjectPtr<UInputAction> ToggleBuildAction;
+
+	UPROPERTY(EditAnywhere, Category="Input|Ocean")
+	TObjectPtr<UInputAction> RotateBuildAction;
+
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
 
@@ -77,6 +90,11 @@ protected:
 	void OnSetDestinationReleased();
 	void OnTouchTriggered();
 	void OnTouchReleased();
+	void OnMoveTriggered(const FInputActionValue& Value);
+	void OnMoveCompleted(const FInputActionValue& Value);
+	void OnInteractTriggered(const FInputActionValue& Value);
+	void OnToggleBuildTriggered(const FInputActionValue& Value);
+	void OnRotateBuildTriggered(const FInputActionValue& Value);
 
 	/** Helper function to get the move destination */
 	void UpdateCachedDestination();

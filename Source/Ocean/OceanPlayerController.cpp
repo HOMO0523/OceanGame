@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "OceanPlayerController.h"
+#include "OceanPrototype/OceanInputMath.h"
 #include "GameFramework/Pawn.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "NiagaraSystem.h"
@@ -57,6 +58,28 @@ void AOceanPlayerController::SetupInputComponent()
 			EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Triggered, this, &AOceanPlayerController::OnTouchTriggered);
 			EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Completed, this, &AOceanPlayerController::OnTouchReleased);
 			EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Canceled, this, &AOceanPlayerController::OnTouchReleased);
+
+			if (MoveAction)
+			{
+				EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AOceanPlayerController::OnMoveTriggered);
+				EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AOceanPlayerController::OnMoveCompleted);
+				EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Canceled, this, &AOceanPlayerController::OnMoveCompleted);
+			}
+
+			if (InteractAction)
+			{
+				EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AOceanPlayerController::OnInteractTriggered);
+			}
+
+			if (ToggleBuildAction)
+			{
+				EnhancedInputComponent->BindAction(ToggleBuildAction, ETriggerEvent::Triggered, this, &AOceanPlayerController::OnToggleBuildTriggered);
+			}
+
+			if (RotateBuildAction)
+			{
+				EnhancedInputComponent->BindAction(RotateBuildAction, ETriggerEvent::Triggered, this, &AOceanPlayerController::OnRotateBuildTriggered);
+			}
 		}
 		else
 		{
@@ -114,6 +137,44 @@ void AOceanPlayerController::OnTouchReleased()
 {
 	bIsTouch = false;
 	OnSetDestinationReleased();
+}
+
+void AOceanPlayerController::OnMoveTriggered(const FInputActionValue& Value)
+{
+	StopMovement();
+
+	APawn* ControlledPawn = GetPawn();
+	if (!ControlledPawn)
+	{
+		return;
+	}
+
+	const FVector2D InputVector = Value.Get<FVector2D>();
+	FRotator ViewRotation = GetControlRotation();
+	FVector ViewLocation = FVector::ZeroVector;
+	GetPlayerViewPoint(ViewLocation, ViewRotation);
+
+	const FVector WorldDirection = FOceanInputMath::MakeCameraRelativeMoveDirection(ViewRotation, InputVector);
+	if (!WorldDirection.IsNearlyZero())
+	{
+		ControlledPawn->AddMovementInput(WorldDirection, 1.0f, false);
+	}
+}
+
+void AOceanPlayerController::OnMoveCompleted(const FInputActionValue& Value)
+{
+}
+
+void AOceanPlayerController::OnInteractTriggered(const FInputActionValue& Value)
+{
+}
+
+void AOceanPlayerController::OnToggleBuildTriggered(const FInputActionValue& Value)
+{
+}
+
+void AOceanPlayerController::OnRotateBuildTriggered(const FInputActionValue& Value)
+{
 }
 
 void AOceanPlayerController::UpdateCachedDestination()
