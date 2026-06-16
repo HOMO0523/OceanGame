@@ -27,6 +27,11 @@
   - Contains `WaterZone_Prototype`, `WaterBodyOcean_Prototype`, `PlayerStart_WaterOcean`, `DirectionalLight_WaterOcean`, `SkyAtmosphere_WaterOcean`, and `ExponentialHeightFog_WaterOcean`.
   - Contains `Landscape_WaterSupport` with 256 `LandscapeComponent`s and `WaterBrushManager_Prototype` for Water/Landmass terrain support.
   - Saved asset exists at `Content/OceanPrototype/Maps/L_WaterOcean.umap`.
+- Created MVP survival-loop starter content:
+  - `/Game/OceanPrototype/Input/IA_OceanMove`, `IA_OceanInteract`, `IA_OceanToggleBuild`, `IA_OceanRotateBuild`, and `IMC_OceanMVP`.
+  - `/Game/OceanPrototype/Blueprints/BP_OceanSurvivorCharacter` and `BP_OceanMVPGameMode`.
+  - `/Game/OceanPrototype/Build/DA_BuildModule_Deck_1x1`.
+  - `OceanFloatingPlatform_Starter`, `OceanResourceField_Starter`, `PlayerStart_MVP`, and 16 starter resource nodes in `L_WaterOcean`.
 
 ## Verification Snapshot
 
@@ -40,6 +45,9 @@
 - WaterOcean `[TDD]` probes passed: map created, save succeeded, map exists, one WaterBodyOcean, and one WaterZone.
 - Bridge direct check confirms the current editor world is `/Game/OceanPrototype/Maps/L_WaterOcean.L_WaterOcean`.
 - Landmass/Landscape support probes pass: one support Landscape, 256 Landscape components, and one WaterBrushManager.
+- MVP setup/verify probes passed through UnrealBridge:
+  - `MVPMapLoaded`, required `MVPAssetExists` checks, `MVPPlatformCount: actual=1 expected>=1`, `MVPResourceFieldCount: actual=1 expected>=1`, and `MVPStarterResourceNodeCount: actual=16 expected>=1`.
+  - Dirty package probe reports `dirty_content=[]` and `dirty_maps=[]`.
 
 ## Active Blockers
 
@@ -48,10 +56,10 @@
 
 ## Next Recommended Steps
 
-1. Add the starter floating platform actor to `L_WaterOcean`.
-2. Add the first PCG resource scatter graph or documented fallback host.
-3. Add `[TDD]` or automation-test probes for map load, Water collision profile, buoyancy components, and PCG/fallback resource spawn.
-4. Run `python scripts/ue_tdd_pipeline.py --pie-duration 5` once the map has gameplay actors worth simulating.
+1. Run final MVP PIE verification with `python scripts/ue_tdd_pipeline.py --pie-duration 5`.
+2. Sync the defense HTML and commit log with the frozen MVP scope and technical tradeoffs.
+3. Keep fishing, diving, island travel, and cruise intro as explicitly deferred work.
+4. Use `scripts/setup_mvp_survival_loop.py` only for regeneration or repair of starter MVP content.
 
 ## WaterOcean Bootstrap
 

@@ -10,5 +10,4 @@ parallel_lock: Ocean.MVPSurvivalLoop
 
 # Implementation Log
 
-No implementation has been started in this production unit. Use the plan in `docs/superpowers/plans/2026-06-16-ocean-mvp-survival-loop.md` before touching runtime code.
-
+- 2026-06-16 Task 6: Added idempotent MVP setup/verify editor scripts and generated the WaterOcean starter input assets, Blueprint classes, 1x1 deck data asset, platform, resource field, player start, and fallback resource nodes.
