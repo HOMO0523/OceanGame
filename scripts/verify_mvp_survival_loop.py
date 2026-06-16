@@ -323,6 +323,35 @@ def verify_controller_and_game_mode() -> None:
         tdd("MVPGameModePlayerController", f"player_controller={PLAYER_CONTROLLER_BP_PATH} result={pass_fail(controller_ok)}", failed=not controller_ok)
 
 
+def get_single_component(cdo, component_class, label: str):
+    try:
+        components = list(cdo.get_components_by_class(component_class))
+    except Exception:
+        components = []
+
+    ok = len(components) == 1
+    tdd("MVPComponentExists", f"owner={label} component={component_class.get_name()} actual={len(components)} expected=1 result={pass_fail(ok)}", failed=not ok)
+    return components[0] if ok else None
+
+
+def verify_survivor_build_defaults() -> None:
+    survivor_bp = load_asset(SURVIVOR_BP_PATH)
+    survivor_class = get_generated_class(survivor_bp) if survivor_bp else None
+    if survivor_class is None:
+        tdd("MVPSurvivorBuildDefaults", "result=FAIL", failed=True)
+        return
+
+    cdo = unreal.get_default_object(survivor_class)
+    build_component = get_single_component(cdo, get_class("/Script/Ocean.OceanBuildComponent"), SURVIVOR_BP_PATH)
+    if build_component is None:
+        return
+
+    selected_ok = same_object(get_prop(build_component, ["selected_module", "SelectedModule"]), load_asset(DECK_DEFINITION_PATH))
+    fallback_ok = same_object(get_prop(build_component, ["fallback_module_actor_class", "FallbackModuleActorClass"]), get_class("/Script/Ocean.OceanBuildModuleActor"))
+    tdd("MVPSurvivorBuildSelectedModule", f"module={DECK_DEFINITION_PATH} result={pass_fail(selected_ok)}", failed=not selected_ok)
+    tdd("MVPSurvivorBuildFallbackClass", f"class=/Script/Ocean.OceanBuildModuleActor result={pass_fail(fallback_ok)}", failed=not fallback_ok)
+
+
 def verify_deck_definition() -> None:
     deck = load_asset(DECK_DEFINITION_PATH)
     if deck is None:
@@ -357,6 +386,7 @@ def main() -> None:
     verify_assets()
     verify_input_context()
     verify_controller_and_game_mode()
+    verify_survivor_build_defaults()
     verify_actor_counts()
     verify_deck_definition()
 

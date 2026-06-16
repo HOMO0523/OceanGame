@@ -631,6 +631,36 @@ def ensure_deck_definition():
     return deck_definition
 
 
+def get_single_component(cdo, component_class, label: str):
+    try:
+        components = list(cdo.get_components_by_class(component_class))
+    except Exception:
+        components = []
+
+    ok = len(components) == 1
+    tdd("MVPComponentExists", f"owner={label} component={component_class.get_name()} actual={len(components)} expected=1 result={pass_fail(ok)}", failed=not ok)
+    return components[0] if ok else None
+
+
+def configure_survivor_build_defaults(survivor_bp, deck_definition) -> None:
+    survivor_class = get_generated_class(survivor_bp)
+    if survivor_class is None:
+        tdd("MVPSurvivorBuildDefaults", "result=FAIL", failed=True)
+        return
+
+    cdo = unreal.get_default_object(survivor_class)
+    build_component_class = get_class("/Script/Ocean.OceanBuildComponent")
+    build_component = get_single_component(cdo, build_component_class, SURVIVOR_BP_PATH)
+    if build_component is None:
+        return
+
+    module_actor_class = get_class("/Script/Ocean.OceanBuildModuleActor")
+    selected_ok = set_prop(build_component, ["selected_module", "SelectedModule"], deck_definition, required=True, label=f"{SURVIVOR_BP_PATH}:OceanBuild")
+    fallback_ok = set_prop(build_component, ["fallback_module_actor_class", "FallbackModuleActorClass"], module_actor_class, required=True, label=f"{SURVIVOR_BP_PATH}:OceanBuild")
+    tdd("MVPSurvivorBuildSelectedModule", f"module={DECK_DEFINITION_PATH} result={pass_fail(selected_ok)}", failed=not selected_ok)
+    tdd("MVPSurvivorBuildFallbackClass", f"class=/Script/Ocean.OceanBuildModuleActor result={pass_fail(fallback_ok)}", failed=not fallback_ok)
+
+
 def configure_player_controller_blueprint(player_controller_bp, input_assets) -> None:
     controller_class = get_generated_class(player_controller_bp)
     if controller_class is None:
@@ -680,7 +710,8 @@ def ensure_blueprints_and_data(input_assets) -> None:
     survivor_bp = ensure_blueprint(SURVIVOR_BP_PATH, "/Script/Ocean.OceanCharacter")
     player_controller_bp = ensure_blueprint(PLAYER_CONTROLLER_BP_PATH, "/Script/Ocean.OceanPlayerController")
     game_mode_bp = ensure_blueprint(GAMEMODE_BP_PATH, "/Script/Ocean.OceanGameMode")
-    ensure_deck_definition()
+    deck_definition = ensure_deck_definition()
+    configure_survivor_build_defaults(survivor_bp, deck_definition)
     configure_player_controller_blueprint(player_controller_bp, input_assets)
     configure_game_mode_blueprint(game_mode_bp, survivor_bp, player_controller_bp)
 

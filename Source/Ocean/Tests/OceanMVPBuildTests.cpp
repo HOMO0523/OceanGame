@@ -137,6 +137,42 @@ bool FOceanMVPDeckPlacementTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanMVPBuildAutoTargetPlatformTest, "Ocean.MVP.Build.AutoFindsTargetPlatform", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanMVPBuildAutoTargetPlatformTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateBuildTestWorld();
+	TestNotNull(TEXT("[TDD] OceanBuild_TestWorld"), World);
+	if (!World)
+	{
+		return false;
+	}
+
+	AActor* Builder = World->SpawnActor<AActor>(FVector::ZeroVector, FRotator::ZeroRotator);
+	UOceanInventoryComponent* Inventory = AddInventoryForBuildTest(Builder);
+	TestTrue(TEXT("[TDD] OceanBuild_AddAutoTargetWood"), Inventory->AddResource({ EOceanResourceType::Wood, 3 }));
+
+	AOceanFloatingPlatform* Platform = CreateOneCellPlatformForTest(World);
+	UOceanBuildGridComponent* Grid = Platform->GetBuildGrid();
+	UOceanBuildModuleDefinition* DeckDefinition = CreateDeckDefinitionForTest();
+
+	UOceanBuildComponent* Build = AddBuildForTest(Builder);
+	Build->SetSelectedModule(DeckDefinition);
+	Build->SetBuildModeActive(true);
+
+	const FIntPoint DeckCell(1, 0);
+	const FVector PlacementLocation = Grid->CellToWorld(DeckCell);
+
+	FText Message;
+	TestTrue(TEXT("[TDD] OceanBuild_AutoFindsTargetPlatform"), Build->TryPlaceSelectedModuleAtWorld(PlacementLocation, Message));
+	TestEqual(TEXT("[TDD] OceanBuild_AutoTargetAssigned"), Build->GetTargetPlatform(), Platform);
+	TestEqual(TEXT("[TDD] OceanBuild_AutoTargetWoodAfterPlacement"), Inventory->GetResourceAmount(EOceanResourceType::Wood), 1);
+	TestTrue(TEXT("[TDD] OceanBuild_AutoTargetReservedDeckCell"), Grid->IsCellOccupied(DeckCell));
+
+	DestroyBuildTestWorld(World);
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanMVPBuildFailureCasesTest, "Ocean.MVP.Build.FailureCases", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FOceanMVPBuildFailureCasesTest::RunTest(const FString& Parameters)
@@ -173,9 +209,6 @@ bool FOceanMVPBuildFailureCasesTest::RunTest(const FString& Parameters)
 	TestFalse(TEXT("[TDD] OceanBuild_FailsWithoutSelectedModule"), Build->TryPlaceSelectedModuleAtWorld(AdjacentLocation, Message));
 
 	Build->SetSelectedModule(DeckDefinition);
-	Build->SetTargetPlatform(nullptr);
-	TestFalse(TEXT("[TDD] OceanBuild_FailsWithoutTargetPlatform"), Build->TryPlaceSelectedModuleAtWorld(AdjacentLocation, Message));
-
 	Build->SetTargetPlatform(Platform);
 	TestTrue(TEXT("[TDD] OceanBuild_RemoveWoodForUnaffordableCase"), Inventory->TrySpend({ { EOceanResourceType::Wood, 4 } }));
 	TestFalse(TEXT("[TDD] OceanBuild_FailsWhenUnaffordable"), Build->TryPlaceSelectedModuleAtWorld(AdjacentLocation, Message));

@@ -7,6 +7,7 @@
 #include "OceanPrototype/OceanInventoryComponent.h"
 #include "BuoyancyComponent.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 
 UOceanBuildComponent::UOceanBuildComponent()
 {
@@ -44,13 +45,14 @@ bool UOceanBuildComponent::TryPlaceSelectedModuleAtWorld(const FVector& WorldLoc
 		return false;
 	}
 
-	if (!IsValid(TargetPlatform))
+	AOceanFloatingPlatform* ResolvedTargetPlatform = ResolveTargetPlatform();
+	if (!IsValid(ResolvedTargetPlatform))
 	{
 		OutMessage = NSLOCTEXT("Ocean", "BuildNoTargetPlatform", "没有目标平台");
 		return false;
 	}
 
-	UOceanBuildGridComponent* Grid = TargetPlatform->GetBuildGrid();
+	UOceanBuildGridComponent* Grid = ResolvedTargetPlatform->GetBuildGrid();
 	if (!IsValid(Grid))
 	{
 		OutMessage = NSLOCTEXT("Ocean", "BuildNoGrid", "目标平台没有建造网格");
@@ -146,4 +148,30 @@ void UOceanBuildComponent::SetTargetPlatform(AOceanFloatingPlatform* Platform)
 void UOceanBuildComponent::SetFallbackModuleActorClass(TSubclassOf<AOceanBuildModuleActor> ActorClass)
 {
 	FallbackModuleActorClass = ActorClass;
+}
+
+AOceanFloatingPlatform* UOceanBuildComponent::ResolveTargetPlatform()
+{
+	if (IsValid(TargetPlatform))
+	{
+		return TargetPlatform;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+
+	for (TActorIterator<AOceanFloatingPlatform> PlatformIt(World); PlatformIt; ++PlatformIt)
+	{
+		AOceanFloatingPlatform* Candidate = *PlatformIt;
+		if (IsValid(Candidate))
+		{
+			TargetPlatform = Candidate;
+			return TargetPlatform;
+		}
+	}
+
+	return nullptr;
 }

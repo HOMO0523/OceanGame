@@ -65,6 +65,8 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Ocean|Build")
 	TObjectPtr<AOceanBuildModuleActor> LastPlacedModuleActor;
 
+	AOceanFloatingPlatform* ResolveTargetPlatform();
+
 	bool bBuildModeActive = false;
 	int32 RotationQuarterTurns = 0;
 };

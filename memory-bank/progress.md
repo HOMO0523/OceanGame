@@ -32,6 +32,7 @@
   - `/Game/OceanPrototype/Blueprints/BP_OceanSurvivorCharacter`, `BP_OceanMVPPlayerController`, and `BP_OceanMVPGameMode`.
   - `/Game/OceanPrototype/Build/DA_BuildModule_Deck_1x1`.
   - `OceanFloatingPlatform_Starter`, `OceanResourceField_Starter`, `PlayerStart_MVP`, and 16 starter resource nodes in `L_WaterOcean`.
+  - `BP_OceanSurvivorCharacter` defaults its `OceanBuild` component to the 1x1 Deck module; `UOceanBuildComponent` auto-resolves the scene floating platform when no explicit target is assigned.
 
 ## Verification Snapshot
 
@@ -46,8 +47,10 @@
 - Bridge direct check confirms the current editor world is `/Game/OceanPrototype/Maps/L_WaterOcean.L_WaterOcean`.
 - Landmass/Landscape support probes pass: one support Landscape, 256 Landscape components, and one WaterBrushManager.
 - MVP setup/verify probes passed through UnrealBridge:
-  - `MVPMapLoaded`, required `MVPAssetExists` checks, `MVPPlatformCount: actual=1 expected>=1`, `MVPResourceFieldCount: actual=1 expected>=1`, and `MVPStarterResourceNodeCount: actual=16 expected>=1`.
+  - `MVPMapLoaded`, required `MVPAssetExists` checks, `MVPPlatformCount: actual=1 expected>=1`, `MVPResourceFieldCount: actual=1 expected>=1`, and `MVPStarterResourceNodeCount: actual=16 expected=16`.
+  - `MVPSurvivorBuildSelectedModule`, `MVPPlayerControllerInput`, and `MVPGameModePlayerController` pass.
   - Dirty package probe reports `dirty_content=[]` and `dirty_maps=[]`.
+- `Ocean.MVP.Build` automation now includes `AutoFindsTargetPlatform`, `DeckPlacement`, and `FailureCases`; all three complete successfully after the runtime target-platform resolution fix.
 
 ## Active Blockers
 
