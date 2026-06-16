@@ -217,6 +217,11 @@ def run_tdd_cycle(
             return result
         kill_editor()
         time.sleep(2)
+        editor_running = is_editor_running()
+        if editor_running is not False:
+            state = "still running" if editor_running is True else "unknown"
+            result["error"] = f"Editor close verification failed: UnrealEditor is {state} after kill_editor()"
+            return result
 
     # Phase 4.2: Build
     if build:
@@ -340,7 +345,7 @@ def main():
     parser = argparse.ArgumentParser(description="UE TDD No-LiveCoding Pipeline")
     parser.add_argument("--no-build", action="store_true", help="Skip build step")
     parser.add_argument("--no-launch", action="store_true", help="Skip editor launch, bridge wait, PIE, and log capture after build")
-    parser.add_argument("--check-only", action="store_true", help="Only capture and analyze logs")
+    parser.add_argument("--check-only", action="store_true", help="Only capture and analyze logs; takes priority over build/launch flags")
     parser.add_argument("--pie-duration", type=float, default=5.0, help="Seconds to run PIE (default: 5)")
     parser.add_argument("--log-lines", type=int, default=300, help="Log lines to capture (default: 300)")
     parser.add_argument("--filter", type=str, default="[TDD]", help="Log filter pattern (default: [TDD])")
@@ -366,6 +371,10 @@ def main():
         tdd_lines = client.filter_tdd_lines(num_lines=args.log_lines)
         report = analyze_logs(tdd_lines)
     else:
+        if args.no_build and args.no_launch:
+            print("FATAL: --no-build --no-launch would do no work; use --check-only to inspect a running editor")
+            sys.exit(1)
+
         result = run_tdd_cycle(
             build=not args.no_build,
             launch=not args.no_launch,
