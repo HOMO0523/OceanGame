@@ -77,28 +77,25 @@
 <!-- DOC_SYNC_HOOK:START -->
 ### Doc Sync Hook Snapshot
 
-- generated_at: 2026-06-16T22:29:03
+- generated_at: 2026-06-16T23:47:32
 - phase: `pre-commit`
-- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260616-222903-doc-sync.md`
+- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260616-234732-doc-sync.md`
 - active_units: `2026-06-16-automation-migration`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`
-- doc_targets: `memory-bank/architecture.md`, `memory-bank/progress.md`
+- doc_targets: `docs/production`, `memory-bank/architecture.md`
 - validator: success=`True` errors=`0` warnings=`0`
 
 **Video flow status:**
 - 00 context and rules: covered
-- 01 production unit split: covered
+- 01 production unit split: touched
 - 02 semantic freeze: covered
 - 03 infrastructure audit: covered
 - 04 implementation plan: covered
-- 05 test design: covered
-- 06 implementation log: touched
+- 05 test design: touched
+- 06 implementation log: covered
 - 07 verification and repair: covered
-- 08 review: covered
+- 08 review: touched
 - 09 memory and registry update: covered
 
 **Next documentation actions:**
-- Update `memory-bank/progress.md` with implementation/test status before handoff.
-- Check whether `memory-bank/architecture.md` needs subsystem/data-flow updates.
-- Tie code changes to an active `docs/production/*` unit or create one.
-- For UE C++ changes, confirm `[TDD]` logs were added before implementation and run the UE TDD pipeline.
+- Production docs validate; keep `07-review.md` decision aligned with actual test evidence.
 <!-- DOC_SYNC_HOOK:END -->

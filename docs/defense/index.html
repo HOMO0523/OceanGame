@@ -376,7 +376,7 @@
 
     <section class="card">
       <h2>第一阶段 MVP</h2>
-      <p>目标不是完整开放世界，而是让玩家能在小船平台上移动、维持三条状态、拾取漂浮资源、消耗资源扩展平台。</p>
+      <p>目标不是完整开放世界，而是让玩家能在小船平台上移动、维持三条状态、拾取漂浮资源、消耗资源扩展平台。当前版本已经落成到 <code>L_WaterOcean</code>：starter 平台、16 个漂浮资源节点、MVP 输入资产、角色/控制器/GameMode 蓝图和 1x1 Deck 数据资产均可脚本验证。</p>
       <div class="loop">
         <div class="loop-step"><strong>出生</strong><p>玩家带初始物资出现在海面小船平台。</p></div>
         <div class="loop-step"><strong>移动</strong><p>左键点地 + WASD 精细移动并存。</p></div>
@@ -429,12 +429,12 @@
           <tr><th>系统</th><th>第一阶段职责</th><th>边界</th></tr>
         </thead>
         <tbody>
-          <tr><td>角色输入</td><td><code>BP_OceanSurvivorCharacter</code> 支持左键点地、WASD、F。</td><td>不删除模板点地移动；WASD 打断寻路。</td></tr>
+          <tr><td>角色输入</td><td><code>BP_OceanMVPPlayerController</code> 绑定左键、WASD、F、B、R。</td><td>不删除模板点地移动；WASD 打断寻路。</td></tr>
           <tr><td>生存状态</td><td>体力、水分、饱食度随时间变化并显示 HUD。</td><td>不做疾病、温度、睡眠等复杂生存属性。</td></tr>
           <tr><td>背包</td><td>堆叠木材、碎片、食物、水等基础资源。</td><td>不做装备栏、耐久和复杂合成树。</td></tr>
           <tr><td>交互</td><td>靠近可交互 Actor 后按 F 执行。</td><td>左键不触发拾取，避免输入语义冲突。</td></tr>
-          <tr><td>建造</td><td>消耗资源放置平台扩展和基础设施模块。</td><td>模块必须是格子组，逻辑网格不随波浪移动。</td></tr>
-          <tr><td>资源散播</td><td>PCG 优先，fallback spawn 保证演示稳定。</td><td>资源避开出生点和平台内部，保留浮力路径。</td></tr>
+          <tr><td>建造</td><td><code>BP_OceanSurvivorCharacter</code> 默认选中 1x1 Deck；建造组件自动寻找场景平台。</td><td>模块必须是格子组，逻辑网格不随波浪移动。</td></tr>
+          <tr><td>资源散播</td><td>PCG 优先，fallback spawn 保证演示稳定，当前地图生成 16 个 starter 资源。</td><td>资源避开出生点和平台内部，保留浮力路径。</td></tr>
         </tbody>
       </table>
     </section>
@@ -466,7 +466,29 @@
         <div class="decision"><b>Water</b><p>已启用水体插件，并保留 <code>WaterBodyCollision</code> 配置，支持海面原型和浮力路径。</p></div>
         <div class="decision"><b>Landmass</b><p><code>L_WaterOcean</code> 使用地形/水体支持，避免 WaterBodyOcean 中间缺块等边界问题。</p></div>
         <div class="decision"><b>PCG</b><p>作为资源散播目标方案；第一阶段允许 deterministic fallback 保障演示稳定。</p></div>
-        <div class="decision"><b>Grid</b><p>已有稳定建造格子和模块基础，后续重点补输入、UI、背包与交互闭环。</p></div>
+        <div class="decision"><b>Grid</b><p>建造系统已接入角色、背包和地图平台；未指定目标平台时会自动解析场景中的浮动平台，避免 MVP 建造入口不可玩。</p></div>
+        <div class="decision"><b>Verification</b><p><code>setup_mvp_survival_loop.py</code> 和 <code>verify_mvp_survival_loop.py</code> 校验 9 个输入映射、控制器绑定、GameMode 默认类、16 个资源节点、Deck 数据和角色建造默认模块。</p></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>验证证据</h2>
+      <div class="grid cols-3">
+        <div class="mini">
+          <span class="tag green">Cold Build</span>
+          <h3>无 Live Coding</h3>
+          <p><code>python scripts/ue_tdd_pipeline.py --no-launch</code> 走保存、关闭编辑器、冷编译路径，验证 <code>OceanEditor Win64 Development -NoHotReload</code>。</p>
+        </div>
+        <div class="mini">
+          <span class="tag green">Automation</span>
+          <h3>建造测试</h3>
+          <p><code>Ocean.MVP.Build</code> 找到 3 个自动化测试：自动找平台、Deck 放置、失败场景，均完成成功。</p>
+        </div>
+        <div class="mini">
+          <span class="tag green">Bridge</span>
+          <h3>资产验证</h3>
+          <p>UnrealBridge 验证地图加载、输入映射、角色建造默认模块、控制器绑定、GameMode、16 个资源节点和 Deck 数据资产。</p>
+        </div>
       </div>
     </section>
 
@@ -476,7 +498,10 @@
         <div class="timeline-item"><strong>Initial Ocean UE prototype</strong><p>建立 UE5.7 原型项目基础。</p></div>
         <div class="timeline-item"><strong>docs: add Ocean workflows and phase plan</strong><p>补充项目工作流和第一阶段规划。</p></div>
         <div class="timeline-item"><strong>feat: add Ocean phase one foundations</strong><p>加入建造格子、浮力模块、资源节点与 PCG/fallback 基础。</p></div>
-        <div class="timeline-item"><strong>本次文档冻结</strong><p>冻结“小船生存主循环 + 轻建造扩展”MVP，并明确钓鱼/潜水后移。</p></div>
+        <div class="timeline-item"><strong>docs: freeze Ocean MVP design</strong><p>冻结“小船生存主循环 + 轻建造扩展”MVP，并明确钓鱼/潜水后移。</p></div>
+        <div class="timeline-item"><strong>feat: add MVP runtime loop</strong><p>完成 WASD、三条状态、背包、F 交互、资源拾取、Deck 建造和调试 HUD。</p></div>
+        <div class="timeline-item"><strong>content: set up MVP map assets</strong><p>生成 WaterOcean 地图内的 starter 平台、资源场、输入资产、蓝图和 Deck 数据资产。</p></div>
+        <div class="timeline-item"><strong>fix: auto bind build target</strong><p>通过红绿测试修复建造入口：自动解析平台并默认选中 1x1 Deck。</p></div>
       </div>
     </section>
 
