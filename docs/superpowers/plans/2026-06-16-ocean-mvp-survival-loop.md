@@ -1403,7 +1403,20 @@ Expected:
 Run:
 
 ```powershell
-@'`nfrom pathlib import Path`nfrom scripts.ue_tdd_bridge import BridgeClient`nclient = BridgeClient()`nif not client.connect():`n    raise SystemExit('bridge_connect_failed')`nscript = Path('scripts/verify_mvp_survival_loop.py').read_text(encoding='utf-8')`nresponse = client.send(script, timeout=180)`nprint(response.get('output', ''))`nif not response.get('success'):`n    raise SystemExit(response.get('error', 'bridge_exec_failed'))`n'@ | python -
+@'
+from pathlib import Path
+from scripts.ue_tdd_bridge import BridgeClient
+
+client = BridgeClient()
+if not client.connect():
+    raise SystemExit("bridge_connect_failed")
+
+script = Path("scripts/verify_mvp_survival_loop.py").read_text(encoding="utf-8")
+response = client.send(script, timeout=180)
+print(response.get("output", ""))
+if not response.get("success"):
+    raise SystemExit(response.get("error", "bridge_exec_failed"))
+'@ | python -
 ```
 
 Expected:
@@ -1502,4 +1515,3 @@ The plan names exact files, commands, expected outputs, class names, method name
 - Movement helper is `FOceanInputMath::MakeCameraRelativeMoveDirection` in both test and implementation.
 - Component names used by HUD, controller, and character match the C++ class names.
 - Build placement consumes `UOceanInventoryComponent`, `UOceanBuildGridComponent`, `UOceanBuildModuleDefinition`, and `AOceanBuildModuleActor`, matching existing OceanPrototype foundation types.
-
