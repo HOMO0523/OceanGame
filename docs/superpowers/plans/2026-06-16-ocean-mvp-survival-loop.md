@@ -121,7 +121,7 @@ bool FOceanMVPCameraRelativeMoveTest::RunTest(const FString& Parameters)
 Run:
 
 ```powershell
-python scripts/ue_tdd_pipeline.py --build-only
+python scripts/ue_tdd_pipeline.py --no-launch
 ```
 
 Expected: build fails because `OceanPrototype/OceanInputMath.h` does not exist.
@@ -264,7 +264,7 @@ void AOceanPlayerController::OnRotateBuildTriggered(const FInputActionValue& Val
 Run:
 
 ```powershell
-python scripts/ue_tdd_pipeline.py --build-only
+python scripts/ue_tdd_pipeline.py --no-launch
 ```
 
 Expected: build exits with code `0`.
@@ -351,7 +351,7 @@ bool FOceanMVPSurvivalTickTest::RunTest(const FString& Parameters)
 Run:
 
 ```powershell
-python scripts/ue_tdd_pipeline.py --build-only
+python scripts/ue_tdd_pipeline.py --no-launch
 ```
 
 Expected: build fails because `UOceanInventoryComponent` and `UOceanSurvivalComponent` are missing.
@@ -638,7 +638,7 @@ SurvivalComponent = CreateDefaultSubobject<UOceanSurvivalComponent>(TEXT("OceanS
 Run:
 
 ```powershell
-python scripts/ue_tdd_pipeline.py --build-only
+python scripts/ue_tdd_pipeline.py --no-launch
 ```
 
 Expected: build exits with code `0`.
@@ -919,7 +919,7 @@ void AOceanPlayerController::OnInteractTriggered(const FInputActionValue& Value)
 Run:
 
 ```powershell
-python scripts/ue_tdd_pipeline.py --build-only
+python scripts/ue_tdd_pipeline.py --no-launch
 ```
 
 Expected: build exits with code `0`.
@@ -1091,7 +1091,7 @@ Add `UOceanBuildComponent` to `AOceanCharacter` as `OceanBuild`.
 Run:
 
 ```powershell
-python scripts/ue_tdd_pipeline.py --build-only
+python scripts/ue_tdd_pipeline.py --no-launch
 ```
 
 Expected: build exits with code `0`.
@@ -1208,7 +1208,7 @@ AOceanGameMode::AOceanGameMode()
 Run:
 
 ```powershell
-python scripts/ue_tdd_pipeline.py --build-only
+python scripts/ue_tdd_pipeline.py --no-launch
 ```
 
 Expected: build exits with code `0`.
@@ -1333,8 +1333,21 @@ Expected: command exits with code `0`.
 Run:
 
 ```powershell
-python scripts/ue_tdd_bridge.py --exec-file scripts/setup_mvp_survival_loop.py
-python scripts/ue_tdd_bridge.py --exec-file scripts/verify_mvp_survival_loop.py
+@'
+from pathlib import Path
+from scripts.ue_tdd_bridge import BridgeClient
+
+client = BridgeClient()
+if not client.connect():
+    raise SystemExit("bridge_connect_failed")
+
+for script_path in ("scripts/setup_mvp_survival_loop.py", "scripts/verify_mvp_survival_loop.py"):
+    script = Path(script_path).read_text(encoding="utf-8")
+    response = client.send(script, timeout=180)
+    print(response.get("output", ""))
+    if not response.get("success"):
+        raise SystemExit(response.get("error", "bridge_exec_failed"))
+'@ | python -
 ```
 
 Expected: verification emits `PASS` for required assets and `actual>=1` for platform/resource field.
@@ -1390,7 +1403,7 @@ Expected:
 Run:
 
 ```powershell
-python scripts/ue_tdd_bridge.py --exec-file scripts/verify_mvp_survival_loop.py
+@'`nfrom pathlib import Path`nfrom scripts.ue_tdd_bridge import BridgeClient`nclient = BridgeClient()`nif not client.connect():`n    raise SystemExit('bridge_connect_failed')`nscript = Path('scripts/verify_mvp_survival_loop.py').read_text(encoding='utf-8')`nresponse = client.send(script, timeout=180)`nprint(response.get('output', ''))`nif not response.get('success'):`n    raise SystemExit(response.get('error', 'bridge_exec_failed'))`n'@ | python -
 ```
 
 Expected:
@@ -1489,3 +1502,4 @@ The plan names exact files, commands, expected outputs, class names, method name
 - Movement helper is `FOceanInputMath::MakeCameraRelativeMoveDirection` in both test and implementation.
 - Component names used by HUD, controller, and character match the C++ class names.
 - Build placement consumes `UOceanInventoryComponent`, `UOceanBuildGridComponent`, `UOceanBuildModuleDefinition`, and `AOceanBuildModuleActor`, matching existing OceanPrototype foundation types.
+
