@@ -20,7 +20,9 @@ public class Ocean : ModuleRules
 			"GameplayStateTreeModule",
 			"Niagara",
 			"UMG",
-			"Slate"
+			"Slate",
+			"Water",
+			"PCG"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
