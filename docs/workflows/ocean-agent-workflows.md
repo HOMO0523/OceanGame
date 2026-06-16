@@ -86,15 +86,16 @@ Use `parallel_lock` metadata when multiple agents or threads might touch related
 | `unreal-bridge` | When controlling a running UE editor, creating assets, saving packages, running PIE, or reading runtime state. |
 | `github:yeet` | When publishing local commits or opening a PR. |
 
-## Useful Scripts To Port Later
+## Migrated Automation Chain
 
-The reference project has several scripts worth porting once Ocean has matching console commands and bridge support:
+The following reference-project automation pieces have been migrated and Ocean-adapted:
 
 - `scripts/ue_tdd_bridge.py`: bridge client for endpoint discovery, PIE control, and log capture.
-- `scripts/ue_tdd_pipeline.py`: full cold compile, launch, PIE, capture, analyze loop.
+- `scripts/ue_tdd_pipeline.py`: full save, cold compile, launch, PIE, capture, analyze loop for `OceanEditor`.
 - `scripts/harness_state_validator.py`: validates production unit state files and parallel locks.
-- `scripts/ai_production_loop.py`: orchestration wrapper for validation, static checks, batch tests, and report writing.
 - `scripts/doc_sync_hook.py`: explicit pre-commit or manual documentation drift detector.
-- `scripts/monitor-session.ps1` and `scripts/monitor-session-check.ps1`: local Codex context monitor pattern.
+- `Plugins/UnrealBridge`: editor-only TCP/Python bridge source plugin, copied without generated binaries.
+- `.agents/skills/ue-tdd-livecoding`: no-LiveCoding UE TDD skill, adapted to Ocean.
+- `.agents/skills/ocean-ai-production-hardness`: Ocean-specific production loop skill.
 
-Do not copy scripts blindly. Port them when Ocean has the target console commands, log categories, and asset paths they need.
+The Roguelike gameplay scripts and plugins were intentionally not copied because their state, UI, economy, and balance assumptions do not belong to Ocean.
