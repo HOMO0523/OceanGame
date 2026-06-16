@@ -3,7 +3,7 @@ unit_id: 2026-06-16-mvp-survival-loop
 status: passed
 owner: executor
 updated_at: 2026-06-16T23:38:00
-source_commit: 2067839
+source_commit: 3cfc434
 depends_on: [2026-06-16-water-ocean-bootstrap]
 parallel_lock: Ocean.MVPSurvivalLoop
 ---

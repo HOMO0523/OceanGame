@@ -40,7 +40,7 @@
 - `Ocean Win64 Development -NoHotReload` built successfully after automation migration.
 - `OceanEditor Win64 Development -NoHotReload` built successfully after the save/close gate.
 - Python automation scripts compile with `python -m py_compile`.
-- `scripts/harness_state_validator.py --json` succeeds with two active production units.
+- `scripts/harness_state_validator.py --json` succeeds with three active production units.
 - `scripts/doc_sync_hook.py --phase manual --history` succeeds and writes a report under `Saved/HarnessReports`.
 - `scripts/create_water_ocean_map.py` executed through UnrealBridge after the editor was relaunched by the automation chain.
 - WaterOcean `[TDD]` probes passed: map created, save succeeded, map exists, one WaterBodyOcean, and one WaterZone.
