@@ -1,0 +1,75 @@
+---
+unit_id: 2026-06-17-paper2d-animation-set
+status: verified
+owner: asset-pipeline
+updated_at: 2026-06-17T02:16:00
+source_commit: 24a3c4f
+depends_on: [2026-06-16-mvp-survival-loop]
+parallel_lock: Ocean.Paper2DAnimationSet
+---
+
+# Paper2D / HD2D 角色动作集 — 验证结果
+
+## 文件验证
+
+| 动作 ID | Grid 尺寸 | 帧数 |
+|---|---:|---:|
+| `idle` | `712x888` | 16 |
+| `walk` | `1780x888` | 40 |
+| `swim` | `1424x888` | 32 |
+| `climb` | `1424x888` | 32 |
+| `jump` | `1424x888` | 32 |
+| `divesuit_dive` | `1424x888` | 32 |
+
+## 解释
+
+- 所有 grid 高度均为 `4 * 222 = 888`。
+- `idle` 宽度为 `4 * 178 = 712`。
+- `walk` 宽度为 `10 * 178 = 1780`。
+- 其余 8 帧动作宽度为 `8 * 178 = 1424`。
+
+## 视觉检查
+
+- `idle`、`walk`、`swim`、`climb`、`jump`、`divesuit_dive` 均可读。
+- `climb` 是占位过渡动作，后续 UE 里需要用交互点精修落点。
+- `divesuit_dive` 已使用潜水服外观，但正式美术可替换。
+
+## 8 帧合成检查
+
+| 产物 | 尺寸 | 帧数 | 结论 |
+|---|---:|---:|---|
+| `ocean_survivor_actions_5x4dir_8f_atlas_alpha_grid256x256.png` | `2048x5120` | 160 | 可作为合成检查稿；由五组动作后处理合成 |
+| `ocean_survivor_actions_5x4dir_8f_regenerated_alpha_grid256x256.png` | `2048x5120` | 160 | 不建议导入；`swim` 起始行混入站立背面 |
+| `ocean_survivor_actions_5x4dir_8f_regenerated_v2_alpha_grid256x256.png` | `2048x5120` | 160 | 不建议导入；仍有行序错位、部分动作贴边 |
+| `atlas_final_8x20\ocean_survivor_actions_5x4dir_8f_final_atlas_alpha_grid256x256.png` | `2048x5120` | 160 | 推荐导入候选；分动作生成后脚本合成 |
+
+## 单次大图重生边界
+
+- 单次生成 `8x20 = 160` 格时，模型会优先保证“看起来像 sprite sheet”，但无法稳定遵守每一行的动作语义。
+- 当前 v1/v2 都已保存，作为对比证据；正式 UE 导入应优先使用“分动作生成高分辨率 → 脚本合成一张总 atlas”的流程。
+- 如果必须追求同一张生图的统一画风，需要降低单张复杂度，例如一次只生成一个动作块 `8x4`，再合成为 `8x20`。
+
+## 最终合成稿验证
+
+| 项 | 结果 |
+|---|---|
+| 生产方式 | 每个动作单独 `8x4` 重生，再脚本合成 `8x20` |
+| 最终 atlas | `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_final_8x20\ocean_survivor_actions_5x4dir_8f_final_atlas_alpha_grid256x256.png` |
+| 单帧目录 | `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_final_8x20\frames_alpha_256x256` |
+| 审计预览 | `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_final_8x20\ocean_survivor_actions_5x4dir_8f_final_audit_preview.png` |
+| Manifest | `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_final_8x20\ocean_survivor_actions_5x4dir_8f_final_manifest.json` |
+| 帧数 | 160 |
+| 网格 | `8` 列 x `20` 行，单元 `256x256` |
+| 脚本审计问题数 | 0 |
+
+## 最终合成稿比例摘要
+
+| 动作 | 中位高度 | 平均高度 | 中位宽度 | 平均宽度 |
+|---|---:|---:|---:|---:|
+| `idle` | 224.5 | 226.25 | 81.5 | 80.97 |
+| `swim` | 146.0 | 148.44 | 182.0 | 184.84 |
+| `climb` | 155.5 | 166.22 | 114.0 | 124.22 |
+| `jump` | 189.0 | 194.16 | 94.0 | 102.53 |
+| `divesuit_dive` | 176.5 | 187.72 | 173.0 | 171.44 |
+
+说明：`swim`、`divesuit_dive` 是横向游泳姿势，不能用全身高度和站立动作直接比较；本轮用同一全局缩放系数和锚点对齐降低头部 / 身体比例跳变。
