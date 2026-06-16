@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "OceanPlayerController.h"
+#include "OceanPrototype/OceanBuildComponent.h"
 #include "OceanPrototype/OceanInputMath.h"
 #include "OceanPrototype/OceanInteractionComponent.h"
 #include "GameFramework/Pawn.h"
@@ -21,6 +22,7 @@ AOceanPlayerController::AOceanPlayerController()
 {
 	bIsTouch = false;
 	bMoveToMouseCursor = false;
+	bHasCachedDestination = false;
 
 	// create the path following comp
 	PathFollowingComponent = CreateDefaultSubobject<UPathFollowingComponent>(TEXT("Path Following Component"));
@@ -75,12 +77,12 @@ void AOceanPlayerController::SetupInputComponent()
 
 			if (ToggleBuildAction)
 			{
-				EnhancedInputComponent->BindAction(ToggleBuildAction, ETriggerEvent::Triggered, this, &AOceanPlayerController::OnToggleBuildTriggered);
+				EnhancedInputComponent->BindAction(ToggleBuildAction, ETriggerEvent::Started, this, &AOceanPlayerController::OnToggleBuildTriggered);
 			}
 
 			if (RotateBuildAction)
 			{
-				EnhancedInputComponent->BindAction(RotateBuildAction, ETriggerEvent::Triggered, this, &AOceanPlayerController::OnRotateBuildTriggered);
+				EnhancedInputComponent->BindAction(RotateBuildAction, ETriggerEvent::Started, this, &AOceanPlayerController::OnRotateBuildTriggered);
 			}
 		}
 		else
@@ -109,7 +111,20 @@ void AOceanPlayerController::OnSetDestinationTriggered()
 	FollowTime += GetWorld()->GetDeltaSeconds();
 	
 	// Update the move destination to wherever the cursor is pointing at
-	UpdateCachedDestination();
+	const bool bDidUpdateDestination = UpdateCachedDestination();
+
+	if (const UOceanBuildComponent* Build = GetControlledPawnBuildComponent())
+	{
+		if (Build->IsBuildModeActive())
+		{
+			return;
+		}
+	}
+
+	if (!bDidUpdateDestination)
+	{
+		return;
+	}
 	
 	// Move towards mouse pointer or touch
 	APawn* ControlledPawn = GetPawn();
@@ -125,9 +140,32 @@ void AOceanPlayerController::OnSetDestinationReleased()
 	// If it was a short press
 	if (FollowTime <= ShortPressThreshold)
 	{
-		// We move there and spawn some particles
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
+		if (UOceanBuildComponent* Build = GetControlledPawnBuildComponent())
+		{
+			if (Build->IsBuildModeActive())
+			{
+				FText Message;
+				if (bHasCachedDestination)
+				{
+					Build->TryPlaceSelectedModuleAtWorld(CachedDestination, Message);
+				}
+				else
+				{
+					Message = NSLOCTEXT("Ocean", "BuildNoValidPlacementCursor", "没有有效建造位置");
+				}
+
+				UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBuildResult: %s"), *Message.ToString());
+				FollowTime = 0.f;
+				return;
+			}
+		}
+
+		if (bHasCachedDestination)
+		{
+			// We move there and spawn some particles
+			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
+		}
 	}
 
 	FollowTime = 0.f;
@@ -195,13 +233,23 @@ void AOceanPlayerController::TryOceanInteract()
 
 void AOceanPlayerController::OnToggleBuildTriggered(const FInputActionValue& Value)
 {
+	if (UOceanBuildComponent* Build = GetControlledPawnBuildComponent())
+	{
+		Build->ToggleBuildMode();
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBuildToggleHandled: result=PASS"));
+	}
 }
 
 void AOceanPlayerController::OnRotateBuildTriggered(const FInputActionValue& Value)
 {
+	if (UOceanBuildComponent* Build = GetControlledPawnBuildComponent())
+	{
+		Build->RotatePreview();
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBuildRotateHandled: result=PASS"));
+	}
 }
 
-void AOceanPlayerController::UpdateCachedDestination()
+bool AOceanPlayerController::UpdateCachedDestination()
 {
 	// We look for the location in the world where the player has pressed the input
 	FHitResult Hit;
@@ -215,9 +263,19 @@ void AOceanPlayerController::UpdateCachedDestination()
 		bHitSuccessful = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
 	}
 
+	bHasCachedDestination = bHitSuccessful;
+
 	// If we hit a surface, cache the location
 	if (bHitSuccessful)
 	{
 		CachedDestination = Hit.Location;
 	}
+
+	return bHasCachedDestination;
+}
+
+UOceanBuildComponent* AOceanPlayerController::GetControlledPawnBuildComponent() const
+{
+	const APawn* ControlledPawn = GetPawn();
+	return ControlledPawn ? ControlledPawn->FindComponentByClass<UOceanBuildComponent>() : nullptr;
 }

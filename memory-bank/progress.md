@@ -66,29 +66,28 @@
 <!-- DOC_SYNC_HOOK:START -->
 ### Doc Sync Hook Snapshot
 
-- generated_at: 2026-06-16T18:51:34
+- generated_at: 2026-06-16T22:07:14
 - phase: `pre-commit`
-- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260616-185134-doc-sync.md`
+- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260616-220714-doc-sync.md`
 - active_units: `2026-06-16-automation-migration`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`
-- doc_targets: `AGENTS.md`, `CLAUDE.md`, `docs/design`, `docs/production`, `docs/superpowers/plans`, `memory-bank/`, `memory-bank/architecture.md`, `memory-bank/progress.md`
+- doc_targets: `memory-bank/architecture.md`, `memory-bank/progress.md`
 - validator: success=`True` errors=`0` warnings=`0`
 
 **Video flow status:**
-- 00 context and rules: touched
-- 01 production unit split: touched
+- 00 context and rules: covered
+- 01 production unit split: covered
 - 02 semantic freeze: covered
-- 03 infrastructure audit: touched
-- 04 implementation plan: touched
+- 03 infrastructure audit: covered
+- 04 implementation plan: covered
 - 05 test design: covered
 - 06 implementation log: touched
-- 07 verification and repair: touched
+- 07 verification and repair: covered
 - 08 review: covered
 - 09 memory and registry update: covered
 
 **Next documentation actions:**
 - Update `memory-bank/progress.md` with implementation/test status before handoff.
-- Check whether `memory-bank/tech-stack.md` needs tooling/dependency updates.
 - Check whether `memory-bank/architecture.md` needs subsystem/data-flow updates.
-- Confirm changed code belongs to exactly one active `parallel_lock`; multiple active locks require coordinator routing.
-- Production docs validate; keep `07-review.md` decision aligned with actual test evidence.
+- Tie code changes to an active `docs/production/*` unit or create one.
+- For UE C++ changes, confirm `[TDD]` logs were added before implementation and run the UE TDD pipeline.
 <!-- DOC_SYNC_HOOK:END -->

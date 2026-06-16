@@ -8,6 +8,7 @@
 #include "OceanPlayerController.generated.h"
 
 class UNiagaraSystem;
+class UOceanBuildComponent;
 class UInputMappingContext;
 class UInputAction;
 class UPathFollowingComponent;
@@ -68,6 +69,9 @@ protected:
 	/** Set to true if we're using touch input */
 	uint32 bIsTouch : 1;
 
+	/** True when CachedDestination was updated from a valid cursor/touch hit */
+	uint32 bHasCachedDestination : 1;
+
 	/** Saved location of the character movement destination */
 	FVector CachedDestination;
 
@@ -98,7 +102,8 @@ protected:
 	void OnRotateBuildTriggered(const FInputActionValue& Value);
 
 	/** Helper function to get the move destination */
-	void UpdateCachedDestination();
+	bool UpdateCachedDestination();
+	UOceanBuildComponent* GetControlledPawnBuildComponent() const;
 };
 
 
