@@ -77,25 +77,28 @@
 <!-- DOC_SYNC_HOOK:START -->
 ### Doc Sync Hook Snapshot
 
-- generated_at: 2026-06-17T00:04:06
+- generated_at: 2026-06-17T00:39:49
 - phase: `pre-commit`
-- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-000406-doc-sync.md`
+- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-003949-doc-sync.md`
 - active_units: `2026-06-16-automation-migration`, `2026-06-16-minimal-loop-workflow`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`
-- doc_targets: `docs/production`, `docs/superpowers/specs`
+- doc_targets: `docs/production`, `docs/superpowers/specs`, `memory-bank/architecture.md`, `memory-bank/progress.md`, `memory-bank/tech-stack.md`
 - validator: success=`True` errors=`0` warnings=`0`
 
 **Video flow status:**
 - 00 context and rules: touched
 - 01 production unit split: touched
-- 02 semantic freeze: covered
-- 03 infrastructure audit: covered
-- 04 implementation plan: covered
-- 05 test design: covered
-- 06 implementation log: covered
-- 07 verification and repair: covered
-- 08 review: covered
+- 02 semantic freeze: touched
+- 03 infrastructure audit: touched
+- 04 implementation plan: touched
+- 05 test design: touched
+- 06 implementation log: touched
+- 07 verification and repair: touched
+- 08 review: touched
 - 09 memory and registry update: covered
 
 **Next documentation actions:**
+- Update `memory-bank/progress.md` with implementation/test status before handoff.
+- Check whether `memory-bank/architecture.md` needs subsystem/data-flow updates.
+- Confirm changed code belongs to exactly one active `parallel_lock`; multiple active locks require coordinator routing.
 - Production docs validate; keep `07-review.md` decision aligned with actual test evidence.
 <!-- DOC_SYNC_HOOK:END -->

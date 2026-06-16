@@ -24,6 +24,13 @@
 
 `UnrealBridge` declares editor plugin dependencies on `PythonScriptPlugin`, `GameplayAbilities`, `EnhancedInput`, `PoseSearch`, `Chooser`, and `StructUtils`. UE 5.7 warns that `StructUtils` is deprecated, but the copied bridge source currently links its module.
 
+## Planned Presentation Stack
+
+| Technology | Purpose | Boundary |
+|---|---|---|
+| Paper2D | Planned player-character visual layer for the HD2D look. | Not yet enabled as a verified project plugin in this docs step; when implemented, it should attach Sprite/Flipbook visuals to `BP_OceanSurvivorCharacter` without replacing the Ocean gameplay Pawn. |
+| HD2D styling | 2D character over 3D water/platform scenes with high saturation, lighting/post-process, and fixed 45-60 degree top-down camera. | Visual style only; collision, survival, interaction, inventory, and build systems stay in existing Ocean gameplay components. |
+
 ## Project Scripts
 
 | Script | Purpose |

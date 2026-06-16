@@ -66,6 +66,25 @@
 不使用 `BP_TopDownCharacter` 不代表删除 TopDown 玩法。  
 正确目标是：保留模板点地移动语义，但把可玩 Pawn 收敛到 Ocean 专用角色。这样左键移动、WASD 微操、`F` 交互、状态/背包/建造可以在同一个角色上稳定叠加。
 
+### 3.5 Paper2D / HD2D 角色不会改变 Pawn 结论
+
+现在补充一个视觉方向：玩家角色后续需要走 Paper2D / HD2D 表现。这个决定不应该把 Pawn 改回 `BP_TopDownCharacter`，也不应该重新写一个完全脱离 Ocean 组件的新 Pawn。
+推荐做法是保留 `BP_OceanSurvivorCharacter` 作为 Gameplay Pawn，只把它的可视层替换为 Paper2D Sprite / Flipbook 组件：
+
+- 胶囊体、移动、交互、背包、生存、建造仍由 `AOceanCharacter` / `BP_OceanSurvivorCharacter` 承担。
+- Paper2D 只负责角色外观、朝向、待机/移动/交互动画。
+- Skeletal Mesh 可隐藏或移除可见性，但不能移除 Ocean 组件。
+- 角色碰撞仍以 Capsule 为准，Sprite 不参与主碰撞，避免 2D 贴片和建造/拾取碰撞互相干扰。
+- HD2D 的核心是“2D 角色 + 3D 水面/平台/灯光/后期”的表现组合，不是把整个项目改成横版 2D。
+
+备选方案对比：
+
+| 方案 | 优点 | 风险 | 结论 |
+|---|---|---|---|
+| `BP_OceanSurvivorCharacter` + PaperFlipbook 视觉组件 | 保留现有生存/建造/交互链路；改动最小。 | 需要处理 Sprite 朝向和相机 billboarding。 | 推荐。 |
+| 新建 Paper2D 专用 Pawn | 表现层干净。 | 要重接输入、交互、背包、建造和 HUD，容易回归。 | 暂不推荐。 |
+| 只用材质平面/贴图 Billboard，不启用 Paper2D | 技术最轻。 | 不满足“用 Paper2D 做 HD2D 角色”的目标，动画资产管理弱。 | 只可作临时占位。 |
+
 ## 4. 最小循环系统清单
 
 ### 4.1 生存数值
@@ -170,6 +189,18 @@
 - 远船事件 + 信号物 -> 假结局救援。
 - 空岛/钩锁 -> 先不做，只保留 DOCX 后续项。
 
+### 4.10 Paper2D / HD2D 角色表现
+
+最小循环的角色表现目标：
+
+| 维度 | MVP 做法 | 边界 |
+|---|---|---|
+| 插件 | 代码阶段启用 Paper2D。 | 只启用需要的角色表现插件，不引入完整外部动画框架。 |
+| 组件 | 在 Ocean 玩家 Pawn 上挂 `PaperFlipbook` 或 `PaperSprite` 视觉组件。 | 不新建绕开 Ocean 组件的 Pawn。 |
+| 朝向 | 先做 4 方向或 8 方向 Flipbook；没有素材时用彩色占位帧。 | 不要求第一版完成全套美术。 |
+| HD2D 风格 | 2D 角色站在 3D 水面/平台上，配合高饱和材质、轻描边、后期和固定俯视相机。 | 不把水体、建造模块、PCG 资源全部改成 2D。 |
+| 碰撞 | Capsule 负责 Gameplay，Sprite 只负责视觉。 | Sprite 不作为拾取/建造/移动碰撞源。 |
+
 ## 5. 当前项目不足
 
 | 方向 | 当前状态 | 不足 |
@@ -182,6 +213,8 @@
 | 放置 | 已有建造网格、Deck 1x1。 | 缺可视化预览、可放置区域提示、更多模块类型。 |
 | 船体 | 有浮动平台和逻辑网格。 | 缺“漂流进度/方向选择”；真实开船暂不建议。 |
 | 终点 | 暂无可通关终点。 | 需要结算状态和最小海岸/字幕占位。 |
+| WASD 输入 | C++ 输入数学能区分 `FVector2D(X,Y)`，控制器从 `InputActionValue` 读取 Axis2D。 | 当前用户实测“按 WASD 都朝右走”，高度指向 `IMC_OceanMVP` 资产只映射 Key、没有给 W/A/S/D 配 Axis2D 方向修饰器。 |
+| Paper2D/HD2D | 现有 Pawn 仍是 3D TopDown 模板表现。 | 需要启用 Paper2D 并把角色视觉改成 Sprite/Flipbook，但不能拆掉 Ocean gameplay 组件。 |
 | 自动化 | 已迁移 UE TDD、Bridge、doc sync。 | 缺针对合成/事件/拖拽/结局的新测试计划和执行文档。 |
 
 ## 6. 边界问题清单
@@ -200,6 +233,8 @@
 - UI 拖拽不要只靠手测：数据规则用 C++ 测，Widget 只做有限冒烟。
 - 随机事件必须有 Seed，测试里固定 Seed。
 - 资源散播优先 PCG；PCG 资产没完成时允许 deterministic fallback。
+- WASD 修复必须先证明 `IA_OceanMove` 的每个按键输出向量：`W=(0,+1)`、`S=(0,-1)`、`A=(-1,0)`、`D=(+1,0)`。只验证“有 W/A/S/D 映射”不够。
+- Paper2D 角色表现不能成为逃避输入 bug 的方式；先定位 Axis2D 输入，再接 HD2D 视觉。
 
 ### 6.3 资产边界
 
@@ -207,6 +242,7 @@
 - 漂浮模块、漂浮资源、水上道具 Actor 必须保留浮力组件或继承浮力路径。
 - 视觉 bob 不能改变建造格逻辑坐标。
 - 可替换 Actor 资产时不改 Gameplay API，只替换 Mesh/材质/动画。
+- 缺角色美术时，Paper2D 可先用占位 Sprite/Flipbook；但占位也要走正式组件路径，避免后面替换资产时重做蓝图结构。
 
 ### 6.4 UX 边界
 
@@ -287,15 +323,21 @@ git push origin HEAD
 | 事件推进 | `Ocean.MVP.Events.AdvanceTime` | 事件点、天数、状态消耗、随机 Seed 可复现。 |
 | 船体漂流 | `Ocean.MVP.Boat.DriftProgress` | 选择/自动漂流能推进终点进度。 |
 | 通关 | `Ocean.MVP.Ending.SurviveSevenDays` | 21 事件后存活触发结算。 |
+| WASD 输入资产 | `BridgeVerifyOceanMoveAxis2D` | 读取 `IMC_OceanMVP`，证明 W/S/A/D 的 Axis2D 输出方向不是同一个右向量。 |
+| WASD 运行日志 | `[TDD] OceanMoveInputVector` | PIE 中按键时输出 `InputVector` 与 `WorldDirection`，定位输入资产、控制器或相机层。 |
+| Paper2D 角色 | `BridgeVerifyOceanPaper2DCharacter` | 证明 `BP_OceanSurvivorCharacter` 保留 Ocean 组件，并新增 Paper2D 视觉组件。 |
+| Flipbook 朝向 | `Ocean.MVP.Visual.FlipbookDirectionModel` | 给定移动向量选择正确 4/8 方向动画，不影响 Gameplay 移动。 |
 | UI 冒烟 | `BridgeVerifyMinimalLoopUI` | HUD/背包/合成/事件入口在 PIE 可见。 |
 
 ## 9. 推荐实现顺序
 
-1. 先补“状态回复 + 使用物品”，让饥饿/脱水有闭环。
-2. 再补“背包 UI + 拖拽模型”，让玩家能操作资源。
-3. 再补“合成配方 + 可放置模块入口”，把资源变成建造目标。
-4. 再补“事件系统 + 7 天推进”，把生存压力和通关条件接起来。
-5. 最后补“终点结算 + 答辩演示脚本”，形成可讲述闭环。
+0. 先修正 WASD Axis2D 输入资产，保证基础移动方向可信。
+1. 接入 Paper2D/HD2D 角色表现，但保持 `BP_OceanSurvivorCharacter` 作为 Gameplay Pawn。
+2. 补“状态回复 + 使用物品”，让饥饿/脱水有闭环。
+3. 补“背包 UI + 拖拽模型”，让玩家能操作资源。
+4. 补“合成配方 + 可放置模块入口”，把资源变成建造目标。
+5. 补“事件系统 + 7 天推进”，把生存压力和通关条件接起来。
+6. 最后补“终点结算 + 答辩演示脚本”，形成可讲述闭环。
 
 ## 10. 待用户确认
 
@@ -304,5 +346,7 @@ git push origin HEAD
 3. 背包 UI 是否先做键鼠拖拽，不要求手柄等价路径？
 4. 回复物品第一版是否只做食物、淡水、休息、雨水收集器？
 5. `BP_OceanSurvivorCharacter` 是否正式作为 MVP 玩家 Pawn，`BP_TopDownCharacter` 只保留为模板参考？
+6. Paper2D 角色是否按推荐方案接在 `BP_OceanSurvivorCharacter` 的视觉层，而不是新建独立 Pawn？
+7. HD2D 第一版是否接受“占位 Sprite/Flipbook + 后期/高饱和材质”的工程占位，后续再替换正式角色素材？
 
 只要以上确认，下一步才进入 DS 代码阶段；在此之前保持 docs/spec/TDD 策略阶段。

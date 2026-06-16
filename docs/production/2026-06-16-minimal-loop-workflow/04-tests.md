@@ -2,8 +2,8 @@
 unit_id: 2026-06-16-minimal-loop-workflow
 status: designed
 owner: gpt
-updated_at: 2026-06-16T23:58:00+08:00
-source_commit: 5af8141
+updated_at: 2026-06-17T00:30:00+08:00
+source_commit: 0964ce7
 depends_on: [2026-06-16-mvp-survival-loop]
 parallel_lock: Ocean.MinimalLoopWorkflow
 ---
@@ -12,6 +12,10 @@ parallel_lock: Ocean.MinimalLoopWorkflow
 
 ## Planned Code-Stage Tests
 
+- `BridgeVerifyOceanMoveAxis2D`: W/S/A/D mappings produce four intended Axis2D values, not the same right vector.
+- `[TDD] OceanMoveInputVector`: PIE logs input vector and world direction for movement actions.
+- `BridgeVerifyOceanPaper2DCharacter`: `BP_OceanSurvivorCharacter` keeps Ocean components and owns a Paper2D visual component.
+- `Ocean.MVP.Visual.FlipbookDirectionModel`: movement direction selects the expected 4/8-direction Paper2D animation key.
 - `Ocean.MVP.Survival.RecoveryItems`: food and water recover stats, clamp at max, and fail cleanly when absent.
 - `Ocean.MVP.Survival.DeathThreshold`: zero hydration/satiety progresses toward failure deterministically.
 - `Ocean.MVP.Inventory.UseItem`: item use consumes inventory and applies gameplay effect atomically.

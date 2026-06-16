@@ -111,3 +111,9 @@
 - 做了什么：阅读《洋流》DOCX 与当前 Ocean MVP，整理 `BP_OceanSurvivorCharacter` / `BP_TopDownCharacter` 的 Pawn 边界风险，并冻结下一步最小循环文档。
 - 证明了什么：项目进入代码前先明确饥饿/脱水回复、背包、合成、拖拽、事件、放置区域、船体漂流和终点通关的边界。
 - 答辩价值：可展示“GPT 负责 Spec/TDD 策略，用户确认后 DS 编码”的自动化协作流程。
+
+### `docs: add WASD and Paper2D gates` — 本次补充规划提交
+
+- 做了什么：补充用户实测的 WASD 全部朝右问题，定位为优先调查 `IMC_OceanMVP` Axis2D 映射；同时明确角色后续用 Paper2D / HD2D 表现。
+- 证明了什么：输入 bug 不靠猜测修，先验证 W/S/A/D 的实际向量；Paper2D 只替换表现层，不替换 `BP_OceanSurvivorCharacter` 的玩法职责。
+- 答辩价值：可展示美术风格方向与工程边界分离，且保留测试先行的调试流程。

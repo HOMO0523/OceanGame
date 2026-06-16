@@ -435,6 +435,16 @@
           <h3>GPT 先冻结，DS 再编码</h3>
           <p>GPT 负责读需求、确认边界、写 Spec 和 TDD 策略；用户确认后再由 DS 进入测试先行编码，继续走保存、关闭编辑器、冷编译、重开项目的自动化链路。</p>
         </div>
+        <div class="mini">
+          <span class="tag orange">Input Fix</span>
+          <h3>先修 WASD 向量</h3>
+          <p>当前实测 WASD 都朝右走，优先定位 <code>IMC_OceanMVP</code> 的 Axis2D 映射；下一步验证 W/S/A/D 输出不同向量，而不是只检查按键存在。</p>
+        </div>
+        <div class="mini">
+          <span class="tag yellow">HD2D</span>
+          <h3>Paper2D 只换表现层</h3>
+          <p>角色后续走 Paper2D / HD2D，但仍以 <code>BP_OceanSurvivorCharacter</code> 作为 Gameplay Pawn；Sprite/Flipbook 负责外观，Capsule 和 Ocean 组件负责玩法。</p>
+        </div>
       </div>
     </section>
 
@@ -519,6 +529,7 @@
         <div class="timeline-item"><strong>content: set up MVP map assets</strong><p>生成 WaterOcean 地图内的 starter 平台、资源场、输入资产、蓝图和 Deck 数据资产。</p></div>
         <div class="timeline-item"><strong>fix: auto bind build target</strong><p>通过红绿测试修复建造入口：自动解析平台并默认选中 1x1 Deck。</p></div>
         <div class="timeline-item"><strong>docs: define Ocean minimal loop workflow</strong><p>根据《洋流》策划文档整理 Pawn 风险、饥饿/脱水回复、背包、合成、拖拽、事件、放置区域、漂流终点和 GPT/DS 自动化分工。</p></div>
+        <div class="timeline-item"><strong>docs: add WASD and Paper2D gates</strong><p>补充 WASD Axis2D 根因调查、Paper2D/HD2D 角色表现边界和后续测试门。</p></div>
       </div>
     </section>
 
