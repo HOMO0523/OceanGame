@@ -34,6 +34,9 @@ struct FOceanItemUseEffect
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ocean|Items")
 	float SatietyDelta = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ocean|Items")
+	float HealthDelta = 0.0f;
 };
 
 USTRUCT(BlueprintType)

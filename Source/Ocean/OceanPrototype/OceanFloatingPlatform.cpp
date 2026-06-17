@@ -1,4 +1,4 @@
-#include "OceanPrototype/OceanFloatingPlatform.h"
+﻿#include "OceanPrototype/OceanFloatingPlatform.h"
 #include "OceanPrototype/OceanBuildGridComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/World.h"
@@ -32,6 +32,14 @@ void AOceanFloatingPlatform::Tick(float DeltaSeconds)
 	{
 		const float BobOffset = FMath::Sin(GetWorld()->GetTimeSeconds() * 2.0f * UE_PI * BobbingFrequency) * BobbingAmplitude;
 		VisualRoot->SetRelativeLocation(VisualRootInitialLocation + FVector(0.0f, 0.0f, BobOffset));
+	}
+
+	// Continuous north drift (Y+ in UE world space)
+	if (bEnableNorthDrift)
+	{
+		FVector CurrentLocation = GetActorLocation();
+		CurrentLocation.Y += DriftSpeed * DeltaSeconds;
+		SetActorLocation(CurrentLocation);
 	}
 }
 

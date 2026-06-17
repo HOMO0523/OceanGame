@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -51,6 +51,18 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ocean|Platform", meta = (EditCondition = "bEnableVisualBobbing"))
 	float BobbingFrequency = 0.35f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ocean|Platform|Drift")
+	bool bEnableNorthDrift = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ocean|Platform|Drift", meta = (EditCondition = "bEnableNorthDrift"))
+	float DriftSpeed = 50.0f;
+
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Platform")
+	void SetDriftEnabled(bool bEnabled) { bEnableNorthDrift = bEnabled; }
+
+	UFUNCTION(BlueprintPure, Category = "Ocean|Platform")
+	bool IsDrifting() const { return bEnableNorthDrift; }
 
 private:
 	FVector VisualRootInitialLocation = FVector::ZeroVector;

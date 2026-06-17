@@ -4,6 +4,9 @@
 #include "Components/ActorComponent.h"
 #include "OceanSurvivalComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangedSignature, float, NewHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeathSignature);
+
 UCLASS(ClassGroup = (Ocean), meta = (BlueprintSpawnableComponent))
 class OCEAN_API UOceanSurvivalComponent : public UActorComponent
 {
@@ -21,7 +24,7 @@ public:
 	void SetStats(float NewStamina, float NewHydration, float NewSatiety);
 
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Survival")
-	void ApplyRecovery(float StaminaDelta, float HydrationDelta, float SatietyDelta);
+	void ApplyRecovery(float StaminaDelta, float HydrationDelta, float SatietyDelta, float HealthDelta = 0.0f);
 
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Survival")
 	void SetHydrationDrainPerSecond(float NewHydrationDrainPerSecond);
@@ -32,6 +35,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Survival")
 	void SetStaminaRecoverPerSecond(float NewStaminaRecoverPerSecond);
 
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Survival|Health")
+	void ApplyDamage(float Amount);
+
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Survival|Health")
+	void ApplyHeal(float Amount);
+
 	UFUNCTION(BlueprintPure, Category = "Ocean|Survival")
 	float GetStamina() const { return Stamina; }
 
@@ -40,6 +49,21 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Ocean|Survival")
 	float GetSatiety() const { return Satiety; }
+
+	UFUNCTION(BlueprintPure, Category = "Ocean|Survival|Health")
+	float GetHealth() const { return Health; }
+
+	UFUNCTION(BlueprintPure, Category = "Ocean|Survival|Health")
+	float GetMaxHealth() const { return MaxHealth; }
+
+	UFUNCTION(BlueprintPure, Category = "Ocean|Survival|Health")
+	bool IsDead() const { return bHasDied || Health <= 0.0f; }
+
+	UPROPERTY(BlueprintAssignable, Category = "Ocean|Survival|Health")
+	FOnHealthChangedSignature OnHealthChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Ocean|Survival|Health")
+	FOnDeathSignature OnDeath;
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Ocean|Survival", meta = (ClampMin = "0.0", ClampMax = "100.0"))
@@ -59,4 +83,19 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Ocean|Survival", meta = (ClampMin = "0.0"))
 	float StaminaRecoverPerSecond = 2.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Ocean|Survival|Health", meta = (ClampMin = "0.0", ClampMax = "100.0"))
+	float Health = 100.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Ocean|Survival|Health", meta = (ClampMin = "0.0"))
+	float MaxHealth = 100.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Ocean|Survival|Health", meta = (ClampMin = "0.0"))
+	float HealthDrainPerSecondWhenStarved = 30.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Ocean|Survival|Health", meta = (ClampMin = "0.0"))
+	float HealthRecoveryPerSecondWhenFull = 20.0f;
+
+	UPROPERTY(VisibleAnywhere, Category = "Ocean|Survival|Health")
+	bool bHasDied = false;
 };

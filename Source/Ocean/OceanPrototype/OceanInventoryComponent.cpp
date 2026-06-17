@@ -103,7 +103,8 @@ bool UOceanInventoryComponent::TryUseItemAtSlot(int32 SlotIndex, UOceanSurvivalC
 	Survival->ApplyRecovery(
 		Slot.Stack.UseEffect.StaminaDelta,
 		Slot.Stack.UseEffect.HydrationDelta,
-		Slot.Stack.UseEffect.SatietyDelta);
+		Slot.Stack.UseEffect.SatietyDelta,
+		Slot.Stack.UseEffect.HealthDelta);
 
 	Slot.Stack.Quantity -= 1;
 	if (Slot.Stack.Quantity <= 0)
