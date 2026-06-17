@@ -35,6 +35,29 @@ bool UOceanInventoryComponent::AddItem(const FOceanItemStack& Stack)
 	}
 
 	int32 Remaining = Stack.Quantity;
+	for (const FOceanInventorySlot& Slot : Slots)
+	{
+		if (Slot.Stack.ItemId == Stack.ItemId && Slot.Stack.Quantity < Slot.Stack.MaxStack)
+		{
+			const int32 Capacity = Slot.Stack.MaxStack - Slot.Stack.Quantity;
+			Remaining -= FMath::Min(Capacity, Remaining);
+			if (Remaining <= 0)
+			{
+				break;
+			}
+		}
+	}
+
+	if (Remaining > 0)
+	{
+		const int32 RequiredNewSlots = FMath::DivideAndRoundUp(Remaining, Stack.MaxStack);
+		if (Slots.Num() + RequiredNewSlots > MaxItemSlots)
+		{
+			return false;
+		}
+	}
+
+	Remaining = Stack.Quantity;
 	for (FOceanInventorySlot& Slot : Slots)
 	{
 		if (Slot.Stack.ItemId == Stack.ItemId && Slot.Stack.Quantity < Slot.Stack.MaxStack)
@@ -52,11 +75,6 @@ bool UOceanInventoryComponent::AddItem(const FOceanItemStack& Stack)
 
 	while (Remaining > 0)
 	{
-		if (Slots.Num() >= MaxItemSlots)
-		{
-			return false;
-		}
-
 		FOceanInventorySlot NewSlot;
 		NewSlot.SlotIndex = Slots.Num();
 		NewSlot.Stack = Stack;
