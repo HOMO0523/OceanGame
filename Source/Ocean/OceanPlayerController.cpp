@@ -73,8 +73,8 @@ void AOceanPlayerController::BeginPlay()
 				}
 			}
 
-			// 初始化欢迎提示
-			HUDRootWidget->ShowToast(FText::FromString(TEXT("漂流第 1 天开始")), 3.0f);
+			// Initialize welcome toast
+			HUDRootWidget->ShowToast(FText::FromString(TEXT("Day 1 - Adrift at Sea")), 3.0f);
 		}
 	}
 }

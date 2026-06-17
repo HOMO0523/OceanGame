@@ -25,12 +25,12 @@ protected:
 private:
 	int32 Day = 1;
 	EOceanTimeOfDay TimeOfDay = EOceanTimeOfDay::Morning;
-	UPROPERTY()
-	TObjectPtr<UTextBlock> TimeText;
+	bool bIsInitialized = false;
+	UPROPERTY() TObjectPtr<UTextBlock> TimeText;
 	void RefreshText();
 
 	static const TCHAR* ToDisplayName(EOceanTimeOfDay T)
 	{
-		switch (T) { case EOceanTimeOfDay::Morning: return TEXT("上午"); case EOceanTimeOfDay::Afternoon: return TEXT("下午"); default: return TEXT("夜晚"); }
+		switch (T) { case EOceanTimeOfDay::Morning: return TEXT("Morning"); case EOceanTimeOfDay::Afternoon: return TEXT("Afternoon"); default: return TEXT("Night"); }
 	}
 };

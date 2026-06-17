@@ -21,6 +21,7 @@ protected:
 private:
 	FTimerHandle AutoDismissTimer;
 	void OnAutoDismiss();
+	bool bIsInitialized = false;
 	UPROPERTY() TObjectPtr<UBorder> ToastBorder;
 	UPROPERTY() TObjectPtr<UTextBlock> ToastText;
 };

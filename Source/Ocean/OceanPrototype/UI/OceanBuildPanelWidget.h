@@ -8,6 +8,7 @@ class UOceanBuildComponent;
 class UOceanBuildModuleDefinition;
 class UTextBlock;
 class UVerticalBox;
+class UBorder;
 
 UCLASS()
 class OCEAN_API UOceanBuildPanelWidget : public UUserWidget
@@ -25,14 +26,17 @@ protected:
 
 private:
 	TWeakObjectPtr<UOceanBuildComponent> BuildComponent;
-	virtual void NativeTick(const FGeometry& MyGeometry, float DeltaTime) override;
+	bool bIsInitialized = false;
 	bool LastBuildModeActive = false;
 	int32 LastRotationQuarterTurns = -1;
 	TObjectPtr<UOceanBuildModuleDefinition> LastSelectedModule;
 
+	UPROPERTY() TObjectPtr<UBorder> BgBorder;
 	UPROPERTY() TObjectPtr<UVerticalBox> RootBox;
 	UPROPERTY() TObjectPtr<UTextBlock> ModeText;
 	UPROPERTY() TObjectPtr<UTextBlock> ModuleText;
 	UPROPERTY() TObjectPtr<UTextBlock> RotationText;
+
+	virtual void NativeTick(const FGeometry& MyGeometry, float DeltaTime) override;
 	void UpdateVisuals();
 };

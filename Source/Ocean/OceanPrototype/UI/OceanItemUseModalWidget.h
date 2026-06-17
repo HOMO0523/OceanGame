@@ -6,6 +6,7 @@
 
 class UTextBlock;
 class UBorder;
+class UVerticalBox;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemUseConfirmedSignature, int32, SlotIndex);
 
@@ -27,6 +28,7 @@ protected:
 private:
 	int32 PendingSlotIndex = INDEX_NONE;
 	FOceanItemStack PendingItem;
+	bool bIsInitialized = false;
 	UPROPERTY() TObjectPtr<UBorder> ModalBorder;
 	UPROPERTY() TObjectPtr<UTextBlock> ItemNameText;
 	UPROPERTY() TObjectPtr<UTextBlock> HintText;

@@ -1,11 +1,14 @@
 ﻿#pragma once
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Components/TextBlock.h"
 #include "OceanStatusPanelWidget.generated.h"
 
 class UOceanSurvivalComponent;
 class UVerticalBox;
+class UHorizontalBox;
+class UProgressBar;
+class UBorder;
+class UTextBlock;
 
 UCLASS()
 class OCEAN_API UOceanStatusPanelWidget : public UUserWidget
@@ -34,19 +37,27 @@ private:
 	TWeakObjectPtr<UOceanSurvivalComponent> SurvivalComponent;
 	static constexpr float StaminaPerCell = 33.3333f;
 	static constexpr int32 MaxStaminaCells = 3;
-	float LastStaminaPercent = -1.0f, LastHydrationPercent = -1.0f, LastSatietyPercent = -1.0f;
-	int32 LastStaminaCells = -1;
 
-	UPROPERTY()
-	TObjectPtr<UVerticalBox> RootBox;
-	UPROPERTY()
-	TObjectPtr<UTextBlock> StaminaText;
-	UPROPERTY()
-	TObjectPtr<UTextBlock> HydrationText;
-	UPROPERTY()
-	TObjectPtr<UTextBlock> SatietyText;
+	bool bIsInitialized = false;
+
+	// Last logged values (integer percent for log throttling)
+	int32 LastLoggedStaminaPct = -1;
+	int32 LastLoggedHydrationPct = -1;
+	int32 LastLoggedSatietyPct = -1;
+
+	// Visual elements
+	UPROPERTY() TObjectPtr<UVerticalBox> RootBox;
+	UPROPERTY() TObjectPtr<UHorizontalBox> StaminaCellRow;
+	UPROPERTY() TArray<TObjectPtr<UBorder>> StaminaCells;
+	UPROPERTY() TObjectPtr<UProgressBar> HydrationBar;
+	UPROPERTY() TObjectPtr<UProgressBar> SatietyBar;
+	UPROPERTY() TObjectPtr<UProgressBar> HealthBar;
+	UPROPERTY() TObjectPtr<UTextBlock> StaminaLabel;
+	UPROPERTY() TObjectPtr<UTextBlock> HydrationLabel;
+	UPROPERTY() TObjectPtr<UTextBlock> SatietyLabel;
+	UPROPERTY() TObjectPtr<UTextBlock> HealthLabel;
 
 	virtual void NativeTick(const FGeometry& MyGeometry, float DeltaTime) override;
-	void BroadcastIfChanged();
+	void CheckForChanges();
 	void UpdateVisuals();
 };

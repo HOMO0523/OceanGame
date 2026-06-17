@@ -8,13 +8,17 @@
 
 TSharedRef<SWidget> UOceanToastWidget::RebuildWidget()
 {
+	if (bIsInitialized) return Super::RebuildWidget();
+	bIsInitialized = true;
+
 	ToastBorder = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("ToastBorder"));
 	ToastBorder->SetBrushColor(FLinearColor(0.02f, 0.08f, 0.02f, 0.9f));
+	ToastBorder->SetPadding(FMargin(12, 6));
 	WidgetTree->RootWidget = ToastBorder;
 
 	ToastText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("ToastText"));
 	ToastText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
-	ToastText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 14));
+	ToastText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 14));
 	ToastText->SetJustification(ETextJustify::Center);
 	ToastBorder->AddChild(ToastText);
 

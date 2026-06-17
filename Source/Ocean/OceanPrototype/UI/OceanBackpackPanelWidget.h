@@ -8,6 +8,7 @@ class UOceanInventoryComponent;
 class UOceanSurvivalComponent;
 class UTextBlock;
 class UVerticalBox;
+class UBorder;
 
 UCLASS()
 class OCEAN_API UOceanBackpackPanelWidget : public UUserWidget
@@ -28,7 +29,9 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UOceanInventoryComponent> InventoryComponent;
 	UPROPERTY(Transient) TObjectPtr<UOceanSurvivalComponent> SurvivalComponent;
 	int32 LastCachedSlotCount = -1;
+	bool bIsInitialized = false;
 
+	UPROPERTY() TObjectPtr<UBorder> BgBorder;
 	UPROPERTY() TObjectPtr<UVerticalBox> SlotContainer;
 	UPROPERTY() TObjectPtr<UTextBlock> HeaderText;
 	UPROPERTY() TObjectPtr<UTextBlock> SlotCountText;

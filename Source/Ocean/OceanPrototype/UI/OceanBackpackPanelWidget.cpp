@@ -10,23 +10,27 @@
 
 TSharedRef<SWidget> UOceanBackpackPanelWidget::RebuildWidget()
 {
-	UBorder* Border = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("Border"));
-	Border->SetBrushColor(FLinearColor(0.02f, 0.06f, 0.12f, 0.85f));
-	WidgetTree->RootWidget = Border;
+	if (bIsInitialized) return Super::RebuildWidget();
+	bIsInitialized = true;
+
+	BgBorder = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("BgBorder"));
+	BgBorder->SetBrushColor(FLinearColor(0.02f, 0.06f, 0.12f, 0.88f));
+	BgBorder->SetPadding(FMargin(8, 6));
+	WidgetTree->RootWidget = BgBorder;
 
 	SlotContainer = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("SlotContainer"));
-	Border->AddChild(SlotContainer);
+	BgBorder->AddChild(SlotContainer);
 
 	HeaderText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("HeaderText"));
-	HeaderText->SetText(FText::FromString(TEXT("背包 (Tab/I)")));
+	HeaderText->SetText(FText::FromString(TEXT("BACKPACK [Tab/I]")));
 	HeaderText->SetColorAndOpacity(FSlateColor(FLinearColor(0.3f, 1.0f, 0.5f)));
-	HeaderText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 20));
-	SlotContainer->AddChildToVerticalBox(Cast<UWidget>(HeaderText))->SetPadding(FMargin(10, 5));
+	HeaderText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 18));
+	SlotContainer->AddChildToVerticalBox(HeaderText)->SetPadding(FMargin(4, 2, 4, 4));
 
 	SlotCountText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("SlotCountText"));
-	SlotCountText->SetColorAndOpacity(FSlateColor(FLinearColor(0.7f, 0.7f, 0.7f)));
+	SlotCountText->SetColorAndOpacity(FSlateColor(FLinearColor(0.6f, 0.6f, 0.6f)));
 	SlotCountText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 12));
-	SlotContainer->AddChildToVerticalBox(Cast<UWidget>(SlotCountText))->SetPadding(FMargin(10, 2));
+	SlotContainer->AddChildToVerticalBox(SlotCountText)->SetPadding(FMargin(4, 0));
 
 	return Super::RebuildWidget();
 }
@@ -35,8 +39,7 @@ void UOceanBackpackPanelWidget::BindInventory(UOceanInventoryComponent* InInvent
 {
 	InventoryComponent = InInventory;
 	SurvivalComponent = InSurvival;
-	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBackpackPanel: bound=1 slot_count=%d max_slots=%d"),
-		InInventory ? InInventory->GetSlots().Num() : 0, GetMaxSlots());
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBackpackPanel: bound=1 slots=%d"), InInventory ? InInventory->GetSlots().Num() : 0);
 	RefreshSlots();
 }
 
@@ -45,8 +48,7 @@ void UOceanBackpackPanelWidget::RefreshSlots()
 	if (SlotCountText && InventoryComponent)
 	{
 		int32 Count = InventoryComponent->GetSlots().Num();
-		SlotCountText->SetText(FText::FromString(FString::Printf(TEXT("物品: %d/%d 槽"), Count, 12)));
-		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBackpackPanel: refresh slots=%d"), Count);
+		SlotCountText->SetText(FText::FromString(FString::Printf(TEXT("Items: %d/%d slots"), Count, 12)));
 	}
 }
 
@@ -56,7 +58,7 @@ const TArray<FOceanInventorySlot>& UOceanBackpackPanelWidget::GetSlots() const
 	return InventoryComponent ? InventoryComponent->GetSlots() : Empty;
 }
 
-int32 UOceanBackpackPanelWidget::GetMaxSlots() const { return InventoryComponent ? InventoryComponent->GetSlots().Num() : 12; }
+int32 UOceanBackpackPanelWidget::GetMaxSlots() const { return 12; }
 
 bool UOceanBackpackPanelWidget::TryUseItemAtSlot(int32 SlotIndex)
 {
@@ -71,7 +73,6 @@ EOceanInventoryDragDropResult UOceanBackpackPanelWidget::HandleSlotDrop(int32 Fr
 {
 	if (!InventoryComponent) return EOceanInventoryDragDropResult::Rejected;
 	auto R = InventoryComponent->MoveOrMergeSlot(FromSlotIndex, ToSlotIndex);
-	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBackpackPanel: drop from=%d to=%d result=%d"), FromSlotIndex, ToSlotIndex, static_cast<int32>(R));
 	if (R != EOceanInventoryDragDropResult::Rejected) RefreshSlots();
 	return R;
 }
