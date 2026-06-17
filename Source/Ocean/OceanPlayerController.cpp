@@ -283,13 +283,21 @@ void AOceanPlayerController::OnToggleBackpackTriggered(const FInputActionValue& 
 	HUDRootWidget->ToggleBackpack();
 
 	const bool bBackpackOpen = HUDRootWidget->IsBackpackOpen();
-	bShowMouseCursor = bBackpackOpen;
+	bShowMouseCursor = true;
 
-	FInputModeGameAndUI InputMode;
-	InputMode.SetWidgetToFocus(HUDRootWidget->TakeWidget());
-	InputMode.SetHideCursorDuringCapture(false);
-	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-	SetInputMode(InputMode);
+	if (bBackpackOpen)
+	{
+		FInputModeGameAndUI InputMode;
+		InputMode.SetWidgetToFocus(HUDRootWidget->TakeWidget());
+		InputMode.SetHideCursorDuringCapture(false);
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		SetInputMode(InputMode);
+	}
+	else
+	{
+		FInputModeGameOnly InputMode;
+		SetInputMode(InputMode);
+	}
 }
 
 void AOceanPlayerController::OnRotateBuildTriggered(const FInputActionValue& Value)
