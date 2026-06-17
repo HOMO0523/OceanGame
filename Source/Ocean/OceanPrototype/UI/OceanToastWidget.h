@@ -4,7 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "OceanToastWidget.generated.h"
 
-UCLASS(Abstract)
+UCLASS()
 class OCEAN_API UOceanToastWidget : public UUserWidget
 {
 	GENERATED_BODY()

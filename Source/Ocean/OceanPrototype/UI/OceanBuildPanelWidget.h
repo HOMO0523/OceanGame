@@ -8,7 +8,7 @@
 class UOceanBuildComponent;
 class UOceanBuildModuleDefinition;
 
-UCLASS(Abstract)
+UCLASS()
 class OCEAN_API UOceanBuildPanelWidget : public UUserWidget
 {
 	GENERATED_BODY()

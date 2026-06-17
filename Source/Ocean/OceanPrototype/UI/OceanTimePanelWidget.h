@@ -13,7 +13,7 @@ enum class EOceanTimeOfDay : uint8
 	Night    UMETA(DisplayName = "夜晚")
 };
 
-UCLASS(Abstract)
+UCLASS()
 class OCEAN_API UOceanTimePanelWidget : public UUserWidget
 {
 	GENERATED_BODY()

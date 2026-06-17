@@ -8,6 +8,7 @@
 #include "OceanPrototype/OceanSurvivalComponent.h"
 #include "OceanPrototype/OceanInventoryComponent.h"
 #include "OceanPrototype/OceanBuildComponent.h"
+#include "Blueprint/WidgetTree.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Ocean.h"
@@ -24,9 +25,20 @@ void UOceanHUDRootWidget::EnsureAllPanels()
 {
 	UCanvasPanel* TargetCanvas = CanvasRoot ? CanvasRoot.Get() : Cast<UCanvasPanel>(GetRootWidget());
 
+	// 没有 CanvasPanel → C++ 创建一个并设为 WidgetTree 根
+	if (!TargetCanvas && WidgetTree)
+	{
+		TargetCanvas = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("CanvasRoot"));
+		if (TargetCanvas)
+		{
+			WidgetTree->RootWidget = TargetCanvas;
+			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanHUDRoot: auto-created CanvasRoot via WidgetTree"));
+		}
+	}
+
 	if (!TargetCanvas)
 	{
-		UE_LOG(LogOcean, Warning, TEXT("[TDD] OceanHUDRoot: no CanvasPanel, skip auto-create. Add 'CanvasRoot' to WBP to enable panels."));
+		UE_LOG(LogOcean, Warning, TEXT("[TDD] OceanHUDRoot: cannot create CanvasRoot, skip"));
 		return;
 	}
 

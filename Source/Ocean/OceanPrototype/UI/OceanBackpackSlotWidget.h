@@ -7,7 +7,7 @@
 
 class UOceanInventoryComponent;
 
-UCLASS(Abstract)
+UCLASS()
 class OCEAN_API UOceanBackpackSlotWidget : public UUserWidget
 {
 	GENERATED_BODY()

@@ -7,7 +7,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemUseConfirmedSignature, int32, SlotIndex);
 
-UCLASS(Abstract)
+UCLASS()
 class OCEAN_API UOceanItemUseModalWidget : public UUserWidget
 {
 	GENERATED_BODY()

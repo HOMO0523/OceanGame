@@ -14,7 +14,7 @@ class UOceanSurvivalComponent;
  * - WBP 层通过 BlueprintImplementableEvent 接收更新通知，用进度条/文字呈现。
  * - 体力按策划"3格"设计：上限100，每格≈33.3，GetStaminaCells() 返回整数格数。
  */
-UCLASS(Abstract)
+UCLASS()
 class OCEAN_API UOceanStatusPanelWidget : public UUserWidget
 {
 	GENERATED_BODY()

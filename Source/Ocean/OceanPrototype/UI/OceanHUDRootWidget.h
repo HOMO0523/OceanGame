@@ -15,7 +15,7 @@ class UOceanInventoryComponent;
 class UOceanBuildComponent;
 class UCanvasPanel;
 
-UCLASS(Abstract)
+UCLASS()
 class OCEAN_API UOceanHUDRootWidget : public UUserWidget
 {
 	GENERATED_BODY()
