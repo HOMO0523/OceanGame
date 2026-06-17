@@ -1,9 +1,9 @@
 ---
 unit_id: 2026-06-17-hud-backpack-drawer-uiux
-status: approved
-owner: reviewer
-updated_at: 2026-06-17T16:10:00+08:00
-source_commit: 76ddd07
+status: reviewed
+owner: documentation-sync
+updated_at: 2026-06-17T19:15:00+08:00
+source_commit: 1f8068e
 depends_on: [2026-06-16-minimal-loop-workflow]
 parallel_lock: Ocean.UI.InventoryPlacement
 ---
@@ -12,31 +12,37 @@ parallel_lock: Ocean.UI.InventoryPlacement
 
 | Severity | Finding | File/Line or Evidence | Required Fix |
 |---|---|---|---|
-| Medium | Runtime UI does not exist yet. | Production unit is planning-only. | Execute the approved implementation plan. |
-| Medium | Slot inventory model is missing. | `UOceanInventoryComponent` is resource-stack only. | Add item slots and drag/drop tests. |
-| Medium | Placement has generic failure text. | Build component currently returns a generic invalid placement message. | Add typed placement query result. |
+| Info | Runtime UI foundation now exists and is PIE verified. | `1f8068e`, `f2bb106`, and `[TDD] OceanHUDRootPIE: created=1 drawer_open=0`. | None for this infrastructure slice. |
+| Info | Slot inventory model, use-item recovery, and drag/drop are implemented. | `8738a06`, `ed21f77`, `76ba3dc`. | Continue with final icon/data work in a later UI polish slice. |
+| Info | Placement now exposes query reasons before actor spawn. | `2c70e1f`; UI can consume `FOceanPlacementQueryResult`. | Keep UI as command dispatch; do not spawn actors directly from widget code. |
 
-## Missing Tests
+## Passing / Covered Tests
 
 - `Ocean.MVP.Inventory.UseItem`
 - `Ocean.MVP.Inventory.DragDropModel`
 - `Ocean.MVP.Build.PlacementQuery`
 - `Ocean.MVP.UI.HUDStateModel`
-- UnrealBridge UI asset and PIE probes
+- UnrealBridge WBP asset probe
+- Real PIE HUD root probe through `python scripts/ue_tdd_pipeline.py --pie-duration 5 --log-lines 24000`
+- Strict `scripts/verify_ocean_ui_assets.py --pie` recent-log check with `real_created_log=1`
 
-## Boundary / Dependency Risks
+## Boundary / Dependency Status
 
-- UI must not mutate inventory or spawn actors directly.
-- The `B` build key must remain functional after adding backpack input.
-- WBP asset generation must save dirty packages before editor close.
+- UI remains a presentation and command-dispatch layer.
+- Inventory and survival rules stay in gameplay components.
+- Drag-to-place must use placement query first rather than direct widget-driven actor spawn.
+- `B` build key remains separate from `Tab` / `I` backpack input.
+- WBP asset generation and setup scripts run the editor save gate.
 
-## Stale Document Risks
+## Remaining Product Scope
 
-- `docs/defense/index.html` must be updated after runtime verification, not before.
-- `memory-bank/progress.md` should only claim WBP completion once assets load in PIE.
+- Final art is not complete.
+- The right-side drawer is an interaction foundation, not a fully animated final drawer.
+- Fishing, full diving, island travel, and event UI are deferred.
+- Item icons remain placeholder-ready and are not final replacements.
 
 ## Readiness Decision
 
-readiness: fix
+readiness: pass
 
-This unit is ready for implementation planning and execution, but not runtime shipping.
+This unit is ready as a verified UI/WBP/interaction infrastructure foundation. Treat the next work as visual polish and content expansion, not as a repair of the foundation.

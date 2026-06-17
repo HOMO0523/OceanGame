@@ -21,10 +21,11 @@ Ocean
 | System | File/Area | Responsibility |
 |---|---|---|
 | Player input | `Source/Ocean/OceanPlayerController.*`, `/Game/OceanPrototype/Input/*` | Keeps click-to-move while adding verified Axis2D WASD movement, `F` interaction, `B/R` build controls, `SpaceBar` jump, and `E` dive-entry attempt through `BP_OceanMVPPlayerController`. |
-| Survival / inventory | `UOceanSurvivalComponent`, `UOceanInventoryComponent` | Tracks health-adjacent MVP pressure through stamina, hydration, satiety, and stackable resource costs. |
+| Survival / inventory | `UOceanSurvivalComponent`, `UOceanInventoryComponent`, `Source/Ocean/OceanPrototype/OceanItemTypes.h` | Tracks health-adjacent MVP pressure through stamina, hydration, satiety, stackable resource costs, `FOceanItemStack` slots, recovery item use, and drag/merge/swap inventory semantics. |
 | Interaction | `UOceanInteractionComponent`, `UOceanInteractableInterface` | Finds the nearest valid interactable and routes F interaction to resources or later event actors. |
 | Build grid | `Source/Ocean/OceanPrototype/OceanBuildGridComponent.*` | Stable logical cells, footprint rotation, overlap, adjacency checks, and edge-cell detection for water-only actions. |
-| Build placement | `Source/Ocean/OceanPrototype/OceanBuildComponent.*` | Toggles build mode, rotates previews, consumes inventory cost, and auto-resolves the floating platform if no explicit target is assigned. |
+| Build placement | `Source/Ocean/OceanPrototype/OceanBuildComponent.*`, `Source/Ocean/OceanPrototype/OceanBuildPlacementTypes.h` | Toggles build mode, rotates previews, consumes inventory cost, auto-resolves the floating platform, and exposes typed placement query reasons before placement spawns actors. |
+| HUD/backpack UI | `Source/Ocean/OceanPrototype/UI/OceanHUDRootWidget.*`, `/Game/OceanPrototype/UI/*` | Low-obstruction HUD root and right-side backpack drawer foundation; UI owns open/closed presentation state and dispatches commands while gameplay components own rules. |
 | Module definition | `Source/Ocean/OceanPrototype/OceanBuildModuleDefinition.*` | Data-asset contract for footprint, cost, preview mesh, and actor class. |
 | Module actor | `Source/Ocean/OceanPrototype/OceanBuildModuleActor.*` | Cube-placeholder build module with inherited buoyancy path. |
 | Floating platform | `Source/Ocean/OceanPrototype/OceanFloatingPlatform.*` | Owns stable grid and visual bobbing root. |
@@ -49,10 +50,19 @@ Ocean
 ### Player Loop
 
 1. `BP_OceanMVPGameMode` spawns `BP_OceanSurvivorCharacter` with `BP_OceanMVPPlayerController`.
-2. `IMC_OceanMVP` binds WASD, F, B, R, SpaceBar, E, left mouse, and touch into one Enhanced Input context; W/A/S use Enhanced Input modifiers so W=(0,+1), A=(-1,0), S=(0,-1), D=(+1,0).
+2. `IMC_OceanMVP` binds WASD, F, B, R, SpaceBar, E, Tab, I, left mouse, and touch into one Enhanced Input context; W/A/S use Enhanced Input modifiers so W=(0,+1), A=(-1,0), S=(0,-1), D=(+1,0).
 3. Floating `AOceanResourceNode` actors expose F pickup and feed `UOceanInventoryComponent`.
 4. SpaceBar calls the normal Character jump path; E calls `AOceanCharacter::TryStartDive` and only succeeds when the character is on a platform cell adjacent to unoccupied water.
 5. Build mode consumes inventory resources to place `AOceanBuildModuleActor` cells adjacent to the starter platform.
+6. `BP_OceanMVPPlayerController` creates `WBP_OceanHUDRoot` through `HUDRootWidgetClass`; Tab/I toggles the backpack drawer while B remains build mode.
+
+### HUD / Backpack Command Boundary
+
+1. `UOceanHUDRootWidget` keeps the drawer open/closed state and logs the initial PIE state as `[TDD] OceanHUDRootPIE: created=1 drawer_open=0`.
+2. WBP assets live under `/Game/OceanPrototype/UI`; `WBP_OceanHUDRoot` is parented to `UOceanHUDRootWidget`, while panels, slots, drag visual, placement overlay, modal, and toast stack are `UserWidget` children.
+3. Widgets may dispatch commands such as use item, move/merge slot, toggle drawer, or request placement preview.
+4. Inventory mutation remains in `UOceanInventoryComponent`; survival recovery remains in `UOceanSurvivalComponent`.
+5. Build placement UI must call `QuerySelectedModulePlacement` and read `FOceanPlacementQueryResult` before any final placement command; widgets must not directly spawn build actors.
 
 ### Paper2D Presentation
 
@@ -85,3 +95,4 @@ Ocean
 - Floating actor assets must retain buoyancy components.
 - Water setup is incomplete unless `WaterBodyCollision` exists in `Config/DefaultEngine.ini`.
 - Fishing, full diving, island travel, and cruise intro remain out of MVP scope until the small-boat loop is playable and testable; the current `E` dive button is only a water-edge entry gate, not underwater gameplay.
+- HUD/backpack work is currently UI/WBP/interaction infrastructure only: not final art, not full drawer animation, not fishing/diving/island-event UI, and not final item icons.

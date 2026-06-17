@@ -29,8 +29,20 @@
 
 | Technology | Purpose | Boundary |
 |---|---|---|
+| UMG / Widget Blueprint | Low-obstruction HUD and right-side backpack drawer foundation under `/Game/OceanPrototype/UI`. | WBP layer is presentation and command dispatch only; gameplay rules stay in C++ components. |
 | Paper2D | Active experimental player-character visual layer for the HD2D look. | Enabled as a project plugin and `Ocean` runtime dependency; attaches a Flipbook component and lightweight animation component to `BP_OceanSurvivorCharacter` without replacing the Ocean gameplay Pawn. |
 | HD2D styling | 2D character over 3D water/platform scenes with high saturation, lighting/post-process, and fixed 45-60 degree top-down camera. | Visual style only; collision, survival, interaction, inventory, and build systems stay in existing Ocean gameplay components. |
+
+## HUD / UI Runtime
+
+| Runtime Type / Asset | Purpose |
+|---|---|
+| `UOceanHUDRootWidget` | C++ root widget state model for the backpack drawer; logs real PIE creation state. |
+| `WBP_OceanHUDRoot` | Widget Blueprint child of `UOceanHUDRootWidget`; bound as the MVP player controller HUD class. |
+| `WBP_StatusPanel`, `WBP_TimePanel`, `WBP_TopRightPanel` | Low-obstruction HUD panel placeholders. |
+| `WBP_BackpackDrawer`, `WBP_InventorySlot`, `WBP_ItemDragVisual` | Right-side backpack drawer and drag/drop presentation placeholders. |
+| `WBP_PlacementOverlay` | Build-placement feedback placeholder that should consume placement query results. |
+| `WBP_ConfirmModal`, `WBP_ToastStack` | Common UI feedback placeholders. |
 
 ## Project Scripts
 
@@ -42,6 +54,8 @@
 | `scripts/doc_sync_hook.py` | Manual/pre-commit documentation drift detector and progress snapshot updater. |
 | `scripts/create_water_ocean_map.py` | Editor Python script that creates `/Game/OceanPrototype/Maps/L_WaterOcean` with WaterZone, WaterBodyOcean, support Landscape, and WaterBrushManager. |
 | `scripts/import_paper2d_experiment.py` | Editor Python script that imports the external `288x288` Paper2D experiment frames as Textures, Sprites, and Flipbooks under `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe`. |
+| `scripts/create_ocean_ui_assets.py` | Editor Python script that creates and saves the 10 HUD/backpack Widget Blueprint assets under `/Game/OceanPrototype/UI`. |
+| `scripts/verify_ocean_ui_assets.py` | UnrealBridge verification for WBP asset load, HUDRootWidgetClass binding, map load, and strict real PIE HUD log presence. |
 
 ## Gameplay Input Assets
 
@@ -50,6 +64,7 @@
 | `IA_OceanMove` | `W/A/S/D`, left mouse, touch | Corrected Axis2D movement plus preserved click/touch movement. |
 | `IA_OceanInteract` | `F` | Unified nearby interaction. |
 | `IA_OceanToggleBuild` | `B` | Build mode toggle. |
+| `IA_OceanToggleBackpack` | `Tab`, `I` | Right-side backpack drawer toggle through `UOceanHUDRootWidget`; closes back to game input. |
 | `IA_OceanRotateBuild` | `R` | Build preview rotation. |
 | `IA_OceanJump` | `SpaceBar` | Character jump using `ACharacter::Jump()`. |
 | `IA_OceanDive` | `E` | Water-edge dive-entry attempt; not full underwater gameplay. |

@@ -387,6 +387,28 @@
     </section>
 
     <section class="card">
+      <h2>HUD 与背包抽屉</h2>
+      <p>这一轮完成的是 UI/WBP/交互基础设施：低遮挡 HUD 保留海面与平台视野，右侧背包抽屉用 <code>Tab</code> / <code>I</code> 打开，关闭后恢复游戏输入；它还不是最终美术、完整动画抽屉、钓鱼/潜水/上岛事件 UI，也不是最终物品图标替换。</p>
+      <div class="grid cols-3">
+        <div class="mini">
+          <span class="tag green">Low Obstruction</span>
+          <h3>HUD 不抢画面</h3>
+          <p><code>WBP_StatusPanel</code>、<code>WBP_TimePanel</code>、<code>WBP_TopRightPanel</code> 作为轻量信息区，主画面仍留给水面、平台和资源。</p>
+        </div>
+        <div class="mini">
+          <span class="tag yellow">Drawer</span>
+          <h3>右侧背包基础</h3>
+          <p><code>WBP_BackpackDrawer</code>、<code>WBP_InventorySlot</code> 和 <code>WBP_ItemDragVisual</code> 对应槽模型、拖拽合并和后续图标替换。</p>
+        </div>
+        <div class="mini">
+          <span class="tag">Command Boundary</span>
+          <h3>UI 只分发命令</h3>
+          <p>物品使用、堆叠合并、生存回复和建造规则仍由 gameplay components 拥有；拖拽放置先查询 placement result，而不是 Widget 直接 spawn actor。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
       <h2>范围边界 / 技术取舍</h2>
       <div class="grid cols-2">
         <div class="mini">
@@ -455,9 +477,9 @@
           <tr><th>系统</th><th>第一阶段职责</th><th>边界</th></tr>
         </thead>
         <tbody>
-          <tr><td>角色输入</td><td><code>BP_OceanMVPPlayerController</code> 绑定左键、触摸、WASD、F、B、R、Space、E。</td><td>不删除模板点地移动；WASD 打断寻路；E 只做水边入口判定。</td></tr>
+          <tr><td>角色输入</td><td><code>BP_OceanMVPPlayerController</code> 绑定左键、触摸、WASD、F、B、R、Space、E、Tab、I。</td><td>不删除模板点地移动；WASD 打断寻路；B 是建造，Tab/I 是背包，E 只做水边入口判定。</td></tr>
           <tr><td>生存状态</td><td>体力、水分、饱食度随时间变化并显示 HUD。</td><td>不做疾病、温度、睡眠等复杂生存属性。</td></tr>
-          <tr><td>背包</td><td>堆叠木材、碎片、食物、水等基础资源。</td><td>不做装备栏、耐久和复杂合成树。</td></tr>
+          <tr><td>背包</td><td><code>FOceanItemStack</code> 槽模型支持恢复类物品、拖拽、合并和交换。</td><td>不做装备栏、耐久、复杂合成树和最终图标美术。</td></tr>
           <tr><td>交互</td><td>靠近可交互 Actor 后按 F 执行。</td><td>左键不触发拾取，避免输入语义冲突。</td></tr>
           <tr><td>建造</td><td><code>BP_OceanSurvivorCharacter</code> 默认选中 1x1 Deck；建造组件自动寻找场景平台。</td><td>模块必须是格子组，逻辑网格不随波浪移动。</td></tr>
           <tr><td>资源散播</td><td>PCG 优先，fallback spawn 保证演示稳定，当前地图生成 16 个 starter 资源。</td><td>资源避开出生点和平台内部，保留浮力路径。</td></tr>
@@ -493,6 +515,8 @@
         <div class="decision"><b>Landmass</b><p><code>L_WaterOcean</code> 使用地形/水体支持，避免 WaterBodyOcean 中间缺块等边界问题。</p></div>
         <div class="decision"><b>PCG</b><p>作为资源散播目标方案；第一阶段允许 deterministic fallback 保障演示稳定。</p></div>
         <div class="decision"><b>Grid</b><p>建造系统已接入角色、背包和地图平台；未指定目标平台时会自动解析场景中的浮动平台，避免 MVP 建造入口不可玩。</p></div>
+        <div class="decision"><b>HUD / Backpack</b><p>已生成 10 个 <code>/Game/OceanPrototype/UI</code> WBP 资产；<code>WBP_OceanHUDRoot</code> 继承 <code>UOceanHUDRootWidget</code>，控制器绑定到 <code>WBP_OceanHUDRoot_C</code>，并通过真实 PIE 日志验证创建。</p></div>
+        <div class="decision"><b>Placement Query</b><p>拖拽建造先读取 <code>FOceanPlacementQueryResult</code> 的失败原因，UI 只显示反馈和分发命令，不直接生成 Actor。</p></div>
         <div class="decision"><b>Paper2D Atlas</b><p>角色占位动作集采用“每动作 8x4 单独生成 → 脚本合成 8x20 总 atlas”的流程；五张绿幕源图反推为 222 源定位格，最终用 288 安全格导入，避免 256 切图导致头部/脚蹼裁切。</p></div>
         <div class="decision"><b>Paper2D State</b><p>Paper2D 原生用 <code>Flipbook</code> 播放帧动画，但没有 SkeletalMesh 那种完整 AnimBP；本项目用轻量 C++ 状态组件做相机 billboard、方向判断和 Flipbook 切换。</p></div>
         <div class="decision"><b>Verification</b><p><code>setup_mvp_survival_loop.py</code> 和 <code>verify_mvp_survival_loop.py</code> 校验 11 个输入映射、控制器绑定、GameMode 默认类、16 个资源节点、Deck 数据、角色建造默认模块和 24 个 Paper2D Flipbook 绑定。</p></div>
@@ -517,6 +541,11 @@
           <h3>资产验证</h3>
           <p>UnrealBridge 验证地图加载、11 个输入映射、角色建造默认模块、控制器绑定、GameMode、16 个资源节点、Deck 数据资产、Paper2D 状态组件和 24 个 Flipbook。</p>
         </div>
+        <div class="mini">
+          <span class="tag green">UI PIE</span>
+          <h3>背包 HUD 真实日志</h3>
+          <p><code>python scripts/ue_tdd_pipeline.py --pie-duration 5 --log-lines 24000</code> 成功，日志包含 <code>[TDD] OceanHUDRootPIE: created=1 drawer_open=0</code>；严格验证通过 <code>real_created_log=1</code>。</p>
+        </div>
       </div>
     </section>
 
@@ -535,10 +564,11 @@
         <div class="timeline-item"><strong>docs: document Paper2D animation atlas workflow</strong><p>生成六组四方向八帧占位动作，并记录从单次大图失败到分动作合成 atlas 的资产管线取舍。</p></div>
         <div class="timeline-item"><strong>feat: fix input and import Paper2D experiment</strong><p>修复 WASD 都朝右走，新增 Space 跳跃、E 水边潜水入口，并把 192 帧实验动作导入 UE Paper2D。</p></div>
         <div class="timeline-item"><strong>feat: add Paper2D animation state machine</strong><p>新增相机朝向 billboard、四方向判断、Idle/Walk/Jump 自动切换，并为后续 Swim/Climb/DiveSuitDive 保留视觉状态。</p></div>
+        <div class="timeline-item"><strong>docs: sync ocean hud backpack ui evidence</strong><p>记录库存/背包基础、右侧抽屉 WBP、Tab/I 输入、placement query 边界和真实 PIE HUD 验证证据。</p></div>
       </div>
     </section>
 
-    <p class="footer">《洋流》Ocean · UE5.7 · 第一阶段 MVP 答辩材料 · 2026-06-16</p>
+    <p class="footer">《洋流》Ocean · UE5.7 · 第一阶段 MVP 答辩材料 · 2026-06-17</p>
   </main>
 </body>
 </html>

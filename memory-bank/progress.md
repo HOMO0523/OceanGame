@@ -58,6 +58,13 @@
   - The script verifies `WBP_OceanHUDRoot_C` loads and `BP_OceanMVPPlayerController.HUDRootWidgetClass` points to it.
   - The script verifies `/Game/OceanPrototype/Maps/L_WaterOcean` loads through Unreal Python.
   - The optional `--pie` path now fails unless recent logs include the real `[TDD] OceanHUDRootPIE: created=1` line.
+- Implemented the HUD/backpack drawer UIUX infrastructure slice:
+  - `FOceanItemStack` / `FOceanInventorySlot` provide the slot inventory model while legacy resource stacks still support build costs.
+  - Recovery-class consumables call `UOceanSurvivalComponent::ApplyRecovery`; drag/drop supports reject, merge, swap, and slot reindexing.
+  - Build placement exposes typed query reasons through `FOceanPlacementQueryResult`; UI must query before final placement instead of spawning actors directly.
+  - `UOceanHUDRootWidget` owns drawer open/closed state; `Tab` and `I` toggle backpack input while `B` remains build mode.
+  - Created 10 Widget Blueprint assets under `/Game/OceanPrototype/UI`; `WBP_OceanHUDRoot` inherits `UOceanHUDRootWidget`, and the other nine inherit `UserWidget`.
+  - `BP_OceanMVPPlayerController.HUDRootWidgetClass` is bound to `/Game/OceanPrototype/UI/WBP_OceanHUDRoot.WBP_OceanHUDRoot_C`.
 
 ## Verification Snapshot
 
@@ -85,6 +92,7 @@
 - BridgeClient execution of `scripts/verify_ocean_ui_assets.py` passes: 10/10 WBP assets load, `WBP_OceanHUDRoot_C` loads, `HUDRootWidgetClass` binding reports `PASS`, and `L_WaterOcean` map load reports `PASS`.
 - `python scripts/ue_tdd_pipeline.py --pie-duration 5 --log-lines 24000` succeeds: save gate `save_result=True dirty_before=[] dirty_after=[]`, cold compile succeeds, PIE runs for 5.0s, TDD report shows 21 lines with 19 passed / 0 failed, and logs include `[TDD] OceanHUDRootPIE: created=1 drawer_open=0`.
 - BridgeClient execution of `scripts/verify_ocean_ui_assets.py --pie` passes after the PIE run and emits `[TDD] OceanHUDRootPIE: real_created_log=1 result=PASS`.
+- Key commits for the UI foundation: `8738a06` atomic item adds, `ed21f77` recovery items, `76ba3dc` drag/drop model, `2c70e1f` placement-query failure coverage, `43bad35` HUD root state model, `0e8ec78` game-input restoration after backpack close, `e7a8f4c` WBP parent-tag verification, and `1f8068e` real PIE log requirement.
 
 ## Active Blockers
 
@@ -93,11 +101,12 @@
 
 ## Next Recommended Steps
 
-1. Sync the defense HTML and commit log with the corrected WASD, jump, dive-entry gate, and Paper2D import evidence.
-2. Keep fishing, full diving, island travel, and cruise intro as explicitly deferred work.
-3. Use `scripts/setup_mvp_survival_loop.py` only for regeneration or repair of starter MVP content.
-4. For Paper2D workflow experiments, use `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`; keep final animation-quality acceptance separate from this sandbox.
-5. Next Paper2D slice should add one-shot transition timing and visual event requests for climb / dive-entry, while keeping full diving gameplay deferred.
+1. Keep the HUD/backpack drawer scope clear: this is UI/WBP/interaction infrastructure, not final art, full drawer animation, fishing/diving/island-event UI, or final item icons.
+2. Sync the defense HTML and commit log with the verified HUD/backpack, corrected WASD, jump, dive-entry gate, and Paper2D import evidence.
+3. Keep fishing, full diving, island travel, and cruise intro as explicitly deferred work.
+4. Use `scripts/setup_mvp_survival_loop.py` only for regeneration or repair of starter MVP content.
+5. For Paper2D workflow experiments, use `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`; keep final animation-quality acceptance separate from this sandbox.
+6. Next Paper2D slice should add one-shot transition timing and visual event requests for climb / dive-entry, while keeping full diving gameplay deferred.
 
 ## WaterOcean Bootstrap
 
@@ -112,26 +121,25 @@
 <!-- DOC_SYNC_HOOK:START -->
 ### Doc Sync Hook Snapshot
 
-- generated_at: 2026-06-17T18:52:41
+- generated_at: 2026-06-17T19:11:44
 - phase: `pre-commit`
-- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-185241-doc-sync.md`
+- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-191144-doc-sync.md`
 - active_units: `2026-06-16-automation-migration`, `2026-06-16-minimal-loop-workflow`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`, `2026-06-17-hud-backpack-drawer-uiux`, `2026-06-17-paper2d-animation-set`, `2026-06-17-paper2d-state-machine`, `2026-06-17-paperzd-pie-visibility`
-- doc_targets: `memory-bank/progress.md`, `memory-bank/tech-stack.md`
+- doc_targets: `docs/production`, `memory-bank/architecture.md`, `memory-bank/progress.md`, `memory-bank/tech-stack.md`
 - validator: success=`True` errors=`0` warnings=`0`
 
 **Video flow status:**
 - 00 context and rules: covered
-- 01 production unit split: covered
+- 01 production unit split: touched
 - 02 semantic freeze: covered
-- 03 infrastructure audit: touched
+- 03 infrastructure audit: covered
 - 04 implementation plan: covered
 - 05 test design: covered
-- 06 implementation log: covered
+- 06 implementation log: touched
 - 07 verification and repair: touched
-- 08 review: covered
+- 08 review: touched
 - 09 memory and registry update: covered
 
 **Next documentation actions:**
-- Check whether `memory-bank/tech-stack.md` needs tooling/dependency updates.
 - Production docs validate; keep `07-review.md` decision aligned with actual test evidence.
 <!-- DOC_SYNC_HOOK:END -->
