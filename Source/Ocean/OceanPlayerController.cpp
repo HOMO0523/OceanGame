@@ -6,6 +6,7 @@
 #include "OceanPrototype/OceanInteractionComponent.h"
 #include "OceanPrototype/UI/OceanHUDRootWidget.h"
 #include "OceanPrototype/OceanSurvivalComponent.h"
+#include "OceanPrototype/OceanInventoryComponent.h"
 #include "GameFramework/Pawn.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "InputCoreTypes.h"
@@ -48,15 +49,32 @@ void AOceanPlayerController::BeginPlay()
 			HUDRootWidget->AddToViewport();
 			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanHUDRootPIE: created=1 drawer_open=%d"), HUDRootWidget->IsBackpackOpen() ? 1 : 0);
 
-			// 自动绑定 SurvivalComponent 到 StatusPanel
+			// 自动绑定所有组件到子面板
 			APawn* ControlledPawn = GetPawn();
 			if (ControlledPawn)
 			{
+				// StatusPanel ← SurvivalComponent
 				if (UOceanSurvivalComponent* Survival = ControlledPawn->FindComponentByClass<UOceanSurvivalComponent>())
 				{
 					HUDRootWidget->BindSurvivalToStatusPanel(Survival);
 				}
+
+				// BackpackPanel ← InventoryComponent + SurvivalComponent
+				if (UOceanInventoryComponent* Inventory = ControlledPawn->FindComponentByClass<UOceanInventoryComponent>())
+				{
+					UOceanSurvivalComponent* Survival = ControlledPawn->FindComponentByClass<UOceanSurvivalComponent>();
+					HUDRootWidget->BindInventoryToBackpackPanel(Inventory, Survival);
+				}
+
+				// BuildPanel ← BuildComponent
+				if (UOceanBuildComponent* Build = ControlledPawn->FindComponentByClass<UOceanBuildComponent>())
+				{
+					HUDRootWidget->BindBuildToBuildPanel(Build);
+				}
 			}
+
+			// 初始化欢迎提示
+			HUDRootWidget->ShowToast(FText::FromString(TEXT("漂流第 1 天开始")), 3.0f);
 		}
 	}
 }

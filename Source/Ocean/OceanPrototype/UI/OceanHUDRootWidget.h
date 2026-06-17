@@ -5,22 +5,22 @@
 #include "OceanHUDRootWidget.generated.h"
 
 class UOceanStatusPanelWidget;
+class UOceanBackpackPanelWidget;
+class UOceanBuildPanelWidget;
+class UOceanTimePanelWidget;
+class UOceanItemUseModalWidget;
+class UOceanToastWidget;
 class UOceanSurvivalComponent;
+class UOceanInventoryComponent;
+class UOceanBuildComponent;
 
-/**
- * HUD 根 Widget —— 管理所有 HUD 子面板的容器。
- *
- * 职责边界：
- * - 拥有子面板的引用，负责创建和绑定。
- * - 不直接操作游戏逻辑；游戏逻辑通过 Controller 调用此类的接口。
- * - WBP 层通过命名 Slot 容纳子面板。
- */
 UCLASS(Abstract)
 class OCEAN_API UOceanHUDRootWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
 public:
+	// --- 背包 ---
 	UFUNCTION(BlueprintCallable, Category = "Ocean|UI")
 	void SetBackpackOpen(bool bNewBackpackOpen);
 
@@ -30,24 +30,56 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ocean|UI")
 	bool IsBackpackOpen() const { return bBackpackOpen; }
 
-	/** 绑定生存组件到 StatusPanel（如果存在）。 */
+	// --- 数据绑定 ---
 	UFUNCTION(BlueprintCallable, Category = "Ocean|UI")
 	void BindSurvivalToStatusPanel(UOceanSurvivalComponent* InSurvival);
 
-	/** 获取 StatusPanel 子部件引用（可能为空，WBP 未赋值时）。 */
+	UFUNCTION(BlueprintCallable, Category = "Ocean|UI")
+	void BindInventoryToBackpackPanel(UOceanInventoryComponent* InInventory, UOceanSurvivalComponent* InSurvival);
+
+	UFUNCTION(BlueprintCallable, Category = "Ocean|UI")
+	void BindBuildToBuildPanel(UOceanBuildComponent* InBuild);
+
+	// --- 提示 ---
+	UFUNCTION(BlueprintCallable, Category = "Ocean|UI")
+	void ShowToast(const FText& Message, float Duration = 2.0f);
+
+	// --- 获取子面板 ---
 	UFUNCTION(BlueprintPure, Category = "Ocean|UI")
 	UOceanStatusPanelWidget* GetStatusPanel() const { return StatusPanel; }
 
+	UFUNCTION(BlueprintPure, Category = "Ocean|UI")
+	UOceanBackpackPanelWidget* GetBackpackPanel() const { return BackpackPanel; }
+
+	UFUNCTION(BlueprintPure, Category = "Ocean|UI")
+	UOceanBuildPanelWidget* GetBuildPanel() const { return BuildPanel; }
+
+	UFUNCTION(BlueprintPure, Category = "Ocean|UI")
+	UOceanTimePanelWidget* GetTimePanel() const { return TimePanel; }
+
 protected:
-	/** WBP 实现：背包开关状态变化时刷新视觉。 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Ocean|UI")
 	void OnBackpackOpenChanged(bool bNewBackpackOpen);
 
-	/** WBP 中通过 BindWidgetOptional 绑定的 StatusPanel 子部件（可选，未绑定时为 null）。 */
+	// --- BindWidgetOptional 子面板（WBP 中未绑定时为 null）---
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidgetOptional), Category = "Ocean|UI")
 	TObjectPtr<UOceanStatusPanelWidget> StatusPanel = nullptr;
 
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidgetOptional), Category = "Ocean|UI")
+	TObjectPtr<UOceanBackpackPanelWidget> BackpackPanel = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidgetOptional), Category = "Ocean|UI")
+	TObjectPtr<UOceanBuildPanelWidget> BuildPanel = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidgetOptional), Category = "Ocean|UI")
+	TObjectPtr<UOceanTimePanelWidget> TimePanel = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidgetOptional), Category = "Ocean|UI")
+	TObjectPtr<UOceanItemUseModalWidget> ItemUseModal = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidgetOptional), Category = "Ocean|UI")
+	TObjectPtr<UOceanToastWidget> Toast = nullptr;
+
 private:
-	UPROPERTY(VisibleAnywhere, Category = "Ocean|UI")
 	bool bBackpackOpen = false;
 };

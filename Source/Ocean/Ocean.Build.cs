@@ -21,6 +21,7 @@ public class Ocean : ModuleRules
 			"Niagara",
 			"UMG",
 			"Slate",
+			"SlateCore",
 			"Water",
 			"PCG",
 			"Paper2D"
