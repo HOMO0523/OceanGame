@@ -83,7 +83,7 @@ def verify_widget_parent(path: str, parent_class) -> bool:
 
     actual_parent = get_widget_parent_class(widget_blueprint)
     if actual_parent is None:
-        return True
+        return False
     return actual_parent == parent_class
 
 
@@ -107,8 +107,8 @@ def ensure_widget(path: str, parent_class_path: str) -> None:
     if created and hasattr(unreal, "KismetEditorUtilities"):
         try:
             unreal.KismetEditorUtilities.compile_blueprint(asset)
-        except Exception:
-            pass
+        except Exception as exc:
+            tdd("OceanUIAssetCompile", f"asset={path} error={exc} result=FAIL", failed=True)
     tdd("OceanUIAssetCreated", f"asset={path} result={pass_fail(created)}", failed=not created)
 
 
