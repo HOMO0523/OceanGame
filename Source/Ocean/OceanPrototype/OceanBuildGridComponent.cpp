@@ -81,6 +81,31 @@ bool UOceanBuildGridComponent::IsCellOccupied(FIntPoint Cell) const
 	return OccupiedCells.Contains(Cell);
 }
 
+bool UOceanBuildGridComponent::IsWaterAdjacentCell(FIntPoint Cell) const
+{
+	if (!OccupiedCells.Contains(Cell))
+	{
+		return false;
+	}
+
+	static const FIntPoint CardinalOffsets[] = {
+		FIntPoint(1, 0),
+		FIntPoint(-1, 0),
+		FIntPoint(0, 1),
+		FIntPoint(0, -1)
+	};
+
+	for (const FIntPoint& Offset : CardinalOffsets)
+	{
+		if (!OccupiedCells.Contains(Cell + Offset))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void UOceanBuildGridComponent::ClearGrid()
 {
 	OccupiedCells.Reset();

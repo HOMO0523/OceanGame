@@ -358,7 +358,7 @@
       <div class="hero-copy card">
         <div class="eyebrow">UE5.7 毕设原型 · Ocean Survival</div>
         <h1>洋流</h1>
-        <p>一个以南海海难为背景的单人生存休闲原型。第一阶段聚焦“小船海面生存 + 资源拾取 + 平台扩展”，先建立可玩闭环，再扩展钓鱼、潜水、上岛和邮轮开场。</p>
+        <p>一个以南海海难为背景的单人生存休闲原型。第一阶段聚焦“小船海面生存 + 资源拾取 + 平台扩展”，先建立可玩闭环，再扩展钓鱼、完整潜水、上岛和邮轮开场。</p>
       </div>
       <div class="hero-visual card" aria-label="小船平台示意图">
         <div class="resource r1"></div>
@@ -376,10 +376,10 @@
 
     <section class="card">
       <h2>第一阶段 MVP</h2>
-      <p>目标不是完整开放世界，而是让玩家能在小船平台上移动、维持三条状态、拾取漂浮资源、消耗资源扩展平台。当前版本已经落成到 <code>L_WaterOcean</code>：starter 平台、16 个漂浮资源节点、MVP 输入资产、角色/控制器/GameMode 蓝图和 1x1 Deck 数据资产均可脚本验证。</p>
+      <p>目标不是完整开放世界，而是让玩家能在小船平台上移动、维持三条状态、拾取漂浮资源、消耗资源扩展平台。当前版本已经落成到 <code>L_WaterOcean</code>：starter 平台、16 个漂浮资源节点、MVP 输入资产、角色/控制器/GameMode 蓝图、1x1 Deck 数据资产、Space 跳跃、E 水边潜水入口和 Paper2D 实验表现层均可脚本验证。</p>
       <div class="loop">
         <div class="loop-step"><strong>出生</strong><p>玩家带初始物资出现在海面小船平台。</p></div>
-        <div class="loop-step"><strong>移动</strong><p>左键点地 + WASD 精细移动并存。</p></div>
+        <div class="loop-step"><strong>移动</strong><p>左键点地 + 已修正方向的 WASD 精细移动并存。</p></div>
         <div class="loop-step"><strong>拾取</strong><p>靠近漂浮资源，按 F 加入背包。</p></div>
         <div class="loop-step"><strong>生存</strong><p>体力、水分、饱食度形成持续压力。</p></div>
         <div class="loop-step"><strong>建造</strong><p>资源消耗换取平台扩展和设施占位。</p></div>
@@ -392,7 +392,7 @@
         <div class="mini">
           <span class="tag green">保留</span>
           <h3>双移动方式</h3>
-          <p>左键点地移动不删除，保留休闲玩家熟悉的 TopDown 操作；新增 WASD 作为平台微操。WASD 按下时打断当前寻路目标，避免两套移动互相拉扯。</p>
+          <p>左键点地移动不删除，保留休闲玩家熟悉的 TopDown 操作；WASD 作为平台微操，已通过 Axis2D modifier 验证 W/A/S/D 输出不同方向。WASD 按下时打断当前寻路目标，避免两套移动互相拉扯。</p>
         </div>
         <div class="mini">
           <span class="tag">统一交互</span>
@@ -416,8 +416,8 @@
         </div>
         <div class="mini">
           <span class="tag red">暂不做</span>
-          <h3>钓鱼 / 潜水后移</h3>
-          <p>钓鱼能力、钓鱼交互、潜水能力、水下相机、氧气机制和海底采集不进入第一阶段，只作为后续事件系统扩展项列入待做。</p>
+          <h3>钓鱼 / 完整潜水后移</h3>
+          <p>钓鱼能力、钓鱼交互、水下相机、氧气机制和海底采集不进入第一阶段；当前只保留 E 键水边潜水入口，作为后续事件系统扩展点。</p>
         </div>
       </div>
     </section>
@@ -436,14 +436,14 @@
           <p>GPT 负责读需求、确认边界、写 Spec 和 TDD 策略；用户确认后再由 DS 进入测试先行编码，继续走保存、关闭编辑器、冷编译、重开项目的自动化链路。</p>
         </div>
         <div class="mini">
-          <span class="tag orange">Input Fix</span>
-          <h3>先修 WASD 向量</h3>
-          <p>当前实测 WASD 都朝右走，优先定位 <code>IMC_OceanMVP</code> 的 Axis2D 映射；下一步验证 W/S/A/D 输出不同向量，而不是只检查按键存在。</p>
+          <span class="tag green">Input Fixed</span>
+          <h3>WASD 向量已闭环</h3>
+          <p>问题定位在 <code>IMC_OceanMVP</code> 映射层：W/A/S 缺少 Axis2D modifier。当前验证 W/A/S/D 分别输出上/左/下/右，点击移动仍保留。</p>
         </div>
         <div class="mini">
           <span class="tag yellow">HD2D</span>
           <h3>Paper2D 只换表现层</h3>
-          <p>角色后续走 Paper2D / HD2D，但仍以 <code>BP_OceanSurvivorCharacter</code> 作为 Gameplay Pawn；Sprite/Flipbook 负责外观，Capsule 和 Ocean 组件负责玩法。</p>
+          <p>角色走 Paper2D / HD2D 表现层，但仍以 <code>BP_OceanSurvivorCharacter</code> 作为 Gameplay Pawn；已导入 192 帧、192 Sprites、24 Flipbooks，Capsule 和 Ocean 组件继续负责玩法。</p>
         </div>
       </div>
     </section>
@@ -455,7 +455,7 @@
           <tr><th>系统</th><th>第一阶段职责</th><th>边界</th></tr>
         </thead>
         <tbody>
-          <tr><td>角色输入</td><td><code>BP_OceanMVPPlayerController</code> 绑定左键、WASD、F、B、R。</td><td>不删除模板点地移动；WASD 打断寻路。</td></tr>
+          <tr><td>角色输入</td><td><code>BP_OceanMVPPlayerController</code> 绑定左键、触摸、WASD、F、B、R、Space、E。</td><td>不删除模板点地移动；WASD 打断寻路；E 只做水边入口判定。</td></tr>
           <tr><td>生存状态</td><td>体力、水分、饱食度随时间变化并显示 HUD。</td><td>不做疾病、温度、睡眠等复杂生存属性。</td></tr>
           <tr><td>背包</td><td>堆叠木材、碎片、食物、水等基础资源。</td><td>不做装备栏、耐久和复杂合成树。</td></tr>
           <tr><td>交互</td><td>靠近可交互 Actor 后按 F 执行。</td><td>左键不触发拾取，避免输入语义冲突。</td></tr>
@@ -476,7 +476,7 @@
         <div class="mini">
           <span class="tag red">TODO-Diving</span>
           <h3>潜水系统</h3>
-          <p>潜水入口、水下场景、氧气机制、水下移动和水下资源采集。暂不进入第一阶段。</p>
+          <p>潜水入口已保留为 E 键水边门槛；水下场景、氧气机制、水下移动和水下资源采集暂不进入第一阶段。</p>
         </div>
         <div class="mini">
           <span class="tag red">TODO-EventExpansion</span>
@@ -494,7 +494,7 @@
         <div class="decision"><b>PCG</b><p>作为资源散播目标方案；第一阶段允许 deterministic fallback 保障演示稳定。</p></div>
         <div class="decision"><b>Grid</b><p>建造系统已接入角色、背包和地图平台；未指定目标平台时会自动解析场景中的浮动平台，避免 MVP 建造入口不可玩。</p></div>
         <div class="decision"><b>Paper2D Atlas</b><p>角色占位动作集采用“每动作 8x4 单独生成 → 脚本合成 8x20 总 atlas”的流程；五张绿幕源图反推为 222 源定位格，最终用 288 安全格导入，避免 256 切图导致头部/脚蹼裁切。</p></div>
-        <div class="decision"><b>Verification</b><p><code>setup_mvp_survival_loop.py</code> 和 <code>verify_mvp_survival_loop.py</code> 校验 9 个输入映射、控制器绑定、GameMode 默认类、16 个资源节点、Deck 数据和角色建造默认模块。</p></div>
+        <div class="decision"><b>Verification</b><p><code>setup_mvp_survival_loop.py</code> 和 <code>verify_mvp_survival_loop.py</code> 校验 11 个输入映射、控制器绑定、GameMode 默认类、16 个资源节点、Deck 数据、角色建造默认模块和 Paper2D 表现组件。</p></div>
       </div>
     </section>
 
@@ -509,12 +509,12 @@
         <div class="mini">
           <span class="tag green">Automation</span>
           <h3>建造测试</h3>
-          <p><code>Ocean.MVP.Build</code> 找到 3 个自动化测试：自动找平台、Deck 放置、失败场景，均完成成功。</p>
+          <p><code>Ocean.Build</code> 找到 8 个自动化测试：含自动找平台、Deck 放置、失败场景、水边格子和世界坐标水边判定，均完成成功。</p>
         </div>
         <div class="mini">
           <span class="tag green">Bridge</span>
           <h3>资产验证</h3>
-          <p>UnrealBridge 验证地图加载、输入映射、角色建造默认模块、控制器绑定、GameMode、16 个资源节点和 Deck 数据资产。</p>
+          <p>UnrealBridge 验证地图加载、11 个输入映射、角色建造默认模块、控制器绑定、GameMode、16 个资源节点、Deck 数据资产和 Paper2D 默认 Flipbook。</p>
         </div>
       </div>
     </section>
@@ -531,7 +531,8 @@
         <div class="timeline-item"><strong>fix: auto bind build target</strong><p>通过红绿测试修复建造入口：自动解析平台并默认选中 1x1 Deck。</p></div>
         <div class="timeline-item"><strong>docs: define Ocean minimal loop workflow</strong><p>根据《洋流》策划文档整理 Pawn 风险、饥饿/脱水回复、背包、合成、拖拽、事件、放置区域、漂流终点和 GPT/DS 自动化分工。</p></div>
         <div class="timeline-item"><strong>docs: add WASD and Paper2D gates</strong><p>补充 WASD Axis2D 根因调查、Paper2D/HD2D 角色表现边界和后续测试门。</p></div>
-        <div class="timeline-item"><strong>docs: document Paper2D animation atlas workflow</strong><p>生成五组四方向八帧占位动作，并记录从单次大图失败到分动作合成 atlas 的资产管线取舍。</p></div>
+        <div class="timeline-item"><strong>docs: document Paper2D animation atlas workflow</strong><p>生成六组四方向八帧占位动作，并记录从单次大图失败到分动作合成 atlas 的资产管线取舍。</p></div>
+        <div class="timeline-item"><strong>feat: fix input and import Paper2D experiment</strong><p>修复 WASD 都朝右走，新增 Space 跳跃、E 水边潜水入口，并把 192 帧实验动作导入 UE Paper2D。</p></div>
       </div>
     </section>
 

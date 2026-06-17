@@ -27,6 +27,8 @@ REQUIRED_ASSETS = [
     "/Game/OceanPrototype/Input/IA_OceanInteract",
     "/Game/OceanPrototype/Input/IA_OceanToggleBuild",
     "/Game/OceanPrototype/Input/IA_OceanRotateBuild",
+    "/Game/OceanPrototype/Input/IA_OceanJump",
+    "/Game/OceanPrototype/Input/IA_OceanDive",
     INPUT_CONTEXT_PATH,
     SET_DESTINATION_CLICK_ACTION_PATH,
     SET_DESTINATION_TOUCH_ACTION_PATH,
@@ -274,6 +276,8 @@ def verify_input_context() -> None:
         ("/Game/OceanPrototype/Input/IA_OceanInteract", "F"),
         ("/Game/OceanPrototype/Input/IA_OceanToggleBuild", "B"),
         ("/Game/OceanPrototype/Input/IA_OceanRotateBuild", "R"),
+        ("/Game/OceanPrototype/Input/IA_OceanJump", "SpaceBar"),
+        ("/Game/OceanPrototype/Input/IA_OceanDive", "E"),
         (SET_DESTINATION_CLICK_ACTION_PATH, "LeftMouseButton"),
         (SET_DESTINATION_TOUCH_ACTION_PATH, "Touch1"),
     ]
@@ -283,14 +287,30 @@ def verify_input_context() -> None:
         return
 
     mappings = get_input_context_mappings(context)
+    found_mappings = {}
     for action_path, expected_key in required_mappings:
         action = load_asset(action_path)
         found = False
         for mapping in mappings:
             if same_object(get_prop(mapping, ["action", "Action"]), action) and key_name(get_prop(mapping, ["key", "Key"])) == expected_key:
                 found = True
+                found_mappings[(action_path, expected_key)] = mapping
                 break
         tdd("MVPInputMapping", f"action={action_path.rsplit('/', 1)[-1]} key={expected_key} result={pass_fail(found)}", failed=not found)
+
+    move_action_path = "/Game/OceanPrototype/Input/IA_OceanMove"
+    expected_modifier_classes = {
+        "W": ["InputModifierSwizzleAxis"],
+        "A": ["InputModifierNegate"],
+        "S": ["InputModifierNegate", "InputModifierSwizzleAxis"],
+        "D": [],
+    }
+    for expected_key, expected_classes in expected_modifier_classes.items():
+        mapping = found_mappings.get((move_action_path, expected_key))
+        modifiers = list(get_prop(mapping, ["modifiers", "Modifiers"], [])) if mapping else []
+        actual_classes = [modifier.get_class().get_name() for modifier in modifiers if modifier]
+        ok = actual_classes == expected_classes
+        tdd("MVPInputMoveModifiers", f"key={expected_key} actual={actual_classes} expected={expected_classes} result={pass_fail(ok)}", failed=not ok)
 
     count_ok = len(mappings) == len(required_mappings)
     tdd("MVPInputContext", f"path={INPUT_CONTEXT_PATH} mappings={len(mappings)} expected={len(required_mappings)} result={pass_fail(count_ok)}", failed=not count_ok)
@@ -311,9 +331,21 @@ def verify_controller_and_game_mode() -> None:
             "InteractAction": same_object(get_prop(controller_cdo, ["interact_action", "InteractAction"]), load_asset("/Game/OceanPrototype/Input/IA_OceanInteract")),
             "ToggleBuildAction": same_object(get_prop(controller_cdo, ["toggle_build_action", "ToggleBuildAction"]), load_asset("/Game/OceanPrototype/Input/IA_OceanToggleBuild")),
             "RotateBuildAction": same_object(get_prop(controller_cdo, ["rotate_build_action", "RotateBuildAction"]), load_asset("/Game/OceanPrototype/Input/IA_OceanRotateBuild")),
+            "JumpAction": same_object(get_prop(controller_cdo, ["jump_action", "JumpAction"]), load_asset("/Game/OceanPrototype/Input/IA_OceanJump")),
+            "DiveAction": same_object(get_prop(controller_cdo, ["dive_action", "DiveAction"]), load_asset("/Game/OceanPrototype/Input/IA_OceanDive")),
         }
         for prop_name, ok in checks.items():
             tdd("MVPPlayerControllerInput", f"property={prop_name} result={pass_fail(ok)}", failed=not ok)
+
+    if survivor_class is not None:
+        survivor_cdo = unreal.get_default_object(survivor_class)
+        try:
+            paper_flipbook_component_class = get_class("/Script/Paper2D.PaperFlipbookComponent")
+            paper_components = list(survivor_cdo.get_components_by_class(paper_flipbook_component_class))
+        except Exception:
+            paper_components = []
+        paper_ok = len(paper_components) == 1
+        tdd("MVPPaper2DVisualComponent", f"owner={SURVIVOR_BP_PATH} actual={len(paper_components)} expected=1 result={pass_fail(paper_ok)}", failed=not paper_ok)
 
     if game_mode_class is not None:
         game_mode_cdo = unreal.get_default_object(game_mode_class)

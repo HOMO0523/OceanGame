@@ -40,6 +40,10 @@
 			"Enabled": true
 		},
 		{
+			"Name": "Paper2D",
+			"Enabled": true
+		},
+		{
 			"Name": "Landmass",
 			"Enabled": true
 		},

@@ -9,6 +9,8 @@ Creates or updates:
     /Game/OceanPrototype/Input/IA_OceanInteract
     /Game/OceanPrototype/Input/IA_OceanToggleBuild
     /Game/OceanPrototype/Input/IA_OceanRotateBuild
+    /Game/OceanPrototype/Input/IA_OceanJump
+    /Game/OceanPrototype/Input/IA_OceanDive
     /Game/OceanPrototype/Input/IMC_OceanMVP
     /Game/OceanPrototype/Blueprints/BP_OceanSurvivorCharacter
     /Game/OceanPrototype/Blueprints/BP_OceanMVPPlayerController
@@ -36,6 +38,8 @@ MOVE_ACTION_PATH = f"{INPUT_DIR}/IA_OceanMove"
 INTERACT_ACTION_PATH = f"{INPUT_DIR}/IA_OceanInteract"
 TOGGLE_BUILD_ACTION_PATH = f"{INPUT_DIR}/IA_OceanToggleBuild"
 ROTATE_BUILD_ACTION_PATH = f"{INPUT_DIR}/IA_OceanRotateBuild"
+JUMP_ACTION_PATH = f"{INPUT_DIR}/IA_OceanJump"
+DIVE_ACTION_PATH = f"{INPUT_DIR}/IA_OceanDive"
 INPUT_CONTEXT_PATH = f"{INPUT_DIR}/IMC_OceanMVP"
 SURVIVOR_BP_PATH = f"{BLUEPRINT_DIR}/BP_OceanSurvivorCharacter"
 PLAYER_CONTROLLER_BP_PATH = f"{BLUEPRINT_DIR}/BP_OceanMVPPlayerController"
@@ -332,7 +336,27 @@ def make_key(key_name: str):
         raise RuntimeError(f"Could not create key {key_name}: {exc}") from exc
 
 
-def make_action_mapping(action, key_name: str):
+def create_input_modifier(mapping_context, modifier_class_name: str):
+    modifier_class = getattr(unreal, modifier_class_name, None)
+    if modifier_class is None:
+        tdd("MVPInputModifierClass", f"class={modifier_class_name} result=FAIL", failed=True)
+        return None
+
+    modifier = unreal.new_object(modifier_class, mapping_context)
+    if modifier_class_name == "InputModifierSwizzleAxis":
+        swizzle_enum = getattr(unreal, "InputAxisSwizzle", None)
+        if swizzle_enum is not None and hasattr(swizzle_enum, "YXZ"):
+            set_prop(modifier, ["order", "Order"], swizzle_enum.YXZ, required=True, label=modifier_class_name)
+
+    return modifier
+
+
+def modifier_class_names(mapping) -> list[str]:
+    modifiers = list(get_prop(mapping, ["modifiers", "Modifiers"], [])) if mapping else []
+    return [modifier.get_class().get_name() for modifier in modifiers if modifier]
+
+
+def make_action_mapping(action, key_name: str, mapping_context=None, modifier_classes=None):
     mapping_struct = getattr(unreal, "EnhancedActionKeyMapping", None)
     if mapping_struct is None:
         return None
@@ -340,6 +364,10 @@ def make_action_mapping(action, key_name: str):
     mapping = mapping_struct()
     set_prop(mapping, ["action", "Action"], action, required=True, label=f"{action.get_name()}:{key_name}")
     set_prop(mapping, ["key", "Key"], make_key(key_name), required=True, label=f"{action.get_name()}:{key_name}")
+    if modifier_classes and mapping_context is not None:
+        modifiers = [create_input_modifier(mapping_context, class_name) for class_name in modifier_classes]
+        modifiers = [modifier for modifier in modifiers if modifier is not None]
+        set_prop(mapping, ["modifiers", "Modifiers"], modifiers, required=True, label=f"{action.get_name()}:{key_name}")
     return mapping
 
 
@@ -347,10 +375,12 @@ def action_matches(current_action, desired_action) -> bool:
     return object_identity(current_action) == object_identity(desired_action)
 
 
-def mapping_matches(mapping, action, key_name_to_match: str) -> bool:
+def mapping_matches(mapping, action, key_name_to_match: str, modifier_classes=None) -> bool:
     mapped_action = get_prop(mapping, ["action", "Action"])
     mapped_key = get_prop(mapping, ["key", "Key"])
-    return action_matches(mapped_action, action) and key_name(mapped_key) == key_name_to_match
+    if not (action_matches(mapped_action, action) and key_name(mapped_key) == key_name_to_match):
+        return False
+    return modifier_class_names(mapping) == (modifier_classes or [])
 
 
 def get_input_context_mappings(mapping_context):
@@ -370,20 +400,22 @@ def input_context_has_exact_mappings(mapping_context, desired_mappings) -> bool:
     if len(current_mappings) != len(desired_mappings):
         return False
 
-    for action, key_name_to_match in desired_mappings:
-        if not any(mapping_matches(mapping, action, key_name_to_match) for mapping in current_mappings):
+    for desired_mapping in desired_mappings:
+        action, key_name_to_match, modifier_classes = desired_mapping
+        if not any(mapping_matches(mapping, action, key_name_to_match, modifier_classes) for mapping in current_mappings):
             return False
     return True
 
 
-def map_input_key(mapping_context, action, key_name: str) -> bool:
-    ok, _ = call_if_exists(mapping_context, ["map_key", "MapKey"], action, make_key(key_name))
+def map_input_key(mapping_context, action, key_name: str, modifier_classes=None) -> bool:
+    modifier_classes = modifier_classes or []
+    ok, mapping = call_if_exists(mapping_context, ["map_key", "MapKey"], action, make_key(key_name))
     if ok:
         tdd("MVPInputMapping", f"action={action.get_name()} key={key_name} result=PASS")
         return True
 
     current_mappings = list(get_prop(mapping_context, ["mappings", "Mappings"], []))
-    mapping = make_action_mapping(action, key_name)
+    mapping = make_action_mapping(action, key_name, mapping_context, modifier_classes)
     if mapping is None:
         tdd("MVPInputMapping", f"action={action.get_name()} key={key_name} result=FAIL", failed=True)
         return False
@@ -394,6 +426,44 @@ def map_input_key(mapping_context, action, key_name: str) -> bool:
     return ok
 
 
+def apply_input_mapping_modifiers(mapping_context, desired_mappings) -> bool:
+    default_mapping_data = get_prop(mapping_context, ["default_key_mappings", "DefaultKeyMappings"])
+    if default_mapping_data is not None:
+        current_mappings = list(get_prop(default_mapping_data, ["mappings", "Mappings"], []))
+    else:
+        current_mappings = list(get_prop(mapping_context, ["mappings", "Mappings"], []))
+
+    all_ok = True
+    for action, key_name_to_match, modifier_classes in desired_mappings:
+        matching_mapping = None
+        for mapping in current_mappings:
+            if action_matches(get_prop(mapping, ["action", "Action"]), action) and key_name(get_prop(mapping, ["key", "Key"])) == key_name_to_match:
+                matching_mapping = mapping
+                break
+
+        if matching_mapping is None:
+            tdd("MVPInputMappingModifiers", f"action={action.get_name()} key={key_name_to_match} result=FAIL", failed=True)
+            all_ok = False
+            continue
+
+        modifiers = [create_input_modifier(mapping_context, class_name) for class_name in modifier_classes]
+        modifiers = [modifier for modifier in modifiers if modifier is not None]
+        set_ok = set_prop(matching_mapping, ["modifiers", "Modifiers"], modifiers, required=True, label=f"{action.get_name()}:{key_name_to_match}")
+        actual_modifiers = modifier_class_names(matching_mapping)
+        ok = set_ok and actual_modifiers == modifier_classes
+        tdd("MVPInputMappingModifiers", f"action={action.get_name()} key={key_name_to_match} actual={actual_modifiers} expected={modifier_classes} result={pass_fail(ok)}", failed=not ok)
+        all_ok = all_ok and ok
+
+    if default_mapping_data is not None:
+        mappings_set = set_prop(default_mapping_data, ["mappings", "Mappings"], current_mappings, required=True, label=INPUT_CONTEXT_PATH)
+        context_set = set_prop(mapping_context, ["default_key_mappings", "DefaultKeyMappings"], default_mapping_data, required=True, label=INPUT_CONTEXT_PATH)
+    else:
+        mappings_set = set_prop(mapping_context, ["mappings", "Mappings"], current_mappings, required=True, label=INPUT_CONTEXT_PATH)
+        context_set = True
+
+    return all_ok and mappings_set and context_set
+
+
 def ensure_required_asset(asset_path: str):
     asset = load_asset(asset_path)
     if asset is None:
@@ -402,7 +472,7 @@ def ensure_required_asset(asset_path: str):
     return asset
 
 
-def ensure_input_mapping_context(move_action, interact_action, toggle_build_action, rotate_build_action, click_action, touch_action):
+def ensure_input_mapping_context(move_action, interact_action, toggle_build_action, rotate_build_action, jump_action, dive_action, click_action, touch_action):
     mapping_context_class = getattr(unreal, "InputMappingContext", None) or get_class("/Script/EnhancedInput.InputMappingContext")
     factory_class = getattr(unreal, "InputMappingContextFactory", None) or getattr(unreal, "InputMappingContext_Factory", None)
     factory = factory_class() if factory_class is not None else None
@@ -413,26 +483,29 @@ def ensure_input_mapping_context(move_action, interact_action, toggle_build_acti
 
     mapping_context, _created = create_or_load_asset(INPUT_CONTEXT_PATH, mapping_context_class, factory)
     mappings = [
-        (move_action, "W"),
-        (move_action, "A"),
-        (move_action, "S"),
-        (move_action, "D"),
-        (interact_action, "F"),
-        (toggle_build_action, "B"),
-        (rotate_build_action, "R"),
-        (click_action, "LeftMouseButton"),
-        (touch_action, "Touch1"),
+        (move_action, "W", ["InputModifierSwizzleAxis"]),
+        (move_action, "A", ["InputModifierNegate"]),
+        (move_action, "S", ["InputModifierNegate", "InputModifierSwizzleAxis"]),
+        (move_action, "D", []),
+        (interact_action, "F", []),
+        (toggle_build_action, "B", []),
+        (rotate_build_action, "R", []),
+        (jump_action, "SpaceBar", []),
+        (dive_action, "E", []),
+        (click_action, "LeftMouseButton", []),
+        (touch_action, "Touch1", []),
     ]
 
     if input_context_has_exact_mappings(mapping_context, mappings):
-        for action, key_name_to_log in mappings:
-            tdd("MVPInputMapping", f"action={action.get_name()} key={key_name_to_log} result=PASS")
+        for action, key_name_to_log, modifier_classes in mappings:
+            tdd("MVPInputMapping", f"action={action.get_name()} key={key_name_to_log} modifiers={modifier_classes} result=PASS")
         tdd("MVPInputContext", f"path={INPUT_CONTEXT_PATH} mappings={len(mappings)} result=PASS")
         return mapping_context
 
     clear_input_context_mappings(mapping_context)
-    results = [map_input_key(mapping_context, action, key_name) for action, key_name in mappings]
-    ok = all(results)
+    results = [map_input_key(mapping_context, action, key_name, modifier_classes) for action, key_name, modifier_classes in mappings]
+    modifiers_ok = apply_input_mapping_modifiers(mapping_context, mappings)
+    ok = all(results) and modifiers_ok
     tdd("MVPInputContext", f"path={INPUT_CONTEXT_PATH} mappings={len(mappings)} result={pass_fail(ok)}", failed=not ok)
     return mapping_context
 
@@ -443,14 +516,18 @@ def ensure_input_assets():
     interact_action = ensure_input_action(INTERACT_ACTION_PATH, "Boolean")
     toggle_build_action = ensure_input_action(TOGGLE_BUILD_ACTION_PATH, "Boolean")
     rotate_build_action = ensure_input_action(ROTATE_BUILD_ACTION_PATH, "Boolean")
+    jump_action = ensure_input_action(JUMP_ACTION_PATH, "Boolean")
+    dive_action = ensure_input_action(DIVE_ACTION_PATH, "Boolean")
     click_action = ensure_required_asset(SET_DESTINATION_CLICK_ACTION_PATH)
     touch_action = ensure_required_asset(SET_DESTINATION_TOUCH_ACTION_PATH)
-    mapping_context = ensure_input_mapping_context(move_action, interact_action, toggle_build_action, rotate_build_action, click_action, touch_action)
+    mapping_context = ensure_input_mapping_context(move_action, interact_action, toggle_build_action, rotate_build_action, jump_action, dive_action, click_action, touch_action)
     return {
         "move_action": move_action,
         "interact_action": interact_action,
         "toggle_build_action": toggle_build_action,
         "rotate_build_action": rotate_build_action,
+        "jump_action": jump_action,
+        "dive_action": dive_action,
         "click_action": click_action,
         "touch_action": touch_action,
         "mapping_context": mapping_context,
@@ -676,6 +753,8 @@ def configure_player_controller_blueprint(player_controller_bp, input_assets) ->
         "InteractAction": set_prop(cdo, ["interact_action", "InteractAction"], input_assets["interact_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
         "ToggleBuildAction": set_prop(cdo, ["toggle_build_action", "ToggleBuildAction"], input_assets["toggle_build_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
         "RotateBuildAction": set_prop(cdo, ["rotate_build_action", "RotateBuildAction"], input_assets["rotate_build_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
+        "JumpAction": set_prop(cdo, ["jump_action", "JumpAction"], input_assets["jump_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
+        "DiveAction": set_prop(cdo, ["dive_action", "DiveAction"], input_assets["dive_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
     }
 
     all_ok = all(checks.values())

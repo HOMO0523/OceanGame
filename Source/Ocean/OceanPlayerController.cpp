@@ -84,6 +84,18 @@ void AOceanPlayerController::SetupInputComponent()
 			{
 				EnhancedInputComponent->BindAction(RotateBuildAction, ETriggerEvent::Started, this, &AOceanPlayerController::OnRotateBuildTriggered);
 			}
+
+			if (JumpAction)
+			{
+				EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AOceanPlayerController::OnJumpStarted);
+				EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AOceanPlayerController::OnJumpCompleted);
+				EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Canceled, this, &AOceanPlayerController::OnJumpCompleted);
+			}
+
+			if (DiveAction)
+			{
+				EnhancedInputComponent->BindAction(DiveAction, ETriggerEvent::Started, this, &AOceanPlayerController::OnDiveTriggered);
+			}
 		}
 		else
 		{
@@ -246,6 +258,33 @@ void AOceanPlayerController::OnRotateBuildTriggered(const FInputActionValue& Val
 	{
 		Build->RotatePreview();
 		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBuildRotateHandled: result=PASS"));
+	}
+}
+
+void AOceanPlayerController::OnJumpStarted(const FInputActionValue& Value)
+{
+	if (AOceanCharacter* OceanCharacter = Cast<AOceanCharacter>(GetPawn()))
+	{
+		OceanCharacter->Jump();
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanJumpHandled: result=PASS"));
+	}
+}
+
+void AOceanPlayerController::OnJumpCompleted(const FInputActionValue& Value)
+{
+	if (AOceanCharacter* OceanCharacter = Cast<AOceanCharacter>(GetPawn()))
+	{
+		OceanCharacter->StopJumping();
+	}
+}
+
+void AOceanPlayerController::OnDiveTriggered(const FInputActionValue& Value)
+{
+	if (AOceanCharacter* OceanCharacter = Cast<AOceanCharacter>(GetPawn()))
+	{
+		FText Message;
+		const bool bStarted = OceanCharacter->TryStartDive(Message);
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDiveResult: allowed=%d message=%s"), bStarted ? 1 : 0, *Message.ToString());
 	}
 }
 

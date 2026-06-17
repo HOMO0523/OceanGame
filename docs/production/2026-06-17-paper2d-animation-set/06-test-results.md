@@ -3,7 +3,7 @@ unit_id: 2026-06-17-paper2d-animation-set
 status: verified
 owner: asset-pipeline
 updated_at: 2026-06-17T02:16:00
-source_commit: 24a3c4f
+source_commit: pending
 depends_on: [2026-06-16-mvp-survival-loop]
 parallel_lock: Ocean.Paper2DAnimationSet
 ---
@@ -90,3 +90,24 @@ parallel_lock: Ocean.Paper2DAnimationSet
 | 安全审计问题数 | 0 |
 
 边界结论：`222x222` 是用于从绿幕源图定位每个动作帧的比例；UE Paper2D 导入应使用安全 atlas 的 `288x288` 网格，避免头发、鞋子、脚蹼贴边被裁掉。
+
+## UE Paper2D 实验导入验证
+
+| 项 | 结果 |
+|---|---|
+| 插件可用性 | `PaperSprite`、`PaperFlipbook`、`PaperSpriteFactory`、`PaperFlipbookFactory`、`PaperSpriteComponent`、`PaperFlipbookComponent` 均可在 Unreal Python 中解析 |
+| 导入源目录 | `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288` |
+| 源 PNG 帧数 | 192 |
+| 动作 / 方向 / 帧数 | `idle`、`walk`、`swim`、`climb`、`jump`、`divesuit_dive` × 4 方向 × 8 帧 |
+| UE Textures | 192 |
+| UE Sprites | 192 |
+| UE Flipbooks | 24 |
+| 默认角色 Flipbook | `FB_ocean_survivor_idle_south` 已赋给 `BP_OceanSurvivorCharacter` 的 `Paper2DVisualComponent` |
+| 保存状态 | 导入目录与角色蓝图保存成功 |
+
+## 命令证据
+
+```powershell
+python scripts/ue_tdd_pipeline.py --pie-duration 3 --log-lines 160
+python scripts/ue_tdd_bridge.py --exec-file scripts/import_paper2d_experiment.py
+```

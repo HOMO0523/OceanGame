@@ -3,7 +3,7 @@ unit_id: 2026-06-17-paper2d-animation-set
 status: reviewed
 owner: asset-pipeline
 updated_at: 2026-06-17T02:16:00
-source_commit: 24a3c4f
+source_commit: pending
 depends_on: [2026-06-16-mvp-survival-loop]
 parallel_lock: Ocean.Paper2DAnimationSet
 ---
@@ -19,6 +19,9 @@ parallel_lock: Ocean.Paper2DAnimationSet
 - `idle` 已补齐为每方向 8 帧，并纳入最终 `8x20` 总 atlas。
 - 已从五张绿幕源图反推出真实比例：源定位格 `222x222`，UE 安全导入格 `288x288`。
 - 安全版 atlas 的脚本审计问题数为 0，解决了 `256x256` 切图导致的比例错误和头部裁切风险。
+- Paper2D 插件已在 Ocean 项目中启用，并通过 `Ocean.Build.cs` 接入 runtime module。
+- `BP_OceanSurvivorCharacter` 已挂载 Paper2D Flipbook 表现层，未替换原有 Gameplay Pawn。
+- V5 walk-safe 实验帧已导入 UE，形成 192 Textures、192 Sprites、24 Flipbooks，可用于后续方向/动作状态机实验。
 
 ## 风险
 
@@ -26,12 +29,12 @@ parallel_lock: Ocean.Paper2DAnimationSet
 - 绿幕去除可能在发丝和浅色边缘留下轻微半透明边缘。
 - 潜水服状态是新外观，必须和后续装备系统 / 事件系统的状态切换保持一致。
 - 单次大图重生的 160 格复杂度过高，当前已实测会出现行序错位、动作混入和贴边裁切。
+- 当前 UE 导入的是技术实验资产，不能等同于最终美术验收；侧向 `walk` 腿部相位仍需按“一黑丝腿 / 一裸腿”连续性继续修。
+- Paper2D 表现层不能接管移动、碰撞、交互或建造逻辑，否则会破坏 `BP_OceanSurvivorCharacter` 的 MVP gameplay 组件边界。
 
 ## 下一步
 
-1. 人工挑选是否接受当前视觉方向。
-2. Paper2D 技术实验优先使用 `atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`，只验证导入、Sprite、Flipbook、Pivot 和方向映射。
-3. 正式美术导入前继续修复 `walk`，尤其是侧向走路的一黑丝腿 / 一裸腿相位连续性。
-4. 为每个动作创建 Paper2D flipbook。
-5. 在 `BP_OceanSurvivorCharacter` 或未来专用 Paper2D 表现组件里接入状态机。
-6. 单独修复 `WASD` 四方向都朝右走的问题，并用日志验证输入向量与动画方向。
+1. 正式美术导入前继续修复 `walk`，尤其是侧向走路的一黑丝腿 / 一裸腿相位连续性。
+2. 接入 Paper2D 状态机：按移动方向、跳跃、水面/陆地、潜水入口状态切换 flipbook。
+3. 保持 `BP_OceanSurvivorCharacter` 为唯一 Gameplay Pawn，Paper2D 只读状态并负责显示。
+4. 后续把 `swim`、`climb`、`divesuit_dive` 接到真实事件系统前，先保留为表现资源，不提前承诺完整潜水玩法。

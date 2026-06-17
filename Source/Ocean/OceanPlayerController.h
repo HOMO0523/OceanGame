@@ -63,6 +63,12 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input|Ocean")
 	TObjectPtr<UInputAction> RotateBuildAction;
 
+	UPROPERTY(EditAnywhere, Category="Input|Ocean")
+	TObjectPtr<UInputAction> JumpAction;
+
+	UPROPERTY(EditAnywhere, Category="Input|Ocean")
+	TObjectPtr<UInputAction> DiveAction;
+
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
 
@@ -100,6 +106,9 @@ protected:
 	void TryOceanInteract();
 	void OnToggleBuildTriggered(const FInputActionValue& Value);
 	void OnRotateBuildTriggered(const FInputActionValue& Value);
+	void OnJumpStarted(const FInputActionValue& Value);
+	void OnJumpCompleted(const FInputActionValue& Value);
+	void OnDiveTriggered(const FInputActionValue& Value);
 
 	/** Helper function to get the move destination */
 	bool UpdateCachedDestination();

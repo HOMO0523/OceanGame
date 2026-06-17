@@ -27,6 +27,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Platform")
 	void SetInitialCoreSize(FIntPoint NewCoreSize);
 
+	UFUNCTION(BlueprintPure, Category = "Ocean|Platform")
+	bool IsWorldLocationAtWaterEdge(const FVector& WorldLocation) const;
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ocean|Platform")
 	TObjectPtr<USceneComponent> SceneRoot;

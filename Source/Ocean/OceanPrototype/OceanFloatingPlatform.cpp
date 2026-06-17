@@ -53,3 +53,13 @@ void AOceanFloatingPlatform::SetInitialCoreSize(FIntPoint NewCoreSize)
 {
 	InitialCoreSize = FIntPoint(FMath::Max(1, NewCoreSize.X), FMath::Max(1, NewCoreSize.Y));
 }
+
+bool AOceanFloatingPlatform::IsWorldLocationAtWaterEdge(const FVector& WorldLocation) const
+{
+	if (!BuildGrid)
+	{
+		return false;
+	}
+
+	return BuildGrid->IsWaterAdjacentCell(BuildGrid->WorldToCell(WorldLocation));
+}

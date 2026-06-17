@@ -42,6 +42,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ocean|Build Grid")
 	bool IsCellOccupied(FIntPoint Cell) const;
 
+	UFUNCTION(BlueprintPure, Category = "Ocean|Build Grid")
+	bool IsWaterAdjacentCell(FIntPoint Cell) const;
+
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Build Grid")
 	void ClearGrid();
 

@@ -11,7 +11,7 @@
 
 namespace
 {
-bool HasBlueprintInteractionOverride(AActor* Candidate, const FName FunctionName)
+bool HasBlueprintInteractionTextOverride(AActor* Candidate, const FName FunctionName)
 {
 	const UFunction* Function = Candidate ? Candidate->FindFunction(FunctionName) : nullptr;
 	return Function && !Function->GetOwnerClass()->HasAnyClassFlags(CLASS_Native);
@@ -20,7 +20,7 @@ bool HasBlueprintInteractionOverride(AActor* Candidate, const FName FunctionName
 FText DispatchGetOceanInteractionText(AActor* Target, AActor* Interactor)
 {
 	static const FName GetInteractionTextName(TEXT("GetOceanInteractionText"));
-	if (HasBlueprintInteractionOverride(Target, GetInteractionTextName))
+	if (HasBlueprintInteractionTextOverride(Target, GetInteractionTextName))
 	{
 		return IOceanInteractableInterface::Execute_GetOceanInteractionText(Target, Interactor);
 	}

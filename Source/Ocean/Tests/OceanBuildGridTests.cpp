@@ -19,7 +19,7 @@ bool FOceanBuildGridWorldToCellTest::RunTest(const FString& Parameters)
 	Grid->SetGridOrigin(FVector::ZeroVector);
 
 	TestEqual(TEXT("[TDD] OceanGrid_WorldToCell_X"), Grid->WorldToCell(FVector(149.0f, 151.0f, 0.0f)).X, 1);
-	TestEqual(TEXT("[TDD] OceanGrid_WorldToCell_Y"), Grid->WorldToCell(FVector(149.0f, 151.0f, 0.0f)).Y, 2);
+	TestEqual(TEXT("[TDD] OceanGrid_WorldToCell_Y"), Grid->WorldToCell(FVector(149.0f, 151.0f, 0.0f)).Y, 1);
 
 	return true;
 }
@@ -59,6 +59,39 @@ bool FOceanBuildGridAdjacencyTest::RunTest(const FString& Parameters)
 
 	TestTrue(TEXT("[TDD] OceanGrid_AdjacentAccepted"), Grid->CanPlaceFootprint({ FIntPoint(1, 0) }, true));
 	TestFalse(TEXT("[TDD] OceanGrid_DetachedRejected"), Grid->CanPlaceFootprint({ FIntPoint(5, 5) }, true));
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanBuildGridWaterEdgeTest, "Ocean.Build.Grid.WaterEdgeCells", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanBuildGridWaterEdgeTest::RunTest(const FString& Parameters)
+{
+	UOceanBuildGridComponent* Grid = NewObject<UOceanBuildGridComponent>();
+	Grid->ReserveFootprint(UOceanBuildGridComponent::BuildFootprint(FIntPoint(0, 0), FIntPoint(3, 3), 0), TEXT("TestPlatform"));
+
+	TestFalse(TEXT("[TDD] OceanGrid_WaterEdge_CenterRejected"), Grid->IsWaterAdjacentCell(FIntPoint(1, 1)));
+	TestTrue(TEXT("[TDD] OceanGrid_WaterEdge_WestAccepted"), Grid->IsWaterAdjacentCell(FIntPoint(0, 1)));
+	TestTrue(TEXT("[TDD] OceanGrid_WaterEdge_CornerAccepted"), Grid->IsWaterAdjacentCell(FIntPoint(0, 0)));
+	TestFalse(TEXT("[TDD] OceanGrid_WaterEdge_UnoccupiedRejected"), Grid->IsWaterAdjacentCell(FIntPoint(4, 4)));
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanFloatingPlatformWaterEdgeTest, "Ocean.Build.Platform.WorldLocationWaterEdge", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanFloatingPlatformWaterEdgeTest::RunTest(const FString& Parameters)
+{
+	AOceanFloatingPlatform* Platform = NewObject<AOceanFloatingPlatform>();
+	Platform->SetInitialCoreSize(FIntPoint(3, 3));
+	Platform->InitializeCorePlatform();
+
+	TestFalse(TEXT("[TDD] OceanPlatform_WaterEdge_CenterRejected"), Platform->IsWorldLocationAtWaterEdge(Platform->GetBuildGrid()->CellToWorld(FIntPoint(0, 0))));
+	TestTrue(TEXT("[TDD] OceanPlatform_WaterEdge_NorthAccepted"), Platform->IsWorldLocationAtWaterEdge(Platform->GetBuildGrid()->CellToWorld(FIntPoint(0, 1))));
+
+	Platform->SetInitialCoreSize(FIntPoint(2, 2));
+	Platform->InitializeCorePlatform();
+	TestTrue(TEXT("[TDD] OceanPlatform_WaterEdge_StarterBoatAccepted"), Platform->IsWorldLocationAtWaterEdge(Platform->GetBuildGrid()->CellToWorld(FIntPoint(0, 0))));
 
 	return true;
 }

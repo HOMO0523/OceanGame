@@ -19,16 +19,17 @@
 | Water | Water bodies, water collision profile, buoyancy support. |
 | PCG | Procedural resource scattering. |
 | Landmass | Terrain/brush support for WaterBodyOcean shoreline and landscape deformation workflows. |
+| Paper2D | Experimental HD2D player presentation through sprites and flipbooks. |
 | UnrealBridge | Editor-only Python/TCP bridge for automation, PIE/log capture, asset creation, save gate. |
 | EditorScriptingUtilities | Editor-only Python asset helpers used by `scripts/create_water_ocean_map.py`. |
 
 `UnrealBridge` declares editor plugin dependencies on `PythonScriptPlugin`, `GameplayAbilities`, `EnhancedInput`, `PoseSearch`, `Chooser`, and `StructUtils`. UE 5.7 warns that `StructUtils` is deprecated, but the copied bridge source currently links its module.
 
-## Planned Presentation Stack
+## Presentation Stack
 
 | Technology | Purpose | Boundary |
 |---|---|---|
-| Paper2D | Planned player-character visual layer for the HD2D look. | Not yet enabled as a verified project plugin in this docs step; when implemented, it should attach Sprite/Flipbook visuals to `BP_OceanSurvivorCharacter` without replacing the Ocean gameplay Pawn. |
+| Paper2D | Active experimental player-character visual layer for the HD2D look. | Enabled as a project plugin and `Ocean` runtime dependency; attaches a Flipbook component to `BP_OceanSurvivorCharacter` without replacing the Ocean gameplay Pawn. |
 | HD2D styling | 2D character over 3D water/platform scenes with high saturation, lighting/post-process, and fixed 45-60 degree top-down camera. | Visual style only; collision, survival, interaction, inventory, and build systems stay in existing Ocean gameplay components. |
 
 ## Project Scripts
@@ -40,6 +41,18 @@
 | `scripts/harness_state_validator.py` | Validates `docs/production` state folders, metadata, schemas, and `parallel_lock` collisions. |
 | `scripts/doc_sync_hook.py` | Manual/pre-commit documentation drift detector and progress snapshot updater. |
 | `scripts/create_water_ocean_map.py` | Editor Python script that creates `/Game/OceanPrototype/Maps/L_WaterOcean` with WaterZone, WaterBodyOcean, support Landscape, and WaterBrushManager. |
+| `scripts/import_paper2d_experiment.py` | Editor Python script that imports the external `288x288` Paper2D experiment frames as Textures, Sprites, and Flipbooks under `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe`. |
+
+## Gameplay Input Assets
+
+| Input Asset | Default Key | Purpose |
+|---|---|---|
+| `IA_OceanMove` | `W/A/S/D`, left mouse, touch | Corrected Axis2D movement plus preserved click/touch movement. |
+| `IA_OceanInteract` | `F` | Unified nearby interaction. |
+| `IA_OceanToggleBuild` | `B` | Build mode toggle. |
+| `IA_OceanRotateBuild` | `R` | Build preview rotation. |
+| `IA_OceanJump` | `SpaceBar` | Character jump using `ACharacter::Jump()`. |
+| `IA_OceanDive` | `E` | Water-edge dive-entry attempt; not full underwater gameplay. |
 
 ## Editor Automation Library
 

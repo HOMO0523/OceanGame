@@ -36,8 +36,19 @@
 - Produced an external Paper2D / HD2D placeholder animation atlas for the survivor character:
   - safe import candidate: `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\ocean_survivor_actions_5x4dir_8f_source222_pad33_safe_atlas_alpha_grid288x288.png`.
   - Paper2D experiment frames: `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`.
-  - covers `idle`, `swim`, `climb`, `jump`, and `divesuit_dive`, each with 4 directions and 8 frames per direction.
+  - covers `idle`, `walk`, `swim`, `climb`, `jump`, and `divesuit_dive`, each with 4 directions and 8 frames per direction.
   - built by generating each action as a separate `8x4` block, measuring the green source sheets as `1774x887`, using `222x222` as the source locator grid, then exporting a padded `288x288` UE-safe atlas.
+- Fixed the MVP movement input root cause:
+  - `IMC_OceanMVP` now uses Enhanced Input modifiers so `W=(0,+1)`, `A=(-1,0)`, `S=(0,-1)`, and `D=(+1,0)`.
+  - click-to-move and touch move remain in the same input context.
+- Added MVP jump and dive-entry controls:
+  - `IA_OceanJump` maps to `SpaceBar` and uses the normal `ACharacter::Jump()` path.
+  - `IA_OceanDive` maps to `E`; it only succeeds on floating-platform cells adjacent to water via `AOceanFloatingPlatform::IsWorldLocationAtWaterEdge`.
+  - Full diving ability, oxygen, underwater camera, and underwater collection remain deferred.
+- Enabled Paper2D as an experimental presentation layer:
+  - `AOceanCharacter` now owns a `Paper2DVisualComponent` without replacing Ocean gameplay components.
+  - Imported 192 experiment PNG frames as Textures, 192 Sprites, and 24 Flipbooks under `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe`.
+  - `BP_OceanSurvivorCharacter` is assigned `FB_ocean_survivor_idle_south` as the default experimental flipbook.
 
 ## Verification Snapshot
 
@@ -56,7 +67,9 @@
   - `MVPSurvivorBuildSelectedModule`, `MVPPlayerControllerInput`, and `MVPGameModePlayerController` pass.
   - Dirty package probe reports `dirty_content=[]` and `dirty_maps=[]`.
 - `Ocean.MVP.Build` automation now includes `AutoFindsTargetPlatform`, `DeckPlacement`, and `FailureCases`; all three complete successfully after the runtime target-platform resolution fix.
-- Paper2D placeholder asset probe generated 160 safe frames under `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\frames_alpha_288x288` with zero script-detected edge/crop issues; `atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288` is reserved for UE Paper2D import / flipbook experiments.
+- MVP input verification now checks 11 mappings, including corrected W/A/S/D modifiers, left mouse, touch, F, B, R, SpaceBar, and E.
+- `Ocean.Build` command-line automation finds and passes 8 tests, including `Ocean.Build.Grid.WaterEdgeCells` and `Ocean.Build.Platform.WorldLocationWaterEdge`.
+- Paper2D placeholder asset probe generated UE-safe `288x288` frames with zero script-detected edge/crop issues; the V5 experiment frame set imported successfully into UE as 192 textures, 192 sprites, and 24 flipbooks.
 
 ## Active Blockers
 
@@ -65,11 +78,11 @@
 
 ## Next Recommended Steps
 
-1. Run final MVP PIE verification with `python scripts/ue_tdd_pipeline.py --pie-duration 5`.
-2. Sync the defense HTML and commit log with the frozen MVP scope and technical tradeoffs.
-3. Keep fishing, diving, island travel, and cruise intro as explicitly deferred work.
-4. Use `scripts/setup_mvp_survival_loop.py` only for regeneration or repair of starter MVP content.
-5. For Paper2D workflow experiments, use `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`; keep final animation-quality acceptance separate from this sandbox.
+1. Sync the defense HTML and commit log with the corrected WASD, jump, dive-entry gate, and Paper2D import evidence.
+2. Keep fishing, full diving, island travel, and cruise intro as explicitly deferred work.
+3. Use `scripts/setup_mvp_survival_loop.py` only for regeneration or repair of starter MVP content.
+4. For Paper2D workflow experiments, use `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`; keep final animation-quality acceptance separate from this sandbox.
+5. Next gameplay slice should wire visual flipbook state selection from movement/water/dive-entry state, not move gameplay authority into Paper2D.
 
 ## WaterOcean Bootstrap
 
@@ -84,27 +97,27 @@
 <!-- DOC_SYNC_HOOK:START -->
 ### Doc Sync Hook Snapshot
 
-- generated_at: 2026-06-17T10:31:32
+- generated_at: 2026-06-17T11:39:12
 - phase: `pre-commit`
-- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-103132-doc-sync.md`
+- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-113912-doc-sync.md`
 - active_units: `2026-06-16-automation-migration`, `2026-06-16-minimal-loop-workflow`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`, `2026-06-17-paper2d-animation-set`
-- doc_targets: `docs/production`, `memory-bank/architecture.md`, `memory-bank/progress.md`
+- doc_targets: `docs/production`, `memory-bank/architecture.md`, `memory-bank/progress.md`, `memory-bank/tech-stack.md`
 - validator: success=`True` errors=`0` warnings=`0`
 
 **Video flow status:**
 - 00 context and rules: covered
 - 01 production unit split: touched
-- 02 semantic freeze: touched
-- 03 infrastructure audit: covered
+- 02 semantic freeze: covered
+- 03 infrastructure audit: touched
 - 04 implementation plan: covered
 - 05 test design: covered
 - 06 implementation log: touched
-- 07 verification and repair: covered
+- 07 verification and repair: touched
 - 08 review: touched
 - 09 memory and registry update: covered
 
 **Next documentation actions:**
-- Check whether `memory-bank/architecture.md` needs subsystem/data-flow updates.
 - Confirm changed code belongs to exactly one active `parallel_lock`; multiple active locks require coordinator routing.
+- For UE C++ changes, confirm `[TDD]` logs were added before implementation and run the UE TDD pipeline.
 - Production docs validate; keep `07-review.md` decision aligned with actual test evidence.
 <!-- DOC_SYNC_HOOK:END -->

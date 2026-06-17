@@ -20,10 +20,10 @@ Ocean
 
 | System | File/Area | Responsibility |
 |---|---|---|
-| Player input | `Source/Ocean/OceanPlayerController.*`, `/Game/OceanPrototype/Input/*` | Keeps click-to-move while adding WASD movement, F interaction, B build toggle, and R build rotation through `BP_OceanMVPPlayerController`. |
+| Player input | `Source/Ocean/OceanPlayerController.*`, `/Game/OceanPrototype/Input/*` | Keeps click-to-move while adding verified Axis2D WASD movement, `F` interaction, `B/R` build controls, `SpaceBar` jump, and `E` dive-entry attempt through `BP_OceanMVPPlayerController`. |
 | Survival / inventory | `UOceanSurvivalComponent`, `UOceanInventoryComponent` | Tracks health-adjacent MVP pressure through stamina, hydration, satiety, and stackable resource costs. |
 | Interaction | `UOceanInteractionComponent`, `UOceanInteractableInterface` | Finds the nearest valid interactable and routes F interaction to resources or later event actors. |
-| Build grid | `Source/Ocean/OceanPrototype/OceanBuildGridComponent.*` | Stable logical cells, footprint rotation, overlap and adjacency checks. |
+| Build grid | `Source/Ocean/OceanPrototype/OceanBuildGridComponent.*` | Stable logical cells, footprint rotation, overlap, adjacency checks, and edge-cell detection for water-only actions. |
 | Build placement | `Source/Ocean/OceanPrototype/OceanBuildComponent.*` | Toggles build mode, rotates previews, consumes inventory cost, and auto-resolves the floating platform if no explicit target is assigned. |
 | Module definition | `Source/Ocean/OceanPrototype/OceanBuildModuleDefinition.*` | Data-asset contract for footprint, cost, preview mesh, and actor class. |
 | Module actor | `Source/Ocean/OceanPrototype/OceanBuildModuleActor.*` | Cube-placeholder build module with inherited buoyancy path. |
@@ -32,6 +32,7 @@ Ocean
 | Resource field | `Source/Ocean/OceanPrototype/OceanResourceField.*` | Owns PCG component and deterministic fallback spawn positions. |
 | Debug HUD | `Source/Ocean/OceanPrototype/OceanSurvivalHUD.*` | Draws survival stats, inventory counts, build state, and nearest interaction prompt for MVP debugging. |
 | MVP map content | `scripts/setup_mvp_survival_loop.py`, `scripts/verify_mvp_survival_loop.py` | Generates and verifies `L_WaterOcean` starter platform, resource field, input assets, Blueprint classes, and the 1x1 deck data asset. |
+| Paper2D visual layer | `AOceanCharacter::Paper2DVisualComponent`, `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe/*` | Adds a Paper2D Flipbook presentation layer to `BP_OceanSurvivorCharacter` without replacing capsule, movement, survival, inventory, interaction, or build components. |
 
 ## 3. Data Flow
 
@@ -48,9 +49,17 @@ Ocean
 ### Player Loop
 
 1. `BP_OceanMVPGameMode` spawns `BP_OceanSurvivorCharacter` with `BP_OceanMVPPlayerController`.
-2. `IMC_OceanMVP` binds WASD, F, B, R, left mouse, and touch into one Enhanced Input context.
+2. `IMC_OceanMVP` binds WASD, F, B, R, SpaceBar, E, left mouse, and touch into one Enhanced Input context; W/A/S use Enhanced Input modifiers so W=(0,+1), A=(-1,0), S=(0,-1), D=(+1,0).
 3. Floating `AOceanResourceNode` actors expose F pickup and feed `UOceanInventoryComponent`.
-4. Build mode consumes inventory resources to place `AOceanBuildModuleActor` cells adjacent to the starter platform.
+4. SpaceBar calls the normal Character jump path; E calls `AOceanCharacter::TryStartDive` and only succeeds when the character is on a platform cell adjacent to unoccupied water.
+5. Build mode consumes inventory resources to place `AOceanBuildModuleActor` cells adjacent to the starter platform.
+
+### Paper2D Presentation
+
+1. Paper2D is enabled as a project plugin and runtime dependency of `Ocean`.
+2. `AOceanCharacter` owns `Paper2DVisualComponent`; gameplay remains on the existing Ocean pawn and components.
+3. `scripts/import_paper2d_experiment.py` imports the external `288x288` experiment frames as Textures, Sprites, and Flipbooks under `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe`.
+4. The script assigns `FB_ocean_survivor_idle_south` as the default experimental flipbook on `BP_OceanSurvivorCharacter`.
 
 ### Resource Spawn
 
@@ -64,6 +73,7 @@ Ocean
 |---|---|---|
 | Water | Ocean surface, water collision profile, buoyancy sampling. | Required for water actors and `UBuoyancyComponent`. |
 | PCG | Resource scattering and future island/loot generation. | Runtime actors can provide deterministic fallback until PCG graph assets exist. |
+| Paper2D | HD2D player presentation through sprites and flipbooks. | Visual layer only; it must not own movement, survival, inventory, interaction, or build authority. |
 | UnrealBridge | Editor automation, Python execution, PIE/log capture, save gate. | Editor-only; never required by packaged runtime. |
 
 ## 5. Prototype Rules
@@ -73,4 +83,4 @@ Ocean
 - Missing models use cube placeholders first.
 - Floating actor assets must retain buoyancy components.
 - Water setup is incomplete unless `WaterBodyCollision` exists in `Config/DefaultEngine.ini`.
-- Fishing, diving, island travel, and cruise intro remain out of MVP scope until the small-boat loop is playable and testable.
+- Fishing, full diving, island travel, and cruise intro remain out of MVP scope until the small-boat loop is playable and testable; the current `E` dive button is only a water-edge entry gate, not underwater gameplay.

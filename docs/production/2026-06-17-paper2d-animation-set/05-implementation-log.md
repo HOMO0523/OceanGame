@@ -3,7 +3,7 @@ unit_id: 2026-06-17-paper2d-animation-set
 status: implemented
 owner: asset-pipeline
 updated_at: 2026-06-17T02:16:00
-source_commit: 24a3c4f
+source_commit: pending
 depends_on: [2026-06-16-mvp-survival-loop]
 parallel_lock: Ocean.Paper2DAnimationSet
 ---
@@ -30,6 +30,11 @@ parallel_lock: Ocean.Paper2DAnimationSet
   - 源定位格：`221.75x221.75`，取 `222x222`
   - 推荐 UE 导入安全格：`288x288`
   - 安全 atlas：`D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\ocean_survivor_actions_5x4dir_8f_source222_pad33_safe_atlas_alpha_grid288x288.png`
+- 2026-06-17: 在 `Ocean` 项目中启用 Paper2D 插件，并把 `Paper2D` 加入 `Ocean.Build.cs` runtime dependency。
+- 2026-06-17: 给 `AOceanCharacter` 添加 `Paper2DVisualComponent`，作为表现层挂在 `BP_OceanSurvivorCharacter` 上；Capsule、移动、状态、背包、交互和建造组件继续保留 gameplay 权威。
+- 2026-06-17: 使用 `scripts/import_paper2d_experiment.py` 导入实验帧目录 `atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`。
+- 2026-06-17: UE 实验导入结果为 192 个 Textures、192 个 Sprites、24 个 Flipbooks，路径为 `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe`。
+- 2026-06-17: `BP_OceanSurvivorCharacter` 默认指定 `FB_ocean_survivor_idle_south`，用于验证 Paper2D 组件、Flipbook 可加载和默认显示链路。
 
 ## 产物位置
 
@@ -49,6 +54,10 @@ parallel_lock: Ocean.Paper2DAnimationSet
   - `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\frames_alpha_288x288`
 - Paper2D 实验拆帧目录：
   - `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`
+- Ocean UE 实验导入目录：
+  - `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe/Textures`
+  - `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe/Sprites`
+  - `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe/Flipbooks`
 - 当前推荐安全 manifest：
   - `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\ocean_survivor_actions_5x4dir_8f_source222_pad33_safe_manifest.json`
 - 动作导出根目录：
@@ -56,8 +65,8 @@ parallel_lock: Ocean.Paper2DAnimationSet
 
 ## 备注
 
-- 当前产物存放在 `D:\UE5 demo\Paper2d`，不是 `Ocean` Git 仓库内的正式资产目录。
-- 如果确认视觉方向可用，再迁移到 `D:\UE5 demo\Ocean\Content` 并通过 Unreal Editor / UnrealBridge 正式导入。
+- 原始生产产物仍存放在 `D:\UE5 demo\Paper2d`；本轮只把 V5 walk-safe 实验帧导入 `Ocean` Git 仓库内，用于验证 UE Paper2D 技术链路。
+- 当前 UE 导入资产是实验资产，不代表最终 walk 动画质量已经通过；侧向走路腿部相位仍应继续按人工反馈修图。
 - 当前不建议直接把单次大图重生 v1/v2 作为 UE 生产导入源；审计发现 160 格一次生成会产生行序错位和贴边裁切。
 - 当前推荐使用 `atlas_final_8x20` 目录下的最终合成稿作为 UE Paper2D 导入候选。
 - 若在 UE 中使用 Grid 切分，当前优先使用 `atlas_source_ratio_222_pad33_v4_safe`，切图尺寸设为 `288x288`；不要再用 `256x256` 切这批绿幕源图。

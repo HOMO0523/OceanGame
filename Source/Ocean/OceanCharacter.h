@@ -11,6 +11,7 @@ class UOceanBuildComponent;
 class UOceanInteractionComponent;
 class UOceanInventoryComponent;
 class UOceanSurvivalComponent;
+class UPaperFlipbookComponent;
 class USpringArmComponent;
 
 /**
@@ -43,6 +44,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UOceanBuildComponent> OceanBuildComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPaperFlipbookComponent> Paper2DVisualComponent;
+
 public:
 
 	/** Constructor */
@@ -71,6 +75,18 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Ocean|Build")
 	UOceanBuildComponent* GetBuildComponent() const { return OceanBuildComponent.Get(); }
+
+	UFUNCTION(BlueprintPure, Category = "Ocean|Visual")
+	UPaperFlipbookComponent* GetPaper2DVisualComponent() const { return Paper2DVisualComponent.Get(); }
+
+	UFUNCTION(BlueprintPure, Category = "Ocean|Dive")
+	bool CanStartDiveAtCurrentLocation() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Dive")
+	bool TryStartDive(FText& OutMessage);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Ocean|Dive")
+	void OnDiveRequested();
 
 };
 

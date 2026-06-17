@@ -22,7 +22,8 @@ public class Ocean : ModuleRules
 			"UMG",
 			"Slate",
 			"Water",
-			"PCG"
+			"PCG",
+			"Paper2D"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
