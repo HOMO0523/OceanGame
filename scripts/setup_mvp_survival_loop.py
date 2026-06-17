@@ -49,6 +49,7 @@ DECK_DEFINITION_PATH = f"{BUILD_DIR}/DA_BuildModule_Deck_1x1"
 SET_DESTINATION_CLICK_ACTION_PATH = "/Game/TopDown/Input/Actions/IA_SetDestination_Click"
 SET_DESTINATION_TOUCH_ACTION_PATH = "/Game/TopDown/Input/Actions/IA_SetDestination_Touch"
 PAPER2D_FLIPBOOK_DIR = "/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe/Flipbooks"
+HUD_ROOT_WIDGET_CLASS_PATH = "/Game/OceanPrototype/UI/WBP_OceanHUDRoot.WBP_OceanHUDRoot_C"
 
 PAPER2D_FLIPBOOK_PROPS = [
     ("idle_south", "idle", "south"),
@@ -820,6 +821,8 @@ def configure_player_controller_blueprint(player_controller_bp, input_assets) ->
         return
 
     cdo = unreal.get_default_object(controller_class)
+    hud_root_widget_class = unreal.load_class(None, HUD_ROOT_WIDGET_CLASS_PATH)
+    hud_root_widget_ok = hud_root_widget_class is not None
     checks = {
         "DefaultMappingContext": set_prop(cdo, ["default_mapping_context", "DefaultMappingContext"], input_assets["mapping_context"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
         "SetDestinationClickAction": set_prop(cdo, ["set_destination_click_action", "SetDestinationClickAction"], input_assets["click_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
@@ -831,6 +834,7 @@ def configure_player_controller_blueprint(player_controller_bp, input_assets) ->
         "RotateBuildAction": set_prop(cdo, ["rotate_build_action", "RotateBuildAction"], input_assets["rotate_build_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
         "JumpAction": set_prop(cdo, ["jump_action", "JumpAction"], input_assets["jump_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
         "DiveAction": set_prop(cdo, ["dive_action", "DiveAction"], input_assets["dive_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
+        "HUDRootWidgetClass": hud_root_widget_ok and set_prop(cdo, ["hud_root_widget_class", "HUDRootWidgetClass"], hud_root_widget_class, required=True, label=PLAYER_CONTROLLER_BP_PATH),
     }
 
     all_ok = all(checks.values())
