@@ -7,6 +7,8 @@
 #include "OceanPrototype/UI/OceanHUDRootWidget.h"
 #include "OceanPrototype/OceanSurvivalComponent.h"
 #include "OceanPrototype/OceanInventoryComponent.h"
+#include "OceanPrototype/OceanMVPGameMode.h"
+#include "OceanPrototype/UI/OceanTimePanelWidget.h"
 #include "GameFramework/Pawn.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "InputCoreTypes.h"
@@ -75,6 +77,22 @@ void AOceanPlayerController::BeginPlay()
 
 			// Initialize welcome toast
 			HUDRootWidget->ShowToast(FText::FromString(TEXT("Day 1 - Adrift at Sea")), 3.0f);
+
+			// Bind GameMode delegates to HUD
+			if (AOceanMVPGameMode* GM = Cast<AOceanMVPGameMode>(GetWorld()->GetAuthGameMode()))
+			{
+				// Day changed → update TimePanel
+				if (UOceanTimePanelWidget* TimePanel = HUDRootWidget->GetTimePanel())
+				{
+					GM->OnDayChanged.AddDynamic(TimePanel, &UOceanTimePanelWidget::SetDayAndTime);
+					TimePanel->SetDayAndTime(GM->CurrentDay, GM->CurrentTimeOfDay);
+				}
+
+				// Game phase changed → show win/lose toast
+				GM->OnGamePhaseChanged.AddDynamic(this, &AOceanPlayerController::OnGamePhaseChanged);
+
+				UE_LOG(LogOcean, Log, TEXT("[TDD] OceanGameMode: bound_to_HUD day=%d"), GM->CurrentDay);
+			}
 		}
 	}
 }
@@ -400,4 +418,20 @@ UOceanBuildComponent* AOceanPlayerController::GetControlledPawnBuildComponent() 
 {
 	const APawn* ControlledPawn = GetPawn();
 	return ControlledPawn ? ControlledPawn->FindComponentByClass<UOceanBuildComponent>() : nullptr;
+}
+
+void AOceanPlayerController::OnGamePhaseChanged(EOceanGamePhase Phase)
+{
+	if (!HUDRootWidget) return;
+
+	if (Phase == EOceanGamePhase::Won)
+	{
+		HUDRootWidget->ShowToast(FText::FromString(TEXT("You survived! Washed ashore on Day 8.")), 10.0f);
+	}
+	else if (Phase == EOceanGamePhase::Lost)
+	{
+		HUDRootWidget->ShowToast(FText::FromString(TEXT("You died at sea.")), 10.0f);
+	}
+
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanGameEnd: phase=%d"), static_cast<int32>(Phase));
 }

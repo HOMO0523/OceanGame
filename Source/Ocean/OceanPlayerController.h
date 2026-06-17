@@ -1,10 +1,11 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 //#include "Templates/SubclassOf.h"
 #include "GameFramework/PlayerController.h"
+#include "OceanPrototype/OceanMVPGameMode.h"
 #include "OceanPlayerController.generated.h"
 
 class UNiagaraSystem;
@@ -122,6 +123,9 @@ protected:
 	void OnJumpStarted(const FInputActionValue& Value);
 	void OnJumpCompleted(const FInputActionValue& Value);
 	void OnDiveTriggered(const FInputActionValue& Value);
+
+	// Game phase change handler (bound to GameMode delegate)
+	UFUNCTION() void OnGamePhaseChanged(EOceanGamePhase Phase);
 
 	/** Helper function to get the move destination */
 	bool UpdateCachedDestination();
