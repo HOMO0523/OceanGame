@@ -29,7 +29,7 @@
 
 | Technology | Purpose | Boundary |
 |---|---|---|
-| Paper2D | Active experimental player-character visual layer for the HD2D look. | Enabled as a project plugin and `Ocean` runtime dependency; attaches a Flipbook component to `BP_OceanSurvivorCharacter` without replacing the Ocean gameplay Pawn. |
+| Paper2D | Active experimental player-character visual layer for the HD2D look. | Enabled as a project plugin and `Ocean` runtime dependency; attaches a Flipbook component and lightweight animation component to `BP_OceanSurvivorCharacter` without replacing the Ocean gameplay Pawn. |
 | HD2D styling | 2D character over 3D water/platform scenes with high saturation, lighting/post-process, and fixed 45-60 degree top-down camera. | Visual style only; collision, survival, interaction, inventory, and build systems stay in existing Ocean gameplay components. |
 
 ## Project Scripts
@@ -53,6 +53,15 @@
 | `IA_OceanRotateBuild` | `R` | Build preview rotation. |
 | `IA_OceanJump` | `SpaceBar` | Character jump using `ACharacter::Jump()`. |
 | `IA_OceanDive` | `E` | Water-edge dive-entry attempt; not full underwater gameplay. |
+
+## Paper2D Animation Runtime
+
+| Runtime Type | Purpose |
+|---|---|
+| `UPaperFlipbookComponent` | Plays the currently selected imported sprite animation. |
+| `UOceanPaper2DAnimationComponent` | Keeps the Flipbook visual facing the active camera and selects state/direction Flipbooks. |
+| `EOceanPaper2DAnimationState` | Visual states: `Idle`, `Walk`, `Jump`, `Swim`, `Climb`, `DiveSuitDive`. |
+| `EOceanPaper2DDirection` | Cardinal visual directions: `South`, `West`, `East`, `North`. |
 
 ## Editor Automation Library
 

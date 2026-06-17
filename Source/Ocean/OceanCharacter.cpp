@@ -5,6 +5,7 @@
 #include "OceanPrototype/OceanFloatingPlatform.h"
 #include "OceanPrototype/OceanInteractionComponent.h"
 #include "OceanPrototype/OceanInventoryComponent.h"
+#include "OceanPrototype/OceanPaper2DAnimationComponent.h"
 #include "OceanPrototype/OceanSurvivalComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
@@ -61,6 +62,7 @@ AOceanCharacter::AOceanCharacter()
 	Paper2DVisualComponent->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	Paper2DVisualComponent->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
 	Paper2DVisualComponent->SetLooping(true);
+	OceanPaper2DAnimationComponent = CreateDefaultSubobject<UOceanPaper2DAnimationComponent>(TEXT("OceanPaper2DAnimation"));
 
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
@@ -78,7 +80,10 @@ void AOceanCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 
-	// stub
+	if (OceanPaper2DAnimationComponent)
+	{
+		OceanPaper2DAnimationComponent->UpdatePresentation(this, Paper2DVisualComponent.Get(), DeltaSeconds);
+	}
 }
 
 bool AOceanCharacter::CanStartDiveAtCurrentLocation() const

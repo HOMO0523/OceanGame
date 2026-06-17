@@ -32,7 +32,7 @@ Ocean
 | Resource field | `Source/Ocean/OceanPrototype/OceanResourceField.*` | Owns PCG component and deterministic fallback spawn positions. |
 | Debug HUD | `Source/Ocean/OceanPrototype/OceanSurvivalHUD.*` | Draws survival stats, inventory counts, build state, and nearest interaction prompt for MVP debugging. |
 | MVP map content | `scripts/setup_mvp_survival_loop.py`, `scripts/verify_mvp_survival_loop.py` | Generates and verifies `L_WaterOcean` starter platform, resource field, input assets, Blueprint classes, and the 1x1 deck data asset. |
-| Paper2D visual layer | `AOceanCharacter::Paper2DVisualComponent`, `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe/*` | Adds a Paper2D Flipbook presentation layer to `BP_OceanSurvivorCharacter` without replacing capsule, movement, survival, inventory, interaction, or build components. |
+| Paper2D visual layer | `AOceanCharacter::Paper2DVisualComponent`, `UOceanPaper2DAnimationComponent`, `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe/*` | Adds a camera-facing Paper2D Flipbook presentation layer and lightweight visual state machine to `BP_OceanSurvivorCharacter` without replacing capsule, movement, survival, inventory, interaction, or build components. |
 
 ## 3. Data Flow
 
@@ -57,9 +57,10 @@ Ocean
 ### Paper2D Presentation
 
 1. Paper2D is enabled as a project plugin and runtime dependency of `Ocean`.
-2. `AOceanCharacter` owns `Paper2DVisualComponent`; gameplay remains on the existing Ocean pawn and components.
+2. `AOceanCharacter` owns `Paper2DVisualComponent` and `OceanPaper2DAnimationComponent`; gameplay remains on the existing Ocean pawn and components.
 3. `scripts/import_paper2d_experiment.py` imports the external `288x288` experiment frames as Textures, Sprites, and Flipbooks under `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe`.
-4. The script assigns `FB_ocean_survivor_idle_south` as the default experimental flipbook on `BP_OceanSurvivorCharacter`.
+4. `scripts/setup_mvp_survival_loop.py` assigns all 24 imported Flipbooks to `OceanPaper2DAnimationComponent`.
+5. Each character tick updates only the Paper2D visual: it faces the active camera and chooses `Idle`, `Walk`, or `Jump` from movement state; `Swim`, `Climb`, and `DiveSuitDive` are assignable visual states for future event systems.
 
 ### Resource Spawn
 
@@ -73,7 +74,7 @@ Ocean
 |---|---|---|
 | Water | Ocean surface, water collision profile, buoyancy sampling. | Required for water actors and `UBuoyancyComponent`. |
 | PCG | Resource scattering and future island/loot generation. | Runtime actors can provide deterministic fallback until PCG graph assets exist. |
-| Paper2D | HD2D player presentation through sprites and flipbooks. | Visual layer only; it must not own movement, survival, inventory, interaction, or build authority. |
+| Paper2D | HD2D player presentation through sprites, flipbooks, and a lightweight visual state machine. | Visual layer only; it must not own movement, survival, inventory, interaction, or build authority. |
 | UnrealBridge | Editor automation, Python execution, PIE/log capture, save gate. | Editor-only; never required by packaged runtime. |
 
 ## 5. Prototype Rules

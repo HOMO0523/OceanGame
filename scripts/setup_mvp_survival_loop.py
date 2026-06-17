@@ -47,6 +47,34 @@ GAMEMODE_BP_PATH = f"{BLUEPRINT_DIR}/BP_OceanMVPGameMode"
 DECK_DEFINITION_PATH = f"{BUILD_DIR}/DA_BuildModule_Deck_1x1"
 SET_DESTINATION_CLICK_ACTION_PATH = "/Game/TopDown/Input/Actions/IA_SetDestination_Click"
 SET_DESTINATION_TOUCH_ACTION_PATH = "/Game/TopDown/Input/Actions/IA_SetDestination_Touch"
+PAPER2D_FLIPBOOK_DIR = "/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe/Flipbooks"
+
+PAPER2D_FLIPBOOK_PROPS = [
+    ("idle_south", "idle", "south"),
+    ("idle_west", "idle", "west"),
+    ("idle_east", "idle", "east"),
+    ("idle_north", "idle", "north"),
+    ("walk_south", "walk", "south"),
+    ("walk_west", "walk", "west"),
+    ("walk_east", "walk", "east"),
+    ("walk_north", "walk", "north"),
+    ("jump_south", "jump", "south"),
+    ("jump_west", "jump", "west"),
+    ("jump_east", "jump", "east"),
+    ("jump_north", "jump", "north"),
+    ("swim_south", "swim", "south"),
+    ("swim_west", "swim", "west"),
+    ("swim_east", "swim", "east"),
+    ("swim_north", "swim", "north"),
+    ("climb_south", "climb", "south"),
+    ("climb_west", "climb", "west"),
+    ("climb_east", "climb", "east"),
+    ("climb_north", "climb", "north"),
+    ("dive_suit_dive_south", "divesuit_dive", "south"),
+    ("dive_suit_dive_west", "divesuit_dive", "west"),
+    ("dive_suit_dive_east", "divesuit_dive", "east"),
+    ("dive_suit_dive_north", "divesuit_dive", "north"),
+]
 
 STARTER_PLATFORM_LABEL = "OceanFloatingPlatform_Starter"
 STARTER_RESOURCE_FIELD_LABEL = "OceanResourceField_Starter"
@@ -738,6 +766,48 @@ def configure_survivor_build_defaults(survivor_bp, deck_definition) -> None:
     tdd("MVPSurvivorBuildFallbackClass", f"class=/Script/Ocean.OceanBuildModuleActor result={pass_fail(fallback_ok)}", failed=not fallback_ok)
 
 
+def pascal_property_name(snake_name: str) -> str:
+    return "".join(part.capitalize() for part in snake_name.split("_"))
+
+
+def paper2d_flipbook_path(action: str, direction: str) -> str:
+    return f"{PAPER2D_FLIPBOOK_DIR}/FB_ocean_survivor_{action}_{direction}"
+
+
+def configure_survivor_paper2d_defaults(survivor_bp) -> None:
+    survivor_class = get_generated_class(survivor_bp)
+    if survivor_class is None:
+        tdd("MVPPaper2DAnimDefaults", "result=FAIL", failed=True)
+        return
+
+    cdo = unreal.get_default_object(survivor_class)
+    anim_component_class = get_class("/Script/Ocean.OceanPaper2DAnimationComponent")
+    anim_component = get_single_component(cdo, anim_component_class, SURVIVOR_BP_PATH)
+    if anim_component is None:
+        return
+
+    assigned_count = 0
+    for prop_name, action, direction in PAPER2D_FLIPBOOK_PROPS:
+        asset_path = paper2d_flipbook_path(action, direction)
+        flipbook = load_asset(asset_path)
+        loaded_ok = flipbook is not None
+        set_ok = loaded_ok and set_prop(anim_component, [prop_name, pascal_property_name(prop_name)], flipbook, required=True, label=f"{SURVIVOR_BP_PATH}:OceanPaper2DAnimation")
+        assigned_count += 1 if set_ok else 0
+        tdd("MVPPaper2DAnimFlipbookAssigned", f"property={prop_name} asset={asset_path} result={pass_fail(set_ok)}", failed=not set_ok)
+
+    if assigned_count == len(PAPER2D_FLIPBOOK_PROPS):
+        try:
+            paper_flipbook_component_class = get_class("/Script/Paper2D.PaperFlipbookComponent")
+            paper_components = list(cdo.get_components_by_class(paper_flipbook_component_class))
+        except Exception:
+            paper_components = []
+        if len(paper_components) == 1:
+            default_flipbook = load_asset(paper2d_flipbook_path("idle", "south"))
+            set_prop(paper_components[0], ["source_flipbook", "SourceFlipbook"], default_flipbook, required=False, label=f"{SURVIVOR_BP_PATH}:Paper2DVisual")
+
+    tdd("MVPPaper2DAnimFlipbooks", f"actual={assigned_count} expected={len(PAPER2D_FLIPBOOK_PROPS)} result={pass_fail(assigned_count == len(PAPER2D_FLIPBOOK_PROPS))}", failed=assigned_count != len(PAPER2D_FLIPBOOK_PROPS))
+
+
 def configure_player_controller_blueprint(player_controller_bp, input_assets) -> None:
     controller_class = get_generated_class(player_controller_bp)
     if controller_class is None:
@@ -791,6 +861,7 @@ def ensure_blueprints_and_data(input_assets) -> None:
     game_mode_bp = ensure_blueprint(GAMEMODE_BP_PATH, "/Script/Ocean.OceanGameMode")
     deck_definition = ensure_deck_definition()
     configure_survivor_build_defaults(survivor_bp, deck_definition)
+    configure_survivor_paper2d_defaults(survivor_bp)
     configure_player_controller_blueprint(player_controller_bp, input_assets)
     configure_game_mode_blueprint(game_mode_bp, survivor_bp, player_controller_bp)
 

@@ -347,6 +347,26 @@ def verify_controller_and_game_mode() -> None:
         paper_ok = len(paper_components) == 1
         tdd("MVPPaper2DVisualComponent", f"owner={SURVIVOR_BP_PATH} actual={len(paper_components)} expected=1 result={pass_fail(paper_ok)}", failed=not paper_ok)
 
+        try:
+            paper_anim_component_class = get_class("/Script/Ocean.OceanPaper2DAnimationComponent")
+            paper_anim_components = list(survivor_cdo.get_components_by_class(paper_anim_component_class))
+        except Exception:
+            paper_anim_components = []
+        paper_anim_ok = len(paper_anim_components) == 1
+        tdd("MVPPaper2DAnimComponent", f"owner={SURVIVOR_BP_PATH} actual={len(paper_anim_components)} expected=1 result={pass_fail(paper_anim_ok)}", failed=not paper_anim_ok)
+        if paper_anim_ok:
+            flipbook_props = [
+                "idle_south", "idle_west", "idle_east", "idle_north",
+                "walk_south", "walk_west", "walk_east", "walk_north",
+                "jump_south", "jump_west", "jump_east", "jump_north",
+                "swim_south", "swim_west", "swim_east", "swim_north",
+                "climb_south", "climb_west", "climb_east", "climb_north",
+                "dive_suit_dive_south", "dive_suit_dive_west", "dive_suit_dive_east", "dive_suit_dive_north",
+            ]
+            assigned_count = sum(1 for prop_name in flipbook_props if get_prop(paper_anim_components[0], [prop_name, ''.join(part.capitalize() for part in prop_name.split('_'))]) is not None)
+            flipbooks_ok = assigned_count == len(flipbook_props)
+            tdd("MVPPaper2DAnimFlipbooks", f"actual={assigned_count} expected={len(flipbook_props)} result={pass_fail(flipbooks_ok)}", failed=not flipbooks_ok)
+
     if game_mode_class is not None:
         game_mode_cdo = unreal.get_default_object(game_mode_class)
         pawn_ok = same_object(get_prop(game_mode_cdo, ["default_pawn_class", "DefaultPawnClass"]), survivor_class)

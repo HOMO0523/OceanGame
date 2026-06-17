@@ -49,6 +49,10 @@
   - `AOceanCharacter` now owns a `Paper2DVisualComponent` without replacing Ocean gameplay components.
   - Imported 192 experiment PNG frames as Textures, 192 Sprites, and 24 Flipbooks under `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe`.
   - `BP_OceanSurvivorCharacter` is assigned `FB_ocean_survivor_idle_south` as the default experimental flipbook.
+- Added the first Paper2D visual state machine:
+  - `UOceanPaper2DAnimationComponent` keeps the Paper2D visual facing the active camera without rotating the gameplay actor.
+  - The component auto-selects `Idle`, `Walk`, and `Jump` from movement/falling state and exposes `Swim`, `Climb`, and `DiveSuitDive` as future visual states.
+  - `BP_OceanSurvivorCharacter` now has 24 assigned Flipbook references for six actions x four directions.
 
 ## Verification Snapshot
 
@@ -70,6 +74,8 @@
 - MVP input verification now checks 11 mappings, including corrected W/A/S/D modifiers, left mouse, touch, F, B, R, SpaceBar, and E.
 - `Ocean.Build` command-line automation finds and passes 8 tests, including `Ocean.Build.Grid.WaterEdgeCells` and `Ocean.Build.Platform.WorldLocationWaterEdge`.
 - Paper2D placeholder asset probe generated UE-safe `288x288` frames with zero script-detected edge/crop issues; the V5 experiment frame set imported successfully into UE as 192 textures, 192 sprites, and 24 flipbooks.
+- `Ocean.Paper2D` command-line automation finds and passes 3 tests: camera-facing yaw, cardinal direction mapping, and state-priority selection.
+- MVP setup/verify probes now pass `MVPPaper2DAnimComponent` and `MVPPaper2DAnimFlipbooks: actual=24 expected=24`.
 
 ## Active Blockers
 
@@ -82,7 +88,7 @@
 2. Keep fishing, full diving, island travel, and cruise intro as explicitly deferred work.
 3. Use `scripts/setup_mvp_survival_loop.py` only for regeneration or repair of starter MVP content.
 4. For Paper2D workflow experiments, use `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`; keep final animation-quality acceptance separate from this sandbox.
-5. Next gameplay slice should wire visual flipbook state selection from movement/water/dive-entry state, not move gameplay authority into Paper2D.
+5. Next Paper2D slice should add one-shot transition timing and visual event requests for climb / dive-entry, while keeping full diving gameplay deferred.
 
 ## WaterOcean Bootstrap
 
@@ -97,10 +103,10 @@
 <!-- DOC_SYNC_HOOK:START -->
 ### Doc Sync Hook Snapshot
 
-- generated_at: 2026-06-17T11:39:12
+- generated_at: 2026-06-17T12:21:49
 - phase: `pre-commit`
-- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-113912-doc-sync.md`
-- active_units: `2026-06-16-automation-migration`, `2026-06-16-minimal-loop-workflow`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`, `2026-06-17-paper2d-animation-set`
+- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-122149-doc-sync.md`
+- active_units: `2026-06-16-automation-migration`, `2026-06-16-minimal-loop-workflow`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`, `2026-06-17-paper2d-animation-set`, `2026-06-17-paper2d-state-machine`
 - doc_targets: `docs/production`, `memory-bank/architecture.md`, `memory-bank/progress.md`, `memory-bank/tech-stack.md`
 - validator: success=`True` errors=`0` warnings=`0`
 

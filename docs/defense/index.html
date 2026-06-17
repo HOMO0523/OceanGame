@@ -376,7 +376,7 @@
 
     <section class="card">
       <h2>第一阶段 MVP</h2>
-      <p>目标不是完整开放世界，而是让玩家能在小船平台上移动、维持三条状态、拾取漂浮资源、消耗资源扩展平台。当前版本已经落成到 <code>L_WaterOcean</code>：starter 平台、16 个漂浮资源节点、MVP 输入资产、角色/控制器/GameMode 蓝图、1x1 Deck 数据资产、Space 跳跃、E 水边潜水入口和 Paper2D 实验表现层均可脚本验证。</p>
+      <p>目标不是完整开放世界，而是让玩家能在小船平台上移动、维持三条状态、拾取漂浮资源、消耗资源扩展平台。当前版本已经落成到 <code>L_WaterOcean</code>：starter 平台、16 个漂浮资源节点、MVP 输入资产、角色/控制器/GameMode 蓝图、1x1 Deck 数据资产、Space 跳跃、E 水边潜水入口和 Paper2D 实验状态机均可脚本验证。</p>
       <div class="loop">
         <div class="loop-step"><strong>出生</strong><p>玩家带初始物资出现在海面小船平台。</p></div>
         <div class="loop-step"><strong>移动</strong><p>左键点地 + 已修正方向的 WASD 精细移动并存。</p></div>
@@ -443,7 +443,7 @@
         <div class="mini">
           <span class="tag yellow">HD2D</span>
           <h3>Paper2D 只换表现层</h3>
-          <p>角色走 Paper2D / HD2D 表现层，但仍以 <code>BP_OceanSurvivorCharacter</code> 作为 Gameplay Pawn；已导入 192 帧、192 Sprites、24 Flipbooks，Capsule 和 Ocean 组件继续负责玩法。</p>
+          <p>角色走 Paper2D / HD2D 表现层，但仍以 <code>BP_OceanSurvivorCharacter</code> 作为 Gameplay Pawn；已导入 192 帧、192 Sprites、24 Flipbooks，并接入相机朝向与 Idle/Walk/Jump 状态切换。</p>
         </div>
       </div>
     </section>
@@ -494,7 +494,8 @@
         <div class="decision"><b>PCG</b><p>作为资源散播目标方案；第一阶段允许 deterministic fallback 保障演示稳定。</p></div>
         <div class="decision"><b>Grid</b><p>建造系统已接入角色、背包和地图平台；未指定目标平台时会自动解析场景中的浮动平台，避免 MVP 建造入口不可玩。</p></div>
         <div class="decision"><b>Paper2D Atlas</b><p>角色占位动作集采用“每动作 8x4 单独生成 → 脚本合成 8x20 总 atlas”的流程；五张绿幕源图反推为 222 源定位格，最终用 288 安全格导入，避免 256 切图导致头部/脚蹼裁切。</p></div>
-        <div class="decision"><b>Verification</b><p><code>setup_mvp_survival_loop.py</code> 和 <code>verify_mvp_survival_loop.py</code> 校验 11 个输入映射、控制器绑定、GameMode 默认类、16 个资源节点、Deck 数据、角色建造默认模块和 Paper2D 表现组件。</p></div>
+        <div class="decision"><b>Paper2D State</b><p>Paper2D 原生用 <code>Flipbook</code> 播放帧动画，但没有 SkeletalMesh 那种完整 AnimBP；本项目用轻量 C++ 状态组件做相机 billboard、方向判断和 Flipbook 切换。</p></div>
+        <div class="decision"><b>Verification</b><p><code>setup_mvp_survival_loop.py</code> 和 <code>verify_mvp_survival_loop.py</code> 校验 11 个输入映射、控制器绑定、GameMode 默认类、16 个资源节点、Deck 数据、角色建造默认模块和 24 个 Paper2D Flipbook 绑定。</p></div>
       </div>
     </section>
 
@@ -509,12 +510,12 @@
         <div class="mini">
           <span class="tag green">Automation</span>
           <h3>建造测试</h3>
-          <p><code>Ocean.Build</code> 找到 8 个自动化测试：含自动找平台、Deck 放置、失败场景、水边格子和世界坐标水边判定，均完成成功。</p>
+          <p><code>Ocean.Build</code> 找到 8 个自动化测试，<code>Ocean.Paper2D</code> 找到 3 个自动化测试；水边判定、相机朝向、方向映射和状态优先级均完成成功。</p>
         </div>
         <div class="mini">
           <span class="tag green">Bridge</span>
           <h3>资产验证</h3>
-          <p>UnrealBridge 验证地图加载、11 个输入映射、角色建造默认模块、控制器绑定、GameMode、16 个资源节点、Deck 数据资产和 Paper2D 默认 Flipbook。</p>
+          <p>UnrealBridge 验证地图加载、11 个输入映射、角色建造默认模块、控制器绑定、GameMode、16 个资源节点、Deck 数据资产、Paper2D 状态组件和 24 个 Flipbook。</p>
         </div>
       </div>
     </section>
@@ -533,6 +534,7 @@
         <div class="timeline-item"><strong>docs: add WASD and Paper2D gates</strong><p>补充 WASD Axis2D 根因调查、Paper2D/HD2D 角色表现边界和后续测试门。</p></div>
         <div class="timeline-item"><strong>docs: document Paper2D animation atlas workflow</strong><p>生成六组四方向八帧占位动作，并记录从单次大图失败到分动作合成 atlas 的资产管线取舍。</p></div>
         <div class="timeline-item"><strong>feat: fix input and import Paper2D experiment</strong><p>修复 WASD 都朝右走，新增 Space 跳跃、E 水边潜水入口，并把 192 帧实验动作导入 UE Paper2D。</p></div>
+        <div class="timeline-item"><strong>feat: add Paper2D animation state machine</strong><p>新增相机朝向 billboard、四方向判断、Idle/Walk/Jump 自动切换，并为后续 Swim/Climb/DiveSuitDive 保留视觉状态。</p></div>
       </div>
     </section>
 
