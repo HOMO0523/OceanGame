@@ -90,22 +90,81 @@ bool FOceanMVPPlacementQueryTest::RunTest(const FString& Parameters)
 		return false;
 	}
 
+	UOceanBuildModuleDefinition* DeckDefinition = CreatePlacementQueryDeckDefinition();
+	AActor* Builder = World->SpawnActor<AActor>(FVector::ZeroVector, FRotator::ZeroRotator);
+	TestNotNull(TEXT("[TDD] OceanPlacementQuery_Builder"), Builder);
+	if (!Builder)
+	{
+		DestroyPlacementQueryTestWorld(World);
+		return false;
+	}
+
+	UOceanBuildComponent* Build = AddPlacementQueryBuild(Builder);
+	Build->SetSelectedModule(DeckDefinition);
+	Build->SetBuildModeActive(true);
+
+	const FOceanPlacementQueryResult NoTargetResult = Build->QuerySelectedModulePlacement(FVector::ZeroVector);
+	TestFalse(TEXT("[TDD] OceanPlacementQuery_NoTargetRejected"), NoTargetResult.bCanPlace);
+	TestEqual(TEXT("[TDD] OceanPlacementQuery_NoTargetReason"), NoTargetResult.FailureReason, EOceanPlacementFailureReason::NoTargetPlatform);
+
 	AOceanFloatingPlatform* Platform = World->SpawnActor<AOceanFloatingPlatform>(FVector::ZeroVector, FRotator::ZeroRotator);
+	TestNotNull(TEXT("[TDD] OceanPlacementQuery_Platform"), Platform);
+	if (!Platform)
+	{
+		DestroyPlacementQueryTestWorld(World);
+		return false;
+	}
+
 	Platform->SetInitialCoreSize(FIntPoint(1, 1));
 	Platform->InitializeCorePlatform();
 	UOceanBuildGridComponent* Grid = Platform->GetBuildGrid();
 	TestNotNull(TEXT("[TDD] OceanPlacementQuery_BuildGrid"), Grid);
+	if (!Grid)
+	{
+		DestroyPlacementQueryTestWorld(World);
+		return false;
+	}
 
-	UOceanBuildModuleDefinition* DeckDefinition = CreatePlacementQueryDeckDefinition();
-
-	AActor* Builder = World->SpawnActor<AActor>(FVector::ZeroVector, FRotator::ZeroRotator);
 	UOceanInventoryComponent* Inventory = AddPlacementQueryInventory(Builder);
 	TestTrue(TEXT("[TDD] OceanPlacementQuery_AddWood"), Inventory->AddResource({ EOceanResourceType::Wood, 2 }));
 
-	UOceanBuildComponent* Build = AddPlacementQueryBuild(Builder);
 	Build->SetTargetPlatform(Platform);
 	Build->SetSelectedModule(DeckDefinition);
 	Build->SetBuildModeActive(true);
+
+	const FVector AdjacentLocation = Grid->CellToWorld(FIntPoint(1, 0));
+
+	Build->SetBuildModeActive(false);
+	const FOceanPlacementQueryResult NoBuildModeResult = Build->QuerySelectedModulePlacement(AdjacentLocation);
+	TestFalse(TEXT("[TDD] OceanPlacementQuery_NoBuildModeRejected"), NoBuildModeResult.bCanPlace);
+	TestEqual(TEXT("[TDD] OceanPlacementQuery_NoBuildModeReason"), NoBuildModeResult.FailureReason, EOceanPlacementFailureReason::NoBuildMode);
+
+	Build->SetBuildModeActive(true);
+	Build->SetSelectedModule(nullptr);
+	const FOceanPlacementQueryResult NoSelectedModuleResult = Build->QuerySelectedModulePlacement(AdjacentLocation);
+	TestFalse(TEXT("[TDD] OceanPlacementQuery_NoSelectedModuleRejected"), NoSelectedModuleResult.bCanPlace);
+	TestEqual(TEXT("[TDD] OceanPlacementQuery_NoSelectedModuleReason"), NoSelectedModuleResult.FailureReason, EOceanPlacementFailureReason::NoSelectedModule);
+
+	Build->SetSelectedModule(DeckDefinition);
+
+	AActor* PoorBuilder = World->SpawnActor<AActor>(FVector::ZeroVector, FRotator::ZeroRotator);
+	TestNotNull(TEXT("[TDD] OceanPlacementQuery_PoorBuilder"), PoorBuilder);
+	if (!PoorBuilder)
+	{
+		DestroyPlacementQueryTestWorld(World);
+		return false;
+	}
+
+	UOceanInventoryComponent* PoorInventory = AddPlacementQueryInventory(PoorBuilder);
+	TestTrue(TEXT("[TDD] OceanPlacementQuery_AddInsufficientWood"), PoorInventory->AddResource({ EOceanResourceType::Wood, 1 }));
+	UOceanBuildComponent* PoorBuild = AddPlacementQueryBuild(PoorBuilder);
+	PoorBuild->SetTargetPlatform(Platform);
+	PoorBuild->SetSelectedModule(DeckDefinition);
+	PoorBuild->SetBuildModeActive(true);
+
+	const FOceanPlacementQueryResult InsufficientResourcesResult = PoorBuild->QuerySelectedModulePlacement(AdjacentLocation);
+	TestFalse(TEXT("[TDD] OceanPlacementQuery_InsufficientResourcesRejected"), InsufficientResourcesResult.bCanPlace);
+	TestEqual(TEXT("[TDD] OceanPlacementQuery_InsufficientResourcesReason"), InsufficientResourcesResult.FailureReason, EOceanPlacementFailureReason::InsufficientResources);
 
 	const FOceanPlacementQueryResult OccupiedResult = Build->QuerySelectedModulePlacement(Grid->CellToWorld(FIntPoint(0, 0)));
 	TestFalse(TEXT("[TDD] OceanPlacementQuery_OccupiedRejected"), OccupiedResult.bCanPlace);
@@ -115,7 +174,7 @@ bool FOceanMVPPlacementQueryTest::RunTest(const FString& Parameters)
 	TestFalse(TEXT("[TDD] OceanPlacementQuery_DetachedRejected"), DetachedResult.bCanPlace);
 	TestEqual(TEXT("[TDD] OceanPlacementQuery_DetachedReason"), DetachedResult.FailureReason, EOceanPlacementFailureReason::DetachedFromPlatform);
 
-	const FOceanPlacementQueryResult AdjacentResult = Build->QuerySelectedModulePlacement(Grid->CellToWorld(FIntPoint(1, 0)));
+	const FOceanPlacementQueryResult AdjacentResult = Build->QuerySelectedModulePlacement(AdjacentLocation);
 	TestTrue(TEXT("[TDD] OceanPlacementQuery_AdjacentAccepted"), AdjacentResult.bCanPlace);
 	TestEqual(TEXT("[TDD] OceanPlacementQuery_AdjacentReason"), AdjacentResult.FailureReason, EOceanPlacementFailureReason::None);
 	TestEqual(TEXT("[TDD] OceanPlacementQuery_AdjacentAnchor"), AdjacentResult.AnchorCell, FIntPoint(1, 0));

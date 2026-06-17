@@ -64,9 +64,6 @@ FOceanPlacementQueryResult UOceanBuildComponent::QuerySelectedModulePlacement(co
 	Result.SnappedWorldLocation = Grid->CellToWorld(Result.AnchorCell);
 	Result.FootprintCells = SelectedModule->GetFootprintCells(Result.AnchorCell, RotationQuarterTurns);
 
-	const int32 ExpectedFootprintCount = FMath::Max(0, SelectedModule->FootprintSize.X) * FMath::Max(0, SelectedModule->FootprintSize.Y);
-	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBuildFootprintCellCount: actual=%d expected=%d"), Result.FootprintCells.Num(), ExpectedFootprintCount);
-
 	Result.FailureReason = Grid->ExplainFootprintPlacement(Result.FootprintCells, SelectedModule->bRequiresAdjacency);
 	if (Result.FailureReason != EOceanPlacementFailureReason::None)
 	{
@@ -91,6 +88,12 @@ bool UOceanBuildComponent::TryPlaceSelectedModuleAtWorld(const FVector& WorldLoc
 	LastPlacedModuleActor = nullptr;
 
 	const FOceanPlacementQueryResult PlacementQuery = QuerySelectedModulePlacement(WorldLocation);
+	if (IsValid(SelectedModule) && !PlacementQuery.FootprintCells.IsEmpty())
+	{
+		const int32 ExpectedFootprintCount = FMath::Max(0, SelectedModule->FootprintSize.X) * FMath::Max(0, SelectedModule->FootprintSize.Y);
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBuildFootprintCellCount: actual=%d expected=%d"), PlacementQuery.FootprintCells.Num(), ExpectedFootprintCount);
+	}
+
 	if (!PlacementQuery.bCanPlace)
 	{
 		switch (PlacementQuery.FailureReason)
