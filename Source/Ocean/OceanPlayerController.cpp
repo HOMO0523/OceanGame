@@ -299,6 +299,12 @@ void AOceanPlayerController::OnToggleBuildTriggered(const FInputActionValue& Val
 	{
 		Build->ToggleBuildMode();
 		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBuildToggleHandled: result=PASS"));
+
+		// 同步 BuildPanel 可见性
+		if (HUDRootWidget)
+		{
+			HUDRootWidget->SetBuildPanelVisible(Build->IsBuildModeActive());
+		}
 	}
 }
 

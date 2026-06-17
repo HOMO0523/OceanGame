@@ -13,6 +13,7 @@ class UOceanToastWidget;
 class UOceanSurvivalComponent;
 class UOceanInventoryComponent;
 class UOceanBuildComponent;
+class UCanvasPanel;
 
 UCLASS(Abstract)
 class OCEAN_API UOceanHUDRootWidget : public UUserWidget
@@ -20,6 +21,8 @@ class OCEAN_API UOceanHUDRootWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	virtual void NativeConstruct() override;
+
 	// --- 背包 ---
 	UFUNCTION(BlueprintCallable, Category = "Ocean|UI")
 	void SetBackpackOpen(bool bNewBackpackOpen);
@@ -44,6 +47,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ocean|UI")
 	void ShowToast(const FText& Message, float Duration = 2.0f);
 
+	// --- 可见性 ---
+	UFUNCTION(BlueprintCallable, Category = "Ocean|UI")
+	void SetBuildPanelVisible(bool bVisible);
+
 	// --- 获取子面板 ---
 	UFUNCTION(BlueprintPure, Category = "Ocean|UI")
 	UOceanStatusPanelWidget* GetStatusPanel() const { return StatusPanel; }
@@ -61,7 +68,7 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Ocean|UI")
 	void OnBackpackOpenChanged(bool bNewBackpackOpen);
 
-	// --- BindWidgetOptional 子面板（WBP 中未绑定时为 null）---
+	// --- BindWidgetOptional (WBP中存在则自动绑定) ---
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidgetOptional), Category = "Ocean|UI")
 	TObjectPtr<UOceanStatusPanelWidget> StatusPanel = nullptr;
 
@@ -80,6 +87,16 @@ protected:
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidgetOptional), Category = "Ocean|UI")
 	TObjectPtr<UOceanToastWidget> Toast = nullptr;
 
+	// --- WBP 中的层级容器 ---
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidgetOptional), Category = "Ocean|UI")
+	TObjectPtr<UCanvasPanel> CanvasRoot = nullptr;
+
 private:
 	bool bBackpackOpen = false;
+
+	/** 动态创建缺失的子面板并放到对应位置。 */
+	void EnsureAllPanels();
+
+	template<typename T>
+	T* CreateAndPlacePanel(const TCHAR* WidgetName, const FVector2D& Anchors, const FVector2D& Position, const FVector2D& Size);
 };
