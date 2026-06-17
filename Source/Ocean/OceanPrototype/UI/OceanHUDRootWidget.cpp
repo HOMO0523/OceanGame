@@ -13,12 +13,16 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Ocean.h"
 
+TSharedRef<SWidget> UOceanHUDRootWidget::RebuildWidget()
+{
+	// ★ 必须在 RebuildWidget 中设置 RootWidget —— NativeConstruct 太晚了
+	EnsureAllPanels();
+	return Super::RebuildWidget();
+}
+
 void UOceanHUDRootWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-
-	// 动态创建 WBP 中缺失的子面板
-	EnsureAllPanels();
 }
 
 void UOceanHUDRootWidget::EnsureAllPanels()

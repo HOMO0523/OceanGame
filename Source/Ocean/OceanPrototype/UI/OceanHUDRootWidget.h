@@ -65,6 +65,8 @@ public:
 	UOceanTimePanelWidget* GetTimePanel() const { return TimePanel; }
 
 protected:
+	virtual TSharedRef<SWidget> RebuildWidget() override;
+
 	UFUNCTION(BlueprintImplementableEvent, Category = "Ocean|UI")
 	void OnBackpackOpenChanged(bool bNewBackpackOpen);
 
