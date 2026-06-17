@@ -30,7 +30,8 @@ parallel_lock: Ocean.Paper2DAnimationSet
 ## 下一步
 
 1. 人工挑选是否接受当前视觉方向。
-2. 如果接受合成稿，优先将 `atlas_source_ratio_222_pad33_v4_safe` 的安全 atlas 导入 UE。
-3. 为每个动作创建 Paper2D flipbook。
-4. 在 `BP_OceanSurvivorCharacter` 或未来专用 Paper2D 表现组件里接入状态机。
-5. 单独修复 `WASD` 四方向都朝右走的问题，并用日志验证输入向量与动画方向。
+2. Paper2D 技术实验优先使用 `atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`，只验证导入、Sprite、Flipbook、Pivot 和方向映射。
+3. 正式美术导入前继续修复 `walk`，尤其是侧向走路的一黑丝腿 / 一裸腿相位连续性。
+4. 为每个动作创建 Paper2D flipbook。
+5. 在 `BP_OceanSurvivorCharacter` 或未来专用 Paper2D 表现组件里接入状态机。
+6. 单独修复 `WASD` 四方向都朝右走的问题，并用日志验证输入向量与动画方向。

@@ -15,6 +15,8 @@ name: Paper2D / HD2D survivor animation atlas
 accepted_target: five action blocks generated as 8x4 sheets and composed into one aligned 8x20 atlas
 screen_set: Paper2D survivor visual-state flipbook source, not an in-game menu screen
 accepted_asset_paths: `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_final_8x20\ocean_survivor_actions_5x4dir_8f_final_atlas_alpha_grid256x256.png`, `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_final_8x20\frames_alpha_256x256`
+paper2d_experiment_source: `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`
+paper2d_experiment_scope: UE Paper2D import / sprite / flipbook workflow sandbox only; not final animation-quality acceptance
 required_controls: `S/A/D/W` direction rows map to `south/west/east/north`; animation state switches are driven by gameplay state, not by UI buttons
 data_bindings: current movement direction, surface state, climb transition state, jump transition state, diving suit state
 command_dispatch: no direct command dispatch in this asset unit; future Paper2D component reads gameplay state from `BP_OceanSurvivorCharacter`
@@ -58,14 +60,14 @@ tests_required: static file probes for atlas size, frame count, row/action order
 
 - 本轮贴图是 Codex 生图 + 去绿幕得到的第一版占位资产，不作为最终商业级动画。
 - 上岸 / 爬船动作不内嵌完整船体或岛岸模型，避免和实际场景资产绑定；UE 里由交互点、碰撞体和动画通知完成吸附。
-- 所有动作统一归一到 `178x222` 单元，和已有 walk 资源保持同一 Paper2D 导入规格。
+- 所有动作统一到同一套 Paper2D 切图规则：从绿幕源图按 `222x222` 定位帧内容，再导出到 `288x288` 安全导入格。
 - 潜水服采用“保留角色识别度 + 增加面罩、氧气背包、脚蹼”的独立外观，后续可替换为正式潜水服设定。
 
 ## 修订后的资产验收目标
 
 - 最终导入候选不使用一次性 `8x20` 单图直生稿，而使用“每个动作单独 `8x4` 重生，再脚本合成 `8x20`”。
 - `idle` 必须和其他动作一样保持每方向 8 帧。
-- 最终总 atlas 必须为 `8` 列、`20` 行，每格 `256x256`，总尺寸 `2048x5120`。
+- 最终安全 atlas 必须为 `8` 列、`20` 行，每格 `288x288`，总尺寸 `2304x5760`。
 - 五个动作块顺序固定为 `idle`、`swim`、`climb`、`jump`、`divesuit_dive`。
 - 行序继续固定为 `south`、`west`、`east`、`north`。
 - 合成脚本必须使用同一个全局缩放系数，避免动作间头部和身体比例跳变。
@@ -80,3 +82,10 @@ tests_required: static file probes for atlas size, frame count, row/action order
 - 推荐导入候选为安全格：`288x288`，即 `222` 源定位格 + 四周约 `33px` 安全边。
 - 最终安全 atlas 路径：
   - `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\ocean_survivor_actions_5x4dir_8f_source222_pad33_safe_atlas_alpha_grid288x288.png`
+
+## Paper2D 实验目录
+
+- 用户指定实验帧目录：
+  - `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`
+- 该目录用于 UE Paper2D 导入、Sprite 切分、Flipbook 创建、Pivot / PixelsPerUnit / 方向映射实验。
+- 该目录不是最终美术验收目录；其中 `walk` 可用于验证 Paper2D 技术链路，但侧向走路腿部相位仍需后续用动作参考表重新修。

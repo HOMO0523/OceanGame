@@ -47,6 +47,8 @@ parallel_lock: Ocean.Paper2DAnimationSet
   - `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_final_8x20\frames_alpha_256x256`
 - 当前推荐安全拆帧目录：
   - `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\frames_alpha_288x288`
+- Paper2D 实验拆帧目录：
+  - `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`
 - 当前推荐安全 manifest：
   - `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\ocean_survivor_actions_5x4dir_8f_source222_pad33_safe_manifest.json`
 - 动作导出根目录：
@@ -59,3 +61,4 @@ parallel_lock: Ocean.Paper2DAnimationSet
 - 当前不建议直接把单次大图重生 v1/v2 作为 UE 生产导入源；审计发现 160 格一次生成会产生行序错位和贴边裁切。
 - 当前推荐使用 `atlas_final_8x20` 目录下的最终合成稿作为 UE Paper2D 导入候选。
 - 若在 UE 中使用 Grid 切分，当前优先使用 `atlas_source_ratio_222_pad33_v4_safe`，切图尺寸设为 `288x288`；不要再用 `256x256` 切这批绿幕源图。
+- 若只是验证 UE Paper2D 导入、Sprite、Flipbook、Pivot 和状态机接线，可使用 `atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288` 作为实验帧目录；该目录不代表最终走路动画质量已通过。
