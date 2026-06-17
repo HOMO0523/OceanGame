@@ -3,14 +3,14 @@
 #include "Components/TextBlock.h"
 #include "Ocean.h"
 
-void UOceanTimePanelWidget::NativeConstruct()
+TSharedRef<SWidget> UOceanTimePanelWidget::RebuildWidget()
 {
-	Super::NativeConstruct();
 	TimeText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("TimeText"));
 	TimeText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
 	TimeText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 16));
 	WidgetTree->RootWidget = TimeText;
 	RefreshText();
+	return Super::RebuildWidget();
 }
 
 void UOceanTimePanelWidget::SetDay(int32 NewDay)

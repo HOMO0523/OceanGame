@@ -22,7 +22,7 @@ public:
 	EOceanInventoryDragDropResult HandleSlotDrop(int32 FromSlotIndex, int32 ToSlotIndex);
 
 protected:
-	virtual void NativeConstruct() override;
+	virtual TSharedRef<SWidget> RebuildWidget() override;
 
 private:
 	UPROPERTY(Transient) TObjectPtr<UOceanInventoryComponent> InventoryComponent;

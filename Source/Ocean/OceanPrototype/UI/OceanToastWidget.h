@@ -15,7 +15,7 @@ public:
 	void Hide();
 
 protected:
-	virtual void NativeConstruct() override;
+	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual void NativeDestruct() override;
 
 private:

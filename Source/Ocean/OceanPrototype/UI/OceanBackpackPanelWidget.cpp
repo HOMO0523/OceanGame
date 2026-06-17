@@ -8,10 +8,8 @@
 #include "Components/Border.h"
 #include "Ocean.h"
 
-void UOceanBackpackPanelWidget::NativeConstruct()
+TSharedRef<SWidget> UOceanBackpackPanelWidget::RebuildWidget()
 {
-	Super::NativeConstruct();
-
 	UBorder* Border = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("Border"));
 	Border->SetBrushColor(FLinearColor(0.02f, 0.06f, 0.12f, 0.85f));
 	WidgetTree->RootWidget = Border;
@@ -29,6 +27,8 @@ void UOceanBackpackPanelWidget::NativeConstruct()
 	SlotCountText->SetColorAndOpacity(FSlateColor(FLinearColor(0.7f, 0.7f, 0.7f)));
 	SlotCountText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 12));
 	SlotContainer->AddChildToVerticalBox(Cast<UWidget>(SlotCountText))->SetPadding(FMargin(10, 2));
+
+	return Super::RebuildWidget();
 }
 
 void UOceanBackpackPanelWidget::BindInventory(UOceanInventoryComponent* InInventory, UOceanSurvivalComponent* InSurvival)

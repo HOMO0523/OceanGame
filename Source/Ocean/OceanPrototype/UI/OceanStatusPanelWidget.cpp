@@ -5,10 +5,9 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Ocean.h"
 
-void UOceanStatusPanelWidget::NativeConstruct()
+TSharedRef<SWidget> UOceanStatusPanelWidget::RebuildWidget()
 {
-	Super::NativeConstruct();
-
+	// ★ 必须在 RebuildWidget 中设置 RootWidget（NativeConstruct 太晚）
 	RootBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("RootBox"));
 	WidgetTree->RootWidget = RootBox;
 
@@ -25,6 +24,7 @@ void UOceanStatusPanelWidget::NativeConstruct()
 	SatietyText = MakeText(TEXT("SatietyText"));
 
 	UpdateVisuals();
+	return Super::RebuildWidget();
 }
 
 void UOceanStatusPanelWidget::BindSurvivalComponent(UOceanSurvivalComponent* InSurvival)

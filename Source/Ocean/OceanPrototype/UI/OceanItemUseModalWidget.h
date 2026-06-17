@@ -22,7 +22,7 @@ public:
 	const FOceanItemStack& GetPendingItem() const { return PendingItem; }
 
 protected:
-	virtual void NativeConstruct() override;
+	virtual TSharedRef<SWidget> RebuildWidget() override;
 
 private:
 	int32 PendingSlotIndex = INDEX_NONE;

@@ -6,10 +6,8 @@
 #include "Engine/World.h"
 #include "Ocean.h"
 
-void UOceanToastWidget::NativeConstruct()
+TSharedRef<SWidget> UOceanToastWidget::RebuildWidget()
 {
-	Super::NativeConstruct();
-
 	ToastBorder = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("ToastBorder"));
 	ToastBorder->SetBrushColor(FLinearColor(0.02f, 0.08f, 0.02f, 0.9f));
 	WidgetTree->RootWidget = ToastBorder;
@@ -21,6 +19,7 @@ void UOceanToastWidget::NativeConstruct()
 	ToastBorder->AddChild(ToastText);
 
 	SetVisibility(ESlateVisibility::Collapsed);
+	return Super::RebuildWidget();
 }
 
 void UOceanToastWidget::NativeDestruct()

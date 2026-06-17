@@ -8,10 +8,8 @@
 #include "Components/Border.h"
 #include "Ocean.h"
 
-void UOceanBuildPanelWidget::NativeConstruct()
+TSharedRef<SWidget> UOceanBuildPanelWidget::RebuildWidget()
 {
-	Super::NativeConstruct();
-
 	UBorder* Border = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("Border"));
 	Border->SetBrushColor(FLinearColor(0.05f, 0.05f, 0.08f, 0.85f));
 	WidgetTree->RootWidget = Border;
@@ -35,6 +33,7 @@ void UOceanBuildPanelWidget::NativeConstruct()
 	RootBox->AddChildToVerticalBox(Cast<UWidget>(RotationText))->SetPadding(FMargin(8, 2));
 
 	UpdateVisuals();
+	return Super::RebuildWidget();
 }
 
 void UOceanBuildPanelWidget::BindBuildComponent(UOceanBuildComponent* InBuild)

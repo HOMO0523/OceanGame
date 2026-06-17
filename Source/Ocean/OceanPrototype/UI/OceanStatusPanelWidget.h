@@ -28,7 +28,7 @@ public:
 	int32 GetMaxStaminaCells() const { return MaxStaminaCells; }
 
 protected:
-	virtual void NativeConstruct() override;
+	virtual TSharedRef<SWidget> RebuildWidget() override;
 
 private:
 	TWeakObjectPtr<UOceanSurvivalComponent> SurvivalComponent;

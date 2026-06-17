@@ -20,7 +20,7 @@ public:
 	EOceanTimeOfDay GetTimeOfDay() const { return TimeOfDay; }
 
 protected:
-	virtual void NativeConstruct() override;
+	virtual TSharedRef<SWidget> RebuildWidget() override;
 
 private:
 	int32 Day = 1;

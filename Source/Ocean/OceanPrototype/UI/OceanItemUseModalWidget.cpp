@@ -7,10 +7,8 @@
 #include "Ocean.h"
 #include "Ocean.h"
 
-void UOceanItemUseModalWidget::NativeConstruct()
+TSharedRef<SWidget> UOceanItemUseModalWidget::RebuildWidget()
 {
-	Super::NativeConstruct();
-
 	ModalBorder = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("ModalBorder"));
 	ModalBorder->SetBrushColor(FLinearColor(0.05f, 0.05f, 0.1f, 0.95f));
 	WidgetTree->RootWidget = ModalBorder;
@@ -30,6 +28,7 @@ void UOceanItemUseModalWidget::NativeConstruct()
 	VBox->AddChildToVerticalBox(Cast<UWidget>(HintText))->SetPadding(FMargin(20, 5));
 
 	SetVisibility(ESlateVisibility::Collapsed);
+	return Super::RebuildWidget();
 }
 
 void UOceanItemUseModalWidget::ShowConfirmation(int32 InSlotIndex, const FOceanItemStack& InItem)

@@ -21,7 +21,7 @@ public:
 	bool IsBuildModeActive() const;
 
 protected:
-	virtual void NativeConstruct() override;
+	virtual TSharedRef<SWidget> RebuildWidget() override;
 
 private:
 	TWeakObjectPtr<UOceanBuildComponent> BuildComponent;
