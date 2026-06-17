@@ -103,19 +103,19 @@
 <!-- DOC_SYNC_HOOK:START -->
 ### Doc Sync Hook Snapshot
 
-- generated_at: 2026-06-17T15:53:27
+- generated_at: 2026-06-17T16:08:34
 - phase: `pre-commit`
-- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-155327-doc-sync.md`
-- active_units: `2026-06-16-automation-migration`, `2026-06-16-minimal-loop-workflow`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`, `2026-06-17-paper2d-animation-set`, `2026-06-17-paper2d-state-machine`, `2026-06-17-paperzd-pie-visibility`
-- doc_targets: `docs/superpowers/specs`
+- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-160834-doc-sync.md`
+- active_units: `2026-06-16-automation-migration`, `2026-06-16-minimal-loop-workflow`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`, `2026-06-17-hud-backpack-drawer-uiux`, `2026-06-17-paper2d-animation-set`, `2026-06-17-paper2d-state-machine`, `2026-06-17-paperzd-pie-visibility`
+- doc_targets: `docs/production`, `docs/superpowers/plans`
 - validator: success=`True` errors=`0` warnings=`0`
 
 **Video flow status:**
-- 00 context and rules: touched
-- 01 production unit split: covered
+- 00 context and rules: covered
+- 01 production unit split: touched
 - 02 semantic freeze: covered
 - 03 infrastructure audit: covered
-- 04 implementation plan: covered
+- 04 implementation plan: touched
 - 05 test design: covered
 - 06 implementation log: covered
 - 07 verification and repair: covered
@@ -123,5 +123,5 @@
 - 09 memory and registry update: covered
 
 **Next documentation actions:**
-- No immediate documentation drift detected by the hook.
+- Production docs validate; keep `07-review.md` decision aligned with actual test evidence.
 <!-- DOC_SYNC_HOOK:END -->
