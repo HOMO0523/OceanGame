@@ -5,6 +5,7 @@
 #include "OceanPrototype/OceanInputMath.h"
 #include "OceanPrototype/OceanInteractionComponent.h"
 #include "OceanPrototype/UI/OceanHUDRootWidget.h"
+#include "OceanPrototype/OceanSurvivalComponent.h"
 #include "GameFramework/Pawn.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "InputCoreTypes.h"
@@ -46,6 +47,16 @@ void AOceanPlayerController::BeginPlay()
 		{
 			HUDRootWidget->AddToViewport();
 			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanHUDRootPIE: created=1 drawer_open=%d"), HUDRootWidget->IsBackpackOpen() ? 1 : 0);
+
+			// 自动绑定 SurvivalComponent 到 StatusPanel
+			APawn* ControlledPawn = GetPawn();
+			if (ControlledPawn)
+			{
+				if (UOceanSurvivalComponent* Survival = ControlledPawn->FindComponentByClass<UOceanSurvivalComponent>())
+				{
+					HUDRootWidget->BindSurvivalToStatusPanel(Survival);
+				}
+			}
 		}
 	}
 }
