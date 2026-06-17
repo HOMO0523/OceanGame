@@ -27,6 +27,47 @@ bool UOceanInventoryComponent::AddResource(FOceanResourceStack Stack)
 	return true;
 }
 
+bool UOceanInventoryComponent::AddItem(const FOceanItemStack& Stack)
+{
+	if (Stack.ItemId.IsNone() || Stack.Quantity <= 0 || Stack.MaxStack <= 0)
+	{
+		return false;
+	}
+
+	int32 Remaining = Stack.Quantity;
+	for (FOceanInventorySlot& Slot : Slots)
+	{
+		if (Slot.Stack.ItemId == Stack.ItemId && Slot.Stack.Quantity < Slot.Stack.MaxStack)
+		{
+			const int32 Capacity = Slot.Stack.MaxStack - Slot.Stack.Quantity;
+			const int32 ToMove = FMath::Min(Capacity, Remaining);
+			Slot.Stack.Quantity += ToMove;
+			Remaining -= ToMove;
+			if (Remaining <= 0)
+			{
+				return true;
+			}
+		}
+	}
+
+	while (Remaining > 0)
+	{
+		if (Slots.Num() >= MaxItemSlots)
+		{
+			return false;
+		}
+
+		FOceanInventorySlot NewSlot;
+		NewSlot.SlotIndex = Slots.Num();
+		NewSlot.Stack = Stack;
+		NewSlot.Stack.Quantity = FMath::Min(Stack.MaxStack, Remaining);
+		Slots.Add(NewSlot);
+		Remaining -= NewSlot.Stack.Quantity;
+	}
+
+	return true;
+}
+
 bool UOceanInventoryComponent::CanAcceptResource(FOceanResourceStack Stack) const
 {
 	if (Stack.Amount <= 0)

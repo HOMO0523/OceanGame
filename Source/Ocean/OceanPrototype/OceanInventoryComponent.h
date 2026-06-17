@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "OceanItemTypes.h"
 #include "OceanResourceTypes.h"
 #include "OceanInventoryComponent.generated.h"
 
@@ -15,6 +16,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Inventory")
 	bool AddResource(FOceanResourceStack Stack);
+
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Inventory")
+	bool AddItem(const FOceanItemStack& Stack);
 
 	UFUNCTION(BlueprintPure, Category = "Ocean|Inventory")
 	bool CanAcceptResource(FOceanResourceStack Stack) const;
@@ -34,12 +38,21 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ocean|Inventory")
 	const TArray<FOceanResourceStack>& GetStacks() const { return Stacks; }
 
+	UFUNCTION(BlueprintPure, Category = "Ocean|Inventory")
+	const TArray<FOceanInventorySlot>& GetSlots() const { return Slots; }
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Ocean|Inventory", meta = (ClampMin = "1"))
 	int32 MaxSlots = 8;
 
 	UPROPERTY(VisibleAnywhere, Category = "Ocean|Inventory")
 	TArray<FOceanResourceStack> Stacks;
+
+	UPROPERTY(EditAnywhere, Category = "Ocean|Inventory", meta = (ClampMin = "1"))
+	int32 MaxItemSlots = 12;
+
+	UPROPERTY(VisibleAnywhere, Category = "Ocean|Inventory")
+	TArray<FOceanInventorySlot> Slots;
 
 	FOceanResourceStack* FindMutableStack(EOceanResourceType ResourceType);
 	const FOceanResourceStack* FindStack(EOceanResourceType ResourceType) const;
