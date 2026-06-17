@@ -1,4 +1,5 @@
 ﻿#include "OceanPrototype/UI/OceanBackpackPanelWidget.h"
+#include "OceanPrototype/UI/OceanBackpackSlotWidget.h"
 #include "OceanPrototype/OceanInventoryComponent.h"
 #include "OceanPrototype/OceanSurvivalComponent.h"
 #include "Blueprint/WidgetTree.h"
@@ -6,6 +7,8 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Components/TextBlock.h"
 #include "Components/Border.h"
+#include "Components/WrapBox.h"
+#include "Components/WrapBoxSlot.h"
 #include "Ocean.h"
 
 TSharedRef<SWidget> UOceanBackpackPanelWidget::RebuildWidget()
@@ -13,24 +16,44 @@ TSharedRef<SWidget> UOceanBackpackPanelWidget::RebuildWidget()
 	if (bIsInitialized) return Super::RebuildWidget();
 	bIsInitialized = true;
 
+	// Root: dark background border
 	BgBorder = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("BgBorder"));
-	BgBorder->SetBrushColor(FLinearColor(0.02f, 0.06f, 0.12f, 0.88f));
-	BgBorder->SetPadding(FMargin(8, 6));
+	BgBorder->SetBrushColor(FLinearColor(0.02f, 0.06f, 0.12f, 0.92f));
+	BgBorder->SetPadding(FMargin(10, 8));
 	WidgetTree->RootWidget = BgBorder;
 
-	SlotContainer = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("SlotContainer"));
-	BgBorder->AddChild(SlotContainer);
+	RootVBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("RootVBox"));
+	BgBorder->AddChild(RootVBox);
 
+	// Header
 	HeaderText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("HeaderText"));
 	HeaderText->SetText(FText::FromString(TEXT("BACKPACK [Tab/I]")));
 	HeaderText->SetColorAndOpacity(FSlateColor(FLinearColor(0.3f, 1.0f, 0.5f)));
 	HeaderText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 18));
-	SlotContainer->AddChildToVerticalBox(HeaderText)->SetPadding(FMargin(4, 2, 4, 4));
+	RootVBox->AddChildToVerticalBox(HeaderText)->SetPadding(FMargin(0, 0, 0, 4));
 
+	// Slot count text
 	SlotCountText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("SlotCountText"));
 	SlotCountText->SetColorAndOpacity(FSlateColor(FLinearColor(0.6f, 0.6f, 0.6f)));
 	SlotCountText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 12));
-	SlotContainer->AddChildToVerticalBox(SlotCountText)->SetPadding(FMargin(4, 0));
+	RootVBox->AddChildToVerticalBox(SlotCountText)->SetPadding(FMargin(0, 0, 0, 6));
+
+	// WrapBox for 12 slot widgets (auto-wrap grid)
+	SlotWrapBox = WidgetTree->ConstructWidget<UWrapBox>(UWrapBox::StaticClass(), TEXT("SlotWrapBox"));
+	SlotWrapBox->SetInnerSlotPadding(FVector2D(3.0f, 3.0f));
+	RootVBox->AddChildToVerticalBox(SlotWrapBox);
+
+	// Create 12 slot widgets
+	for (int32 i = 0; i < SlotGridCount; ++i)
+	{
+		auto* SlotWidget = WidgetTree->ConstructWidget<UOceanBackpackSlotWidget>(
+			UOceanBackpackSlotWidget::StaticClass(), *FString::Printf(TEXT("Slot_%d"), i));
+		SlotWidget->ClearSlot();
+		SlotWrapBox->AddChildToWrapBox(SlotWidget);
+		SlotWidgets.Add(SlotWidget);
+	}
+
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBackpackPanel: created %d slot widgets"), SlotWidgets.Num());
 
 	return Super::RebuildWidget();
 }
@@ -45,11 +68,27 @@ void UOceanBackpackPanelWidget::BindInventory(UOceanInventoryComponent* InInvent
 
 void UOceanBackpackPanelWidget::RefreshSlots()
 {
-	if (SlotCountText && InventoryComponent)
+	if (!SlotCountText) return;
+
+	const auto& Slots = GetSlots();
+	const int32 Occupied = Slots.Num();
+
+	SlotCountText->SetText(FText::FromString(FString::Printf(TEXT("Items: %d/%d slots"), Occupied, SlotGridCount)));
+
+	// Update each slot widget with data or clear it
+	for (int32 i = 0; i < SlotWidgets.Num(); ++i)
 	{
-		int32 Count = InventoryComponent->GetSlots().Num();
-		SlotCountText->SetText(FText::FromString(FString::Printf(TEXT("Items: %d/%d slots"), Count, 12)));
+		if (i < Occupied)
+		{
+			SlotWidgets[i]->SetSlotData(i, Slots[i]);
+		}
+		else
+		{
+			SlotWidgets[i]->ClearSlot();
+		}
 	}
+
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBackpackPanel: refresh occupied=%d total=%d"), Occupied, SlotGridCount);
 }
 
 const TArray<FOceanInventorySlot>& UOceanBackpackPanelWidget::GetSlots() const
@@ -58,7 +97,7 @@ const TArray<FOceanInventorySlot>& UOceanBackpackPanelWidget::GetSlots() const
 	return InventoryComponent ? InventoryComponent->GetSlots() : Empty;
 }
 
-int32 UOceanBackpackPanelWidget::GetMaxSlots() const { return 12; }
+int32 UOceanBackpackPanelWidget::GetMaxSlots() const { return SlotGridCount; }
 
 bool UOceanBackpackPanelWidget::TryUseItemAtSlot(int32 SlotIndex)
 {
