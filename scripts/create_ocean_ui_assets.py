@@ -2,7 +2,7 @@
 Create Ocean HUD/backpack Widget Blueprint assets.
 
 Run through UnrealBridge from the project root:
-    python scripts/ue_tdd_bridge.py --exec-file scripts/create_ocean_ui_assets.py
+    BridgeClient().send(Path("scripts/create_ocean_ui_assets.py").read_text(encoding="utf-8"))
 """
 
 from __future__ import annotations
@@ -62,18 +62,19 @@ def load_parent_class(parent_class_path: str):
     return parent_class
 
 
-def get_widget_parent_class(widget_blueprint):
-    generated_class = None
-    try:
-        generated_class = widget_blueprint.get_editor_property("generated_class")
-    except Exception:
-        generated_class = None
-    if generated_class is None:
-        return None
-    try:
-        return generated_class.get_super_class()
-    except Exception:
-        return None
+def asset_data_tag(path: str, tag_name: str) -> str:
+    asset_data = unreal.EditorAssetLibrary.find_asset_data(path)
+    if not asset_data.is_valid():
+        return ""
+    tag_value = asset_data.get_tag_value(tag_name)
+    return str(tag_value) if tag_value else ""
+
+
+def generated_class_path_from_tag(path: str) -> str:
+    tag_value = asset_data_tag(path, "GeneratedClass")
+    if "'" not in tag_value:
+        return ""
+    return tag_value.split("'", 2)[1]
 
 
 def verify_widget_parent(path: str, parent_class) -> bool:
@@ -81,10 +82,15 @@ def verify_widget_parent(path: str, parent_class) -> bool:
     if widget_blueprint is None or parent_class is None:
         return False
 
-    actual_parent = get_widget_parent_class(widget_blueprint)
-    if actual_parent is None:
+    parent_path = parent_class.get_path_name()
+    parent_tag = asset_data_tag(path, "ParentClass") or asset_data_tag(path, "NativeParentClass")
+    if f"'{parent_path}'" not in parent_tag:
         return False
-    return actual_parent == parent_class
+
+    generated_class_path = generated_class_path_from_tag(path)
+    if not generated_class_path:
+        return False
+    return unreal.load_class(None, generated_class_path) is not None
 
 
 def ensure_widget(path: str, parent_class_path: str) -> None:
