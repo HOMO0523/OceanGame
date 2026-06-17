@@ -53,6 +53,10 @@
   - `UOceanPaper2DAnimationComponent` keeps the Paper2D visual facing the active camera without rotating the gameplay actor.
   - The component auto-selects `Idle`, `Walk`, and `Jump` from movement/falling state and exposes `Swim`, `Climb`, and `DiveSuitDive` as future visual states.
   - `BP_OceanSurvivorCharacter` now has 24 assigned Flipbook references for six actions x four directions.
+- Added HUD/backpack drawer UI verification:
+  - `scripts/verify_ocean_ui_assets.py` verifies the 10 Ocean HUD/backpack WBP assets under `/Game/OceanPrototype/UI`.
+  - The script verifies `/Game/OceanPrototype/Maps/L_WaterOcean` loads through Unreal Python.
+  - The optional `--pie` path emits a non-fragile `[TDD] OceanHUDRootPIE` probe while the no-LiveCoding pipeline captures the real HUD creation log.
 
 ## Verification Snapshot
 
@@ -76,6 +80,10 @@
 - Paper2D placeholder asset probe generated UE-safe `288x288` frames with zero script-detected edge/crop issues; the V5 experiment frame set imported successfully into UE as 192 textures, 192 sprites, and 24 flipbooks.
 - `Ocean.Paper2D` command-line automation finds and passes 3 tests: camera-facing yaw, cardinal direction mapping, and state-priority selection.
 - MVP setup/verify probes now pass `MVPPaper2DAnimComponent` and `MVPPaper2DAnimFlipbooks: actual=24 expected=24`.
+- `python -m py_compile scripts/verify_ocean_ui_assets.py` exits `0`.
+- BridgeClient execution of `scripts/verify_ocean_ui_assets.py` passes: 10/10 WBP assets load and `L_WaterOcean` map load reports `PASS`.
+- BridgeClient execution of `scripts/verify_ocean_ui_assets.py --pie` passes and emits `[TDD] OceanHUDRootPIE: probe=placeholder real_created_log=0 result=PASS`.
+- `python scripts/ue_tdd_pipeline.py --pie-duration 5 --log-lines 24000` succeeds: save gate `save_result=True dirty_before=[] dirty_after=[]`, cold compile succeeds, PIE runs for 5.33s, TDD report shows 21 lines with 19 passed / 0 failed, and logs include `[TDD] OceanHUDRootPIE: created=1 drawer_open=0`.
 
 ## Active Blockers
 
@@ -103,25 +111,26 @@
 <!-- DOC_SYNC_HOOK:START -->
 ### Doc Sync Hook Snapshot
 
-- generated_at: 2026-06-17T16:08:34
+- generated_at: 2026-06-17T18:52:41
 - phase: `pre-commit`
-- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-160834-doc-sync.md`
+- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-185241-doc-sync.md`
 - active_units: `2026-06-16-automation-migration`, `2026-06-16-minimal-loop-workflow`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`, `2026-06-17-hud-backpack-drawer-uiux`, `2026-06-17-paper2d-animation-set`, `2026-06-17-paper2d-state-machine`, `2026-06-17-paperzd-pie-visibility`
-- doc_targets: `docs/production`, `docs/superpowers/plans`
+- doc_targets: `memory-bank/progress.md`, `memory-bank/tech-stack.md`
 - validator: success=`True` errors=`0` warnings=`0`
 
 **Video flow status:**
 - 00 context and rules: covered
-- 01 production unit split: touched
+- 01 production unit split: covered
 - 02 semantic freeze: covered
-- 03 infrastructure audit: covered
-- 04 implementation plan: touched
+- 03 infrastructure audit: touched
+- 04 implementation plan: covered
 - 05 test design: covered
 - 06 implementation log: covered
-- 07 verification and repair: covered
+- 07 verification and repair: touched
 - 08 review: covered
 - 09 memory and registry update: covered
 
 **Next documentation actions:**
+- Check whether `memory-bank/tech-stack.md` needs tooling/dependency updates.
 - Production docs validate; keep `07-review.md` decision aligned with actual test evidence.
 <!-- DOC_SYNC_HOOK:END -->
