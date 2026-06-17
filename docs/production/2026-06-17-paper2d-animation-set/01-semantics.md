@@ -70,3 +70,13 @@ tests_required: static file probes for atlas size, frame count, row/action order
 - 行序继续固定为 `south`、`west`、`east`、`north`。
 - 合成脚本必须使用同一个全局缩放系数，避免动作间头部和身体比例跳变。
 - `idle`、`climb`、`jump` 使用稳定地面基线；`swim`、`divesuit_dive` 使用中心锚点。
+
+## 切图比例修订
+
+- 五张绿幕源图尺寸均为 `1774x887`。
+- 这些源图的自然网格不是 `256x256`，而是 `1774 / 8 = 221.75`、`887 / 4 = 221.75`。
+- 正确做法是把 `222x222` 当作源图定位网格，而不是 UE 最终导入格子。
+- 由于部分头发、鞋子、脚蹼贴近源格边缘，直接用 `222x222` 导入仍有裁切风险。
+- 推荐导入候选为安全格：`288x288`，即 `222` 源定位格 + 四周约 `33px` 安全边。
+- 最终安全 atlas 路径：
+  - `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\ocean_survivor_actions_5x4dir_8f_source222_pad33_safe_atlas_alpha_grid288x288.png`

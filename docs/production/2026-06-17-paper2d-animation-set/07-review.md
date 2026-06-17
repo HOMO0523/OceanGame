@@ -17,6 +17,8 @@ parallel_lock: Ocean.Paper2DAnimationSet
 - 水面游泳、爬船、跳跃、潜水服潜水已经覆盖小循环和后续扩展。
 - 最终推荐稿采用分动作 `8x4` 重生再合成，规避了单次 `8x20` 大图直生的行序错位问题。
 - `idle` 已补齐为每方向 8 帧，并纳入最终 `8x20` 总 atlas。
+- 已从五张绿幕源图反推出真实比例：源定位格 `222x222`，UE 安全导入格 `288x288`。
+- 安全版 atlas 的脚本审计问题数为 0，解决了 `256x256` 切图导致的比例错误和头部裁切风险。
 
 ## 风险
 
@@ -28,7 +30,7 @@ parallel_lock: Ocean.Paper2DAnimationSet
 ## 下一步
 
 1. 人工挑选是否接受当前视觉方向。
-2. 如果接受合成稿，将 `atlas_final_8x20` 的 normalized grid PNG 导入 UE。
+2. 如果接受合成稿，优先将 `atlas_source_ratio_222_pad33_v4_safe` 的安全 atlas 导入 UE。
 3. 为每个动作创建 Paper2D flipbook。
 4. 在 `BP_OceanSurvivorCharacter` 或未来专用 Paper2D 表现组件里接入状态机。
 5. 单独修复 `WASD` 四方向都朝右走的问题，并用日志验证输入向量与动画方向。

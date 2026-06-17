@@ -493,7 +493,7 @@
         <div class="decision"><b>Landmass</b><p><code>L_WaterOcean</code> 使用地形/水体支持，避免 WaterBodyOcean 中间缺块等边界问题。</p></div>
         <div class="decision"><b>PCG</b><p>作为资源散播目标方案；第一阶段允许 deterministic fallback 保障演示稳定。</p></div>
         <div class="decision"><b>Grid</b><p>建造系统已接入角色、背包和地图平台；未指定目标平台时会自动解析场景中的浮动平台，避免 MVP 建造入口不可玩。</p></div>
-        <div class="decision"><b>Paper2D Atlas</b><p>角色占位动作集采用“每动作 8x4 单独生成 → 脚本合成 8x20 总 atlas”的流程，覆盖待机、游泳、上岸/爬船、跳跃和潜水服潜水，避免单次 160 格生图导致行序错位。</p></div>
+        <div class="decision"><b>Paper2D Atlas</b><p>角色占位动作集采用“每动作 8x4 单独生成 → 脚本合成 8x20 总 atlas”的流程；五张绿幕源图反推为 222 源定位格，最终用 288 安全格导入，避免 256 切图导致头部/脚蹼裁切。</p></div>
         <div class="decision"><b>Verification</b><p><code>setup_mvp_survival_loop.py</code> 和 <code>verify_mvp_survival_loop.py</code> 校验 9 个输入映射、控制器绑定、GameMode 默认类、16 个资源节点、Deck 数据和角色建造默认模块。</p></div>
       </div>
     </section>

@@ -42,6 +42,7 @@ parallel_lock: Ocean.Paper2DAnimationSet
 | `ocean_survivor_actions_5x4dir_8f_regenerated_alpha_grid256x256.png` | `2048x5120` | 160 | 不建议导入；`swim` 起始行混入站立背面 |
 | `ocean_survivor_actions_5x4dir_8f_regenerated_v2_alpha_grid256x256.png` | `2048x5120` | 160 | 不建议导入；仍有行序错位、部分动作贴边 |
 | `atlas_final_8x20\ocean_survivor_actions_5x4dir_8f_final_atlas_alpha_grid256x256.png` | `2048x5120` | 160 | 推荐导入候选；分动作生成后脚本合成 |
+| `atlas_source_ratio_222_pad33_v4_safe\ocean_survivor_actions_5x4dir_8f_source222_pad33_safe_atlas_alpha_grid288x288.png` | `2304x5760` | 160 | 当前推荐导入候选；按五张绿幕图反推比例并加安全边 |
 
 ## 单次大图重生边界
 
@@ -73,3 +74,19 @@ parallel_lock: Ocean.Paper2DAnimationSet
 | `divesuit_dive` | 176.5 | 187.72 | 173.0 | 171.44 |
 
 说明：`swim`、`divesuit_dive` 是横向游泳姿势，不能用全身高度和站立动作直接比较；本轮用同一全局缩放系数和锚点对齐降低头部 / 身体比例跳变。
+
+## 源图比例与安全切图验证
+
+| 项 | 结果 |
+|---|---|
+| 五张绿幕源图尺寸 | `1774x887` |
+| 自然单元比例 | `221.75x221.75` |
+| 源定位格 | `222x222` |
+| 安全导入格 | `288x288` |
+| 安全边 | 每侧约 `33px`，并自动保证最小边距 `12px` |
+| 安全 atlas | `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\ocean_survivor_actions_5x4dir_8f_source222_pad33_safe_atlas_alpha_grid288x288.png` |
+| 安全拆帧 | `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\frames_alpha_288x288` |
+| 安全审计预览 | `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\ocean_survivor_actions_5x4dir_8f_source222_pad33_safe_audit_preview.png` |
+| 安全审计问题数 | 0 |
+
+边界结论：`222x222` 是用于从绿幕源图定位每个动作帧的比例；UE Paper2D 导入应使用安全 atlas 的 `288x288` 网格，避免头发、鞋子、脚蹼贴边被裁掉。

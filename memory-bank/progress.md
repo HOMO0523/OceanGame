@@ -34,9 +34,9 @@
   - `OceanFloatingPlatform_Starter`, `OceanResourceField_Starter`, `PlayerStart_MVP`, and 16 starter resource nodes in `L_WaterOcean`.
   - `BP_OceanSurvivorCharacter` defaults its `OceanBuild` component to the 1x1 Deck module; `UOceanBuildComponent` auto-resolves the scene floating platform when no explicit target is assigned.
 - Produced an external Paper2D / HD2D placeholder animation atlas for the survivor character:
-  - final candidate: `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_final_8x20\ocean_survivor_actions_5x4dir_8f_final_atlas_alpha_grid256x256.png`.
+  - safe import candidate: `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\ocean_survivor_actions_5x4dir_8f_source222_pad33_safe_atlas_alpha_grid288x288.png`.
   - covers `idle`, `swim`, `climb`, `jump`, and `divesuit_dive`, each with 4 directions and 8 frames per direction.
-  - built by generating each action as a separate `8x4` block, then script-composing one aligned `8x20` atlas.
+  - built by generating each action as a separate `8x4` block, measuring the green source sheets as `1774x887`, using `222x222` as the source locator grid, then exporting a padded `288x288` UE-safe atlas.
 
 ## Verification Snapshot
 
@@ -55,7 +55,7 @@
   - `MVPSurvivorBuildSelectedModule`, `MVPPlayerControllerInput`, and `MVPGameModePlayerController` pass.
   - Dirty package probe reports `dirty_content=[]` and `dirty_maps=[]`.
 - `Ocean.MVP.Build` automation now includes `AutoFindsTargetPlatform`, `DeckPlacement`, and `FailureCases`; all three complete successfully after the runtime target-platform resolution fix.
-- Paper2D placeholder asset probe generated 160 final frames under `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_final_8x20\frames_alpha_256x256` with zero script-detected crop/anchor issues.
+- Paper2D placeholder asset probe generated 160 safe frames under `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v4_safe\frames_alpha_288x288` with zero script-detected edge/crop issues.
 
 ## Active Blockers
 
@@ -68,7 +68,7 @@
 2. Sync the defense HTML and commit log with the frozen MVP scope and technical tradeoffs.
 3. Keep fishing, diving, island travel, and cruise intro as explicitly deferred work.
 4. Use `scripts/setup_mvp_survival_loop.py` only for regeneration or repair of starter MVP content.
-5. If the Paper2D visual direction is accepted, import the `atlas_final_8x20` PNG into UE and create flipbooks without replacing the current gameplay Pawn.
+5. If the Paper2D visual direction is accepted, import the `atlas_source_ratio_222_pad33_v4_safe` PNG into UE with `288x288` grid cells and create flipbooks without replacing the current gameplay Pawn.
 
 ## WaterOcean Bootstrap
 
@@ -83,9 +83,9 @@
 <!-- DOC_SYNC_HOOK:START -->
 ### Doc Sync Hook Snapshot
 
-- generated_at: 2026-06-17T02:23:21
+- generated_at: 2026-06-17T08:38:48
 - phase: `pre-commit`
-- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-022321-doc-sync.md`
+- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260617-083848-doc-sync.md`
 - active_units: `2026-06-16-automation-migration`, `2026-06-16-minimal-loop-workflow`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`, `2026-06-17-paper2d-animation-set`
 - doc_targets: `docs/production`, `memory-bank/architecture.md`, `memory-bank/progress.md`
 - validator: success=`True` errors=`0` warnings=`0`
@@ -93,13 +93,13 @@
 **Video flow status:**
 - 00 context and rules: covered
 - 01 production unit split: touched
-- 02 semantic freeze: covered
+- 02 semantic freeze: touched
 - 03 infrastructure audit: covered
 - 04 implementation plan: covered
 - 05 test design: covered
 - 06 implementation log: touched
-- 07 verification and repair: covered
-- 08 review: covered
+- 07 verification and repair: touched
+- 08 review: touched
 - 09 memory and registry update: covered
 
 **Next documentation actions:**
