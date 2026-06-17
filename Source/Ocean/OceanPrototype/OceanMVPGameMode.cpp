@@ -4,6 +4,8 @@
 #include "OceanPrototype/OceanFloatingPlatform.h"
 #include "OceanPrototype/OceanItemScatterComponent.h"
 #include "OceanPrototype/OceanItemPickupActor.h"
+#include "OceanPrototype/OceanDayNightCycleComponent.h"
+#include "OceanPrototype/OceanAutoPlayComponent.h"
 #include "Ocean.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
@@ -19,6 +21,30 @@ void AOceanMVPGameMode::BeginPlay()
 	Super::BeginPlay();
 
 	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: start day=1 phase=Playing total_events=%d"), GetTotalEventNodes());
+
+	// Find or create DayNightCycle component on this actor
+	DayNightCycle = FindComponentByClass<UOceanDayNightCycleComponent>();
+	if (!DayNightCycle)
+	{
+		DayNightCycle = NewObject<UOceanDayNightCycleComponent>(this, UOceanDayNightCycleComponent::StaticClass(), TEXT("DayNightCycle"));
+		DayNightCycle->RegisterComponent();
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: created DayNightCycle"));
+	}
+
+	// Find or create AutoPlay component
+	AutoPlay = FindComponentByClass<UOceanAutoPlayComponent>();
+	if (!AutoPlay)
+	{
+		AutoPlay = NewObject<UOceanAutoPlayComponent>(this, UOceanAutoPlayComponent::StaticClass(), TEXT("AutoPlay"));
+		AutoPlay->RegisterComponent();
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: created AutoPlay"));
+	}
+
+	// Apply initial lighting
+	if (DayNightCycle)
+	{
+		DayNightCycle->SetTimeOfDay(CurrentTimeOfDay);
+	}
 
 	// Scatter test items on the floating platform
 	for (TActorIterator<AOceanFloatingPlatform> It(GetWorld()); It; ++It)
@@ -40,10 +66,7 @@ void AOceanMVPGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (GamePhase != EOceanGamePhase::Playing)
-	{
-		return;
-	}
+	if (GamePhase != EOceanGamePhase::Playing) return;
 
 	EventTimer += DeltaSeconds;
 	if (EventTimer >= SecondsPerEventNode)
@@ -64,24 +87,27 @@ void AOceanMVPGameMode::ProcessEventNode(EOceanEventAction Action)
 		TotalEventsProcessed, static_cast<int32>(Action), CurrentDay,
 		static_cast<int32>(CurrentTimeOfDay));
 
+	// Apply survival drain per event node
 	ApplyEventNodeSurvivalDrain();
 
-	switch (Action)
+	// Auto-play: roll random encounter for this time slot
+	if (AutoPlay && Action == EOceanEventAction::None)
 	{
-	case EOceanEventAction::Rest:
-		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: rest → stamina+1"));
-		break;
-	case EOceanEventAction::Sail:
-	case EOceanEventAction::Dive:
-	case EOceanEventAction::Fish:
-		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: action=%d → stamina-1"), static_cast<int32>(Action));
-		break;
-	default:
-		break;
+		EOceanEncounterType Encounter = AutoPlay->RollEncounter(CurrentTimeOfDay);
+		AutoPlay->ExecuteEncounter(Encounter);
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: encounter=%d"), static_cast<int32>(Encounter));
 	}
 
 	OnEventNodeProcessed.Broadcast(TotalEventsProcessed, Action);
+
+	// Advance time and update lighting
 	AdvanceTimeOfDay();
+
+	if (DayNightCycle)
+	{
+		DayNightCycle->SetTimeOfDay(CurrentTimeOfDay);
+	}
+
 	CheckGameEndConditions();
 }
 
@@ -116,11 +142,11 @@ void AOceanMVPGameMode::ApplyEventNodeSurvivalDrain()
 		UOceanSurvivalComponent* Survival = Pawn->FindComponentByClass<UOceanSurvivalComponent>();
 		if (!Survival) continue;
 
+		// Per ocean.docx: -20% hydration, -10% satiety per event node
 		Survival->ApplyRecovery(0.0f, -20.0f, -10.0f, 0.0f);
 
-		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: drain sta=%.0f hyd=%.0f food=%.0f hp=%.0f"),
-			Survival->GetStamina(), Survival->GetHydration(), Survival->GetSatiety(),
-			Survival->GetHealth());
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: drain sta=%.0f hyd=%.0f food=%.0f"),
+			Survival->GetStamina(), Survival->GetHydration(), Survival->GetSatiety());
 	}
 }
 

@@ -2,11 +2,14 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "OceanPrototype/UI/OceanTimePanelWidget.h"
+#include "OceanPrototype/OceanAutoPlayComponent.h"
 #include "OceanMVPGameMode.generated.h"
 
 class UOceanSurvivalComponent;
 class UOceanInventoryComponent;
 class AOceanFloatingPlatform;
+class UOceanDayNightCycleComponent;
+class UOceanAutoPlayComponent;
 
 UENUM(BlueprintType)
 enum class EOceanGamePhase : uint8
@@ -95,4 +98,10 @@ public:
 protected:
 	void ApplyEventNodeSurvivalDrain();
 	void CheckGameEndConditions();
+
+	UPROPERTY(Transient)
+	TObjectPtr<UOceanDayNightCycleComponent> DayNightCycle;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UOceanAutoPlayComponent> AutoPlay;
 };
