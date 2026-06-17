@@ -1,115 +1,115 @@
-#include "OceanPrototype/UI/OceanStatusPanelWidget.h"
+﻿#include "OceanPrototype/UI/OceanStatusPanelWidget.h"
 #include "OceanPrototype/OceanSurvivalComponent.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
 #include "Ocean.h"
+
+void UOceanStatusPanelWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	RootBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("RootBox"));
+	WidgetTree->RootWidget = RootBox;
+
+	auto MakeText = [this](FName Name) -> UTextBlock* {
+		auto* T = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), Name);
+		T->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+		T->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 18));
+		RootBox->AddChildToVerticalBox(Cast<UWidget>(T))->SetPadding(FMargin(2));
+		return T;
+	};
+
+	StaminaText = MakeText(TEXT("StaminaText"));
+	HydrationText = MakeText(TEXT("HydrationText"));
+	SatietyText = MakeText(TEXT("SatietyText"));
+
+	UpdateVisuals();
+}
 
 void UOceanStatusPanelWidget::BindSurvivalComponent(UOceanSurvivalComponent* InSurvival)
 {
 	SurvivalComponent = InSurvival;
-
 	if (SurvivalComponent.IsValid())
 	{
 		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanStatusPanel: bound=1 stamina=%.1f hydration=%.1f satiety=%.1f"),
-			SurvivalComponent->GetStamina(),
-			SurvivalComponent->GetHydration(),
-			SurvivalComponent->GetSatiety());
-
-		OnSurvivalBound();
+			SurvivalComponent->GetStamina(), SurvivalComponent->GetHydration(), SurvivalComponent->GetSatiety());
 		BroadcastIfChanged();
 	}
 	else
 	{
-		UE_LOG(LogOcean, Warning, TEXT("[TDD] OceanStatusPanel: bound=0 (null survival component)"));
+		UE_LOG(LogOcean, Warning, TEXT("[TDD] OceanStatusPanel: bound=0 (null)"));
 	}
 }
 
 void UOceanStatusPanelWidget::UnbindSurvivalComponent()
 {
 	SurvivalComponent = nullptr;
-	LastStaminaPercent = -1.0f;
-	LastHydrationPercent = -1.0f;
-	LastSatietyPercent = -1.0f;
+	LastStaminaPercent = LastHydrationPercent = LastSatietyPercent = -1.0f;
 	LastStaminaCells = -1;
 }
 
 float UOceanStatusPanelWidget::GetStaminaPercent() const
 {
-	if (!SurvivalComponent.IsValid())
-	{
-		return 0.0f;
-	}
-	// 上限100，百分比 = Stamina/100
-	return FMath::Clamp(SurvivalComponent->GetStamina() / 100.0f, 0.0f, 1.0f);
+	return SurvivalComponent.IsValid() ? FMath::Clamp(SurvivalComponent->GetStamina() / 100.0f, 0.0f, 1.0f) : 0.0f;
 }
-
 float UOceanStatusPanelWidget::GetHydrationPercent() const
 {
-	if (!SurvivalComponent.IsValid())
-	{
-		return 0.0f;
-	}
-	return FMath::Clamp(SurvivalComponent->GetHydration() / 100.0f, 0.0f, 1.0f);
+	return SurvivalComponent.IsValid() ? FMath::Clamp(SurvivalComponent->GetHydration() / 100.0f, 0.0f, 1.0f) : 0.0f;
 }
-
 float UOceanStatusPanelWidget::GetSatietyPercent() const
 {
-	if (!SurvivalComponent.IsValid())
-	{
-		return 0.0f;
-	}
-	return FMath::Clamp(SurvivalComponent->GetSatiety() / 100.0f, 0.0f, 1.0f);
+	return SurvivalComponent.IsValid() ? FMath::Clamp(SurvivalComponent->GetSatiety() / 100.0f, 0.0f, 1.0f) : 0.0f;
 }
-
 int32 UOceanStatusPanelWidget::GetStaminaCells() const
 {
-	if (!SurvivalComponent.IsValid())
-	{
-		return 0;
-	}
-	// 向上取整：0.01→1格，33.3→1格，33.4→2格，100→3格
-	const float Stamina = SurvivalComponent->GetStamina();
-	if (Stamina <= 0.0f)
-	{
-		return 0;
-	}
-	return FMath::Min(MaxStaminaCells, FMath::CeilToInt(Stamina / StaminaPerCell));
+	if (!SurvivalComponent.IsValid()) return 0;
+	const float S = SurvivalComponent->GetStamina();
+	return S <= 0.0f ? 0 : FMath::Min(MaxStaminaCells, FMath::CeilToInt(S / StaminaPerCell));
 }
 
 void UOceanStatusPanelWidget::NativeTick(const FGeometry& MyGeometry, float DeltaTime)
 {
 	Super::NativeTick(MyGeometry, DeltaTime);
-
 	BroadcastIfChanged();
 }
 
 void UOceanStatusPanelWidget::BroadcastIfChanged()
 {
-	if (!SurvivalComponent.IsValid())
+	if (!SurvivalComponent.IsValid()) return;
+	const float SP = GetStaminaPercent(), HP = GetHydrationPercent(), SaP = GetSatietyPercent();
+	const int32 SC = GetStaminaCells();
+
+	if (!FMath::IsNearlyEqual(SP, LastStaminaPercent) || !FMath::IsNearlyEqual(HP, LastHydrationPercent) ||
+		!FMath::IsNearlyEqual(SaP, LastSatietyPercent) || SC != LastStaminaCells)
 	{
-		return;
-	}
-
-	const float CurrentStaminaPercent = GetStaminaPercent();
-	const float CurrentHydrationPercent = GetHydrationPercent();
-	const float CurrentSatietyPercent = GetSatietyPercent();
-	const int32 CurrentStaminaCells = GetStaminaCells();
-
-	// 仅在任意值变化时才调用 Blueprint 事件，减少跨语言开销
-	if (!FMath::IsNearlyEqual(CurrentStaminaPercent, LastStaminaPercent) ||
-		!FMath::IsNearlyEqual(CurrentHydrationPercent, LastHydrationPercent) ||
-		!FMath::IsNearlyEqual(CurrentSatietyPercent, LastSatietyPercent) ||
-		CurrentStaminaCells != LastStaminaCells)
-	{
-		LastStaminaPercent = CurrentStaminaPercent;
-		LastHydrationPercent = CurrentHydrationPercent;
-		LastSatietyPercent = CurrentSatietyPercent;
-		LastStaminaCells = CurrentStaminaCells;
-
+		LastStaminaPercent = SP; LastHydrationPercent = HP; LastSatietyPercent = SaP; LastStaminaCells = SC;
 		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanStatusPanel: updated stamina=%.1f hydration=%.1f satiety=%.1f cells=%d"),
-			SurvivalComponent->GetStamina(),
-			SurvivalComponent->GetHydration(),
-			SurvivalComponent->GetSatiety(),
-			CurrentStaminaCells);
+			SurvivalComponent->GetStamina(), SurvivalComponent->GetHydration(), SurvivalComponent->GetSatiety(), SC);
+		UpdateVisuals();
+	}
+}
 
-		OnStatsUpdated(CurrentStaminaPercent, CurrentHydrationPercent, CurrentSatietyPercent, CurrentStaminaCells);
+void UOceanStatusPanelWidget::UpdateVisuals()
+{
+	if (StaminaText)
+	{
+		StaminaText->SetText(FText::FromString(
+			FString::Printf(TEXT("体力: %d/3格 (%.0f%%)"), GetStaminaCells(), GetStaminaPercent() * 100.0f)));
+		StaminaText->SetColorAndOpacity(GetStaminaPercent() < 0.34f ? FLinearColor::Red : FLinearColor::White);
+	}
+	if (HydrationText)
+	{
+		HydrationText->SetText(FText::FromString(
+			FString::Printf(TEXT("水分: %.0f%%"), GetHydrationPercent() * 100.0f)));
+		HydrationText->SetColorAndOpacity(GetHydrationPercent() < 0.3f ? FLinearColor::Red :
+			(GetHydrationPercent() < 0.5f ? FLinearColor(1, 0.6f, 0) : FLinearColor(0.3f, 0.8f, 1.0f)));
+	}
+	if (SatietyText)
+	{
+		SatietyText->SetText(FText::FromString(
+			FString::Printf(TEXT("饱食: %.0f%%"), GetSatietyPercent() * 100.0f)));
+		SatietyText->SetColorAndOpacity(GetSatietyPercent() < 0.3f ? FLinearColor::Red :
+			(GetSatietyPercent() < 0.5f ? FLinearColor(1, 0.6f, 0) : FLinearColor(1, 0.85f, 0.2f)));
 	}
 }

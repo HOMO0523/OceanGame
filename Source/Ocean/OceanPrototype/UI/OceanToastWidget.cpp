@@ -1,29 +1,39 @@
-#include "OceanPrototype/UI/OceanToastWidget.h"
-#include "Ocean.h"
+﻿#include "OceanPrototype/UI/OceanToastWidget.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Border.h"
+#include "Components/TextBlock.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "Ocean.h"
 
 void UOceanToastWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
+
+	ToastBorder = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("ToastBorder"));
+	ToastBorder->SetBrushColor(FLinearColor(0.02f, 0.08f, 0.02f, 0.9f));
+	WidgetTree->RootWidget = ToastBorder;
+
+	ToastText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("ToastText"));
+	ToastText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+	ToastText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 14));
+	ToastText->SetJustification(ETextJustify::Center);
+	ToastBorder->AddChild(ToastText);
+
+	SetVisibility(ESlateVisibility::Collapsed);
 }
 
 void UOceanToastWidget::NativeDestruct()
 {
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(AutoDismissTimer);
-	}
+	if (UWorld* World = GetWorld()) World->GetTimerManager().ClearTimer(AutoDismissTimer);
 	Super::NativeDestruct();
 }
 
 void UOceanToastWidget::Show(const FText& Message, float Duration)
 {
 	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanToast: show=%s duration=%.1f"), *Message.ToString(), Duration);
-
-	OnToastStateChanged(true, Message);
-
-	// 自动隐藏计时
+	if (ToastText) ToastText->SetText(Message);
+	SetVisibility(ESlateVisibility::Visible);
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(AutoDismissTimer);
@@ -33,15 +43,12 @@ void UOceanToastWidget::Show(const FText& Message, float Duration)
 
 void UOceanToastWidget::Hide()
 {
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(AutoDismissTimer);
-	}
-	OnToastStateChanged(false, FText::GetEmpty());
+	if (UWorld* World = GetWorld()) World->GetTimerManager().ClearTimer(AutoDismissTimer);
+	SetVisibility(ESlateVisibility::Collapsed);
 }
 
 void UOceanToastWidget::OnAutoDismiss()
 {
 	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanToast: auto_dismiss"));
-	OnToastStateChanged(false, FText::GetEmpty());
+	SetVisibility(ESlateVisibility::Collapsed);
 }

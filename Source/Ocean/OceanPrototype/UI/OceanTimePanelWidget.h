@@ -1,48 +1,36 @@
 #pragma once
-
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "OceanTimePanelWidget.generated.h"
 
-/** 一天中的时段，对应策划：上午/下午/夜晚 */
+class UTextBlock;
+
 UENUM(BlueprintType)
-enum class EOceanTimeOfDay : uint8
-{
-	Morning  UMETA(DisplayName = "上午"),
-	Afternoon UMETA(DisplayName = "下午"),
-	Night    UMETA(DisplayName = "夜晚")
-};
+enum class EOceanTimeOfDay : uint8 { Morning, Afternoon, Night };
 
 UCLASS()
 class OCEAN_API UOceanTimePanelWidget : public UUserWidget
 {
 	GENERATED_BODY()
-
 public:
-	/** 设置当前天数。 */
-	UFUNCTION(BlueprintCallable, Category = "Ocean|UI|Time")
 	void SetDay(int32 NewDay);
-
-	/** 设置当前时段。 */
-	UFUNCTION(BlueprintCallable, Category = "Ocean|UI|Time")
 	void SetTimeOfDay(EOceanTimeOfDay NewTimeOfDay);
-
-	/** 同时设置天数和时段。 */
-	UFUNCTION(BlueprintCallable, Category = "Ocean|UI|Time")
 	void SetDayAndTime(int32 NewDay, EOceanTimeOfDay NewTimeOfDay);
-
-	UFUNCTION(BlueprintPure, Category = "Ocean|UI|Time")
 	int32 GetDay() const { return Day; }
-
-	UFUNCTION(BlueprintPure, Category = "Ocean|UI|Time")
 	EOceanTimeOfDay GetTimeOfDay() const { return TimeOfDay; }
 
 protected:
-	/** WBP 实现：时间变化时刷新视觉。 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "Ocean|UI|Time")
-	void OnTimeUpdated(int32 NewDay, EOceanTimeOfDay NewTimeOfDay);
+	virtual void NativeConstruct() override;
 
 private:
 	int32 Day = 1;
 	EOceanTimeOfDay TimeOfDay = EOceanTimeOfDay::Morning;
+	UPROPERTY()
+	TObjectPtr<UTextBlock> TimeText;
+	void RefreshText();
+
+	static const TCHAR* ToDisplayName(EOceanTimeOfDay T)
+	{
+		switch (T) { case EOceanTimeOfDay::Morning: return TEXT("上午"); case EOceanTimeOfDay::Afternoon: return TEXT("下午"); default: return TEXT("夜晚"); }
+	}
 };

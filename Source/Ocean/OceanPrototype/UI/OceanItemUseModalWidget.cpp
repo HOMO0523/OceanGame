@@ -1,30 +1,55 @@
-#include "OceanPrototype/UI/OceanItemUseModalWidget.h"
+﻿#include "OceanPrototype/UI/OceanItemUseModalWidget.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Border.h"
+#include "Components/TextBlock.h"
+#include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
 #include "Ocean.h"
+#include "Ocean.h"
+
+void UOceanItemUseModalWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	ModalBorder = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("ModalBorder"));
+	ModalBorder->SetBrushColor(FLinearColor(0.05f, 0.05f, 0.1f, 0.95f));
+	WidgetTree->RootWidget = ModalBorder;
+
+	UVerticalBox* VBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("VBox"));
+	ModalBorder->AddChild(VBox);
+
+	ItemNameText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("ItemName"));
+	ItemNameText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+	ItemNameText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 18));
+	VBox->AddChildToVerticalBox(Cast<UWidget>(ItemNameText))->SetPadding(FMargin(20, 15));
+
+	HintText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("HintText"));
+	HintText->SetText(FText::FromString(TEXT("是否使用此物品？(左键确认/右键取消)")));
+	HintText->SetColorAndOpacity(FSlateColor(FLinearColor(0.7f, 0.7f, 0.7f)));
+	HintText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 13));
+	VBox->AddChildToVerticalBox(Cast<UWidget>(HintText))->SetPadding(FMargin(20, 5));
+
+	SetVisibility(ESlateVisibility::Collapsed);
+}
 
 void UOceanItemUseModalWidget::ShowConfirmation(int32 InSlotIndex, const FOceanItemStack& InItem)
 {
-	PendingSlotIndex = InSlotIndex;
-	PendingItem = InItem;
-
+	PendingSlotIndex = InSlotIndex; PendingItem = InItem;
 	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanItemUseModal: show slot=%d item=%s"), InSlotIndex, *InItem.ItemId.ToString());
-
-	OnModalStateChanged(true);
-	OnItemInfoUpdated(FText::FromName(InItem.ItemId), InItem.Category);
+	if (ItemNameText) ItemNameText->SetText(FText::FromString(
+		FString::Printf(TEXT("使用 %s x%d？"), *InItem.ItemId.ToString(), InItem.Quantity)));
+	SetVisibility(ESlateVisibility::Visible);
 }
-
 void UOceanItemUseModalWidget::Confirm()
 {
 	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanItemUseModal: confirmed slot=%d"), PendingSlotIndex);
-
-	OnModalStateChanged(false);
+	SetVisibility(ESlateVisibility::Collapsed);
 	OnItemUseConfirmed.Broadcast(PendingSlotIndex);
 	PendingSlotIndex = INDEX_NONE;
 }
-
 void UOceanItemUseModalWidget::Reject()
 {
 	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanItemUseModal: rejected slot=%d"), PendingSlotIndex);
-
-	OnModalStateChanged(false);
+	SetVisibility(ESlateVisibility::Collapsed);
 	PendingSlotIndex = INDEX_NONE;
 }
