@@ -29,41 +29,97 @@ void UOceanBuildComponent::RotatePreview()
 	RotationQuarterTurns = (RotationQuarterTurns + 1) % 4;
 }
 
-bool UOceanBuildComponent::TryPlaceSelectedModuleAtWorld(const FVector& WorldLocation, FText& OutMessage)
+FOceanPlacementQueryResult UOceanBuildComponent::QuerySelectedModulePlacement(const FVector& WorldLocation)
 {
-	LastPlacedModuleActor = nullptr;
+	FOceanPlacementQueryResult Result;
+	Result.RotationQuarterTurns = RotationQuarterTurns;
 
 	if (!bBuildModeActive)
 	{
-		OutMessage = NSLOCTEXT("Ocean", "BuildModeInactive", "未进入建造模式");
-		return false;
+		Result.FailureReason = EOceanPlacementFailureReason::NoBuildMode;
+		return Result;
 	}
 
 	if (!IsValid(SelectedModule))
 	{
-		OutMessage = NSLOCTEXT("Ocean", "BuildNoSelectedModule", "未选择建造模块");
-		return false;
+		Result.FailureReason = EOceanPlacementFailureReason::NoSelectedModule;
+		return Result;
 	}
 
 	AOceanFloatingPlatform* ResolvedTargetPlatform = ResolveTargetPlatform();
 	if (!IsValid(ResolvedTargetPlatform))
 	{
-		OutMessage = NSLOCTEXT("Ocean", "BuildNoTargetPlatform", "没有目标平台");
-		return false;
+		Result.FailureReason = EOceanPlacementFailureReason::NoTargetPlatform;
+		return Result;
 	}
 
 	UOceanBuildGridComponent* Grid = ResolvedTargetPlatform->GetBuildGrid();
 	if (!IsValid(Grid))
 	{
-		OutMessage = NSLOCTEXT("Ocean", "BuildNoGrid", "目标平台没有建造网格");
-		return false;
+		Result.FailureReason = EOceanPlacementFailureReason::NoTargetPlatform;
+		return Result;
+	}
+
+	Result.AnchorCell = Grid->WorldToCell(WorldLocation);
+	Result.SnappedWorldLocation = Grid->CellToWorld(Result.AnchorCell);
+	Result.FootprintCells = SelectedModule->GetFootprintCells(Result.AnchorCell, RotationQuarterTurns);
+
+	const int32 ExpectedFootprintCount = FMath::Max(0, SelectedModule->FootprintSize.X) * FMath::Max(0, SelectedModule->FootprintSize.Y);
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBuildFootprintCellCount: actual=%d expected=%d"), Result.FootprintCells.Num(), ExpectedFootprintCount);
+
+	Result.FailureReason = Grid->ExplainFootprintPlacement(Result.FootprintCells, SelectedModule->bRequiresAdjacency);
+	if (Result.FailureReason != EOceanPlacementFailureReason::None)
+	{
+		return Result;
 	}
 
 	AActor* OwnerActor = GetOwner();
 	UOceanInventoryComponent* Inventory = OwnerActor ? OwnerActor->FindComponentByClass<UOceanInventoryComponent>() : nullptr;
-	if (!IsValid(Inventory))
+	if (!IsValid(Inventory) || !Inventory->CanAfford(SelectedModule->BuildCost))
 	{
-		OutMessage = NSLOCTEXT("Ocean", "BuildNoInventory", "没有背包");
+		Result.FailureReason = EOceanPlacementFailureReason::InsufficientResources;
+		return Result;
+	}
+
+	Result.bCanPlace = true;
+	Result.FailureReason = EOceanPlacementFailureReason::None;
+	return Result;
+}
+
+bool UOceanBuildComponent::TryPlaceSelectedModuleAtWorld(const FVector& WorldLocation, FText& OutMessage)
+{
+	LastPlacedModuleActor = nullptr;
+
+	const FOceanPlacementQueryResult PlacementQuery = QuerySelectedModulePlacement(WorldLocation);
+	if (!PlacementQuery.bCanPlace)
+	{
+		switch (PlacementQuery.FailureReason)
+		{
+		case EOceanPlacementFailureReason::NoBuildMode:
+			OutMessage = NSLOCTEXT("Ocean", "BuildModeInactive", "未进入建造模式");
+			break;
+		case EOceanPlacementFailureReason::NoSelectedModule:
+			OutMessage = NSLOCTEXT("Ocean", "BuildNoSelectedModule", "未选择建造模块");
+			break;
+		case EOceanPlacementFailureReason::NoTargetPlatform:
+			OutMessage = NSLOCTEXT("Ocean", "BuildNoTargetPlatform", "没有目标平台");
+			break;
+		case EOceanPlacementFailureReason::InsufficientResources:
+		{
+			AActor* OwnerActor = GetOwner();
+			const UOceanInventoryComponent* Inventory = OwnerActor ? OwnerActor->FindComponentByClass<UOceanInventoryComponent>() : nullptr;
+			OutMessage = IsValid(Inventory)
+				? NSLOCTEXT("Ocean", "BuildCannotAfford", "材料不足")
+				: NSLOCTEXT("Ocean", "BuildNoInventory", "没有背包");
+			break;
+		}
+		case EOceanPlacementFailureReason::InvalidWorldHit:
+		case EOceanPlacementFailureReason::OccupiedCell:
+		case EOceanPlacementFailureReason::DetachedFromPlatform:
+		default:
+			OutMessage = NSLOCTEXT("Ocean", "BuildInvalidPlacement", "无法放置在此处");
+			break;
+		}
 		return false;
 	}
 
@@ -74,20 +130,19 @@ bool UOceanBuildComponent::TryPlaceSelectedModuleAtWorld(const FVector& WorldLoc
 		return false;
 	}
 
-	const FIntPoint AnchorCell = Grid->WorldToCell(WorldLocation);
-	const TArray<FIntPoint> Footprint = SelectedModule->GetFootprintCells(AnchorCell, RotationQuarterTurns);
-	const int32 ExpectedFootprintCount = FMath::Max(0, SelectedModule->FootprintSize.X) * FMath::Max(0, SelectedModule->FootprintSize.Y);
-	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBuildFootprintCellCount: actual=%d expected=%d"), Footprint.Num(), ExpectedFootprintCount);
-
-	if (!Grid->CanPlaceFootprint(Footprint, SelectedModule->bRequiresAdjacency))
+	AOceanFloatingPlatform* ResolvedTargetPlatform = ResolveTargetPlatform();
+	UOceanBuildGridComponent* Grid = IsValid(ResolvedTargetPlatform) ? ResolvedTargetPlatform->GetBuildGrid() : nullptr;
+	if (!IsValid(Grid))
 	{
-		OutMessage = NSLOCTEXT("Ocean", "BuildInvalidPlacement", "无法放置在此处");
+		OutMessage = NSLOCTEXT("Ocean", "BuildNoTargetPlatform", "没有目标平台");
 		return false;
 	}
 
-	if (!Inventory->CanAfford(SelectedModule->BuildCost))
+	AActor* OwnerActor = GetOwner();
+	UOceanInventoryComponent* Inventory = OwnerActor ? OwnerActor->FindComponentByClass<UOceanInventoryComponent>() : nullptr;
+	if (!IsValid(Inventory))
 	{
-		OutMessage = NSLOCTEXT("Ocean", "BuildCannotAfford", "材料不足");
+		OutMessage = NSLOCTEXT("Ocean", "BuildNoInventory", "没有背包");
 		return false;
 	}
 
@@ -102,11 +157,11 @@ bool UOceanBuildComponent::TryPlaceSelectedModuleAtWorld(const FVector& WorldLoc
 	}
 
 	FVector SpawnLocation = FVector::ZeroVector;
-	for (const FIntPoint& Cell : Footprint)
+	for (const FIntPoint& Cell : PlacementQuery.FootprintCells)
 	{
 		SpawnLocation += Grid->CellToWorld(Cell);
 	}
-	SpawnLocation /= static_cast<float>(Footprint.Num());
+	SpawnLocation /= static_cast<float>(PlacementQuery.FootprintCells.Num());
 
 	const FRotator SpawnRotation(0.0f, static_cast<float>(((RotationQuarterTurns % 4) + 4) % 4) * 90.0f, 0.0f);
 	AOceanBuildModuleActor* PlacedModule = World->SpawnActor<AOceanBuildModuleActor>(ModuleClass, SpawnLocation, SpawnRotation);
@@ -123,9 +178,9 @@ bool UOceanBuildComponent::TryPlaceSelectedModuleAtWorld(const FVector& WorldLoc
 		return false;
 	}
 
-	Grid->ReserveFootprint(Footprint, PlacedModule->GetFName());
+	Grid->ReserveFootprint(PlacementQuery.FootprintCells, PlacedModule->GetFName());
 	PlacedModule->SetPlaceholderMesh(SelectedModule->PreviewMesh);
-	PlacedModule->ConfigurePlacedModule(SelectedModule, Footprint, RotationQuarterTurns);
+	PlacedModule->ConfigurePlacedModule(SelectedModule, PlacementQuery.FootprintCells, RotationQuarterTurns);
 	LastPlacedModuleActor = PlacedModule;
 
 	const bool bHasBuoyancy = PlacedModule->FindComponentByClass<UBuoyancyComponent>() != nullptr;

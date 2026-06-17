@@ -52,20 +52,30 @@ TArray<FIntPoint> UOceanBuildGridComponent::BuildFootprint(FIntPoint AnchorCell,
 
 bool UOceanBuildGridComponent::CanPlaceFootprint(const TArray<FIntPoint>& Footprint, bool bRequiresAdjacency) const
 {
+	return ExplainFootprintPlacement(Footprint, bRequiresAdjacency) == EOceanPlacementFailureReason::None;
+}
+
+EOceanPlacementFailureReason UOceanBuildGridComponent::ExplainFootprintPlacement(const TArray<FIntPoint>& Footprint, bool bRequiresAdjacency) const
+{
 	if (Footprint.IsEmpty())
 	{
-		return false;
+		return EOceanPlacementFailureReason::InvalidWorldHit;
 	}
 
 	for (const FIntPoint& Cell : Footprint)
 	{
 		if (OccupiedCells.Contains(Cell))
 		{
-			return false;
+			return EOceanPlacementFailureReason::OccupiedCell;
 		}
 	}
 
-	return !bRequiresAdjacency || HasAdjacentOccupiedCell(Footprint);
+	if (bRequiresAdjacency && !HasAdjacentOccupiedCell(Footprint))
+	{
+		return EOceanPlacementFailureReason::DetachedFromPlatform;
+	}
+
+	return EOceanPlacementFailureReason::None;
 }
 
 void UOceanBuildGridComponent::ReserveFootprint(const TArray<FIntPoint>& Footprint, FName OccupantId)

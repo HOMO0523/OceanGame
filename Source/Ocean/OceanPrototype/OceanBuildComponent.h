@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "OceanBuildPlacementTypes.h"
 #include "OceanBuildComponent.generated.h"
 
 class AOceanBuildModuleActor;
@@ -27,6 +28,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Build")
 	bool TryPlaceSelectedModuleAtWorld(const FVector& WorldLocation, FText& OutMessage);
+
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Build")
+	FOceanPlacementQueryResult QuerySelectedModulePlacement(const FVector& WorldLocation);
 
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Build")
 	void SetSelectedModule(UOceanBuildModuleDefinition* ModuleDefinition);

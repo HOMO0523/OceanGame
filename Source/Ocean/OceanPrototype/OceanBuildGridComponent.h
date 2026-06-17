@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
+#include "OceanBuildPlacementTypes.h"
 #include "OceanBuildGridComponent.generated.h"
 
 UCLASS(ClassGroup = (Ocean), meta = (BlueprintSpawnableComponent))
@@ -35,6 +36,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Ocean|Build Grid")
 	bool CanPlaceFootprint(const TArray<FIntPoint>& Footprint, bool bRequiresAdjacency) const;
+
+	UFUNCTION(BlueprintPure, Category = "Ocean|Build Grid")
+	EOceanPlacementFailureReason ExplainFootprintPlacement(const TArray<FIntPoint>& Footprint, bool bRequiresAdjacency) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Build Grid")
 	void ReserveFootprint(const TArray<FIntPoint>& Footprint, FName OccupantId);
