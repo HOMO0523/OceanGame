@@ -4,6 +4,7 @@
 #include "OceanPrototype/OceanBuildComponent.h"
 #include "OceanPrototype/OceanInputMath.h"
 #include "OceanPrototype/OceanInteractionComponent.h"
+#include "OceanPrototype/UI/OceanHUDRootWidget.h"
 #include "GameFramework/Pawn.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "InputCoreTypes.h"
@@ -32,6 +33,21 @@ AOceanPlayerController::AOceanPlayerController()
 	DefaultMouseCursor = EMouseCursor::Default;
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
+}
+
+void AOceanPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (IsLocalPlayerController() && HUDRootWidgetClass)
+	{
+		HUDRootWidget = CreateWidget<UOceanHUDRootWidget>(this, HUDRootWidgetClass);
+		if (HUDRootWidget)
+		{
+			HUDRootWidget->AddToViewport();
+			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanHUDRootPIE: created=1 drawer_open=%d"), HUDRootWidget->IsBackpackOpen() ? 1 : 0);
+		}
+	}
 }
 
 void AOceanPlayerController::SetupInputComponent()
@@ -78,6 +94,11 @@ void AOceanPlayerController::SetupInputComponent()
 			if (ToggleBuildAction)
 			{
 				EnhancedInputComponent->BindAction(ToggleBuildAction, ETriggerEvent::Started, this, &AOceanPlayerController::OnToggleBuildTriggered);
+			}
+
+			if (ToggleBackpackAction)
+			{
+				EnhancedInputComponent->BindAction(ToggleBackpackAction, ETriggerEvent::Started, this, &AOceanPlayerController::OnToggleBackpackTriggered);
 			}
 
 			if (RotateBuildAction)
@@ -250,6 +271,25 @@ void AOceanPlayerController::OnToggleBuildTriggered(const FInputActionValue& Val
 		Build->ToggleBuildMode();
 		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBuildToggleHandled: result=PASS"));
 	}
+}
+
+void AOceanPlayerController::OnToggleBackpackTriggered(const FInputActionValue& Value)
+{
+	if (!HUDRootWidget)
+	{
+		return;
+	}
+
+	HUDRootWidget->ToggleBackpack();
+
+	const bool bBackpackOpen = HUDRootWidget->IsBackpackOpen();
+	bShowMouseCursor = bBackpackOpen;
+
+	FInputModeGameAndUI InputMode;
+	InputMode.SetWidgetToFocus(HUDRootWidget->TakeWidget());
+	InputMode.SetHideCursorDuringCapture(false);
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	SetInputMode(InputMode);
 }
 
 void AOceanPlayerController::OnRotateBuildTriggered(const FInputActionValue& Value)

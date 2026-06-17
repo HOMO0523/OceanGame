@@ -37,6 +37,7 @@ BUILD_DIR = "/Game/OceanPrototype/Build"
 MOVE_ACTION_PATH = f"{INPUT_DIR}/IA_OceanMove"
 INTERACT_ACTION_PATH = f"{INPUT_DIR}/IA_OceanInteract"
 TOGGLE_BUILD_ACTION_PATH = f"{INPUT_DIR}/IA_OceanToggleBuild"
+TOGGLE_BACKPACK_ACTION_PATH = f"{INPUT_DIR}/IA_OceanToggleBackpack"
 ROTATE_BUILD_ACTION_PATH = f"{INPUT_DIR}/IA_OceanRotateBuild"
 JUMP_ACTION_PATH = f"{INPUT_DIR}/IA_OceanJump"
 DIVE_ACTION_PATH = f"{INPUT_DIR}/IA_OceanDive"
@@ -500,7 +501,7 @@ def ensure_required_asset(asset_path: str):
     return asset
 
 
-def ensure_input_mapping_context(move_action, interact_action, toggle_build_action, rotate_build_action, jump_action, dive_action, click_action, touch_action):
+def ensure_input_mapping_context(move_action, interact_action, toggle_build_action, toggle_backpack_action, rotate_build_action, jump_action, dive_action, click_action, touch_action):
     mapping_context_class = getattr(unreal, "InputMappingContext", None) or get_class("/Script/EnhancedInput.InputMappingContext")
     factory_class = getattr(unreal, "InputMappingContextFactory", None) or getattr(unreal, "InputMappingContext_Factory", None)
     factory = factory_class() if factory_class is not None else None
@@ -517,6 +518,8 @@ def ensure_input_mapping_context(move_action, interact_action, toggle_build_acti
         (move_action, "D", []),
         (interact_action, "F", []),
         (toggle_build_action, "B", []),
+        (toggle_backpack_action, "Tab", []),
+        (toggle_backpack_action, "I", []),
         (rotate_build_action, "R", []),
         (jump_action, "SpaceBar", []),
         (dive_action, "E", []),
@@ -543,16 +546,18 @@ def ensure_input_assets():
     move_action = ensure_input_action(MOVE_ACTION_PATH, "Axis2D")
     interact_action = ensure_input_action(INTERACT_ACTION_PATH, "Boolean")
     toggle_build_action = ensure_input_action(TOGGLE_BUILD_ACTION_PATH, "Boolean")
+    toggle_backpack_action = ensure_input_action(TOGGLE_BACKPACK_ACTION_PATH, "Boolean")
     rotate_build_action = ensure_input_action(ROTATE_BUILD_ACTION_PATH, "Boolean")
     jump_action = ensure_input_action(JUMP_ACTION_PATH, "Boolean")
     dive_action = ensure_input_action(DIVE_ACTION_PATH, "Boolean")
     click_action = ensure_required_asset(SET_DESTINATION_CLICK_ACTION_PATH)
     touch_action = ensure_required_asset(SET_DESTINATION_TOUCH_ACTION_PATH)
-    mapping_context = ensure_input_mapping_context(move_action, interact_action, toggle_build_action, rotate_build_action, jump_action, dive_action, click_action, touch_action)
+    mapping_context = ensure_input_mapping_context(move_action, interact_action, toggle_build_action, toggle_backpack_action, rotate_build_action, jump_action, dive_action, click_action, touch_action)
     return {
         "move_action": move_action,
         "interact_action": interact_action,
         "toggle_build_action": toggle_build_action,
+        "toggle_backpack_action": toggle_backpack_action,
         "rotate_build_action": rotate_build_action,
         "jump_action": jump_action,
         "dive_action": dive_action,
@@ -822,6 +827,7 @@ def configure_player_controller_blueprint(player_controller_bp, input_assets) ->
         "MoveAction": set_prop(cdo, ["move_action", "MoveAction"], input_assets["move_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
         "InteractAction": set_prop(cdo, ["interact_action", "InteractAction"], input_assets["interact_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
         "ToggleBuildAction": set_prop(cdo, ["toggle_build_action", "ToggleBuildAction"], input_assets["toggle_build_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
+        "ToggleBackpackAction": set_prop(cdo, ["toggle_backpack_action", "ToggleBackpackAction"], input_assets["toggle_backpack_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
         "RotateBuildAction": set_prop(cdo, ["rotate_build_action", "RotateBuildAction"], input_assets["rotate_build_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
         "JumpAction": set_prop(cdo, ["jump_action", "JumpAction"], input_assets["jump_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
         "DiveAction": set_prop(cdo, ["dive_action", "DiveAction"], input_assets["dive_action"], required=True, label=PLAYER_CONTROLLER_BP_PATH),
@@ -1007,6 +1013,7 @@ def save_and_verify() -> None:
         MOVE_ACTION_PATH,
         INTERACT_ACTION_PATH,
         TOGGLE_BUILD_ACTION_PATH,
+        TOGGLE_BACKPACK_ACTION_PATH,
         ROTATE_BUILD_ACTION_PATH,
         INPUT_CONTEXT_PATH,
         SURVIVOR_BP_PATH,

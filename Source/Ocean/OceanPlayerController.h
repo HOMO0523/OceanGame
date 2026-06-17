@@ -9,6 +9,7 @@
 
 class UNiagaraSystem;
 class UOceanBuildComponent;
+class UOceanHUDRootWidget;
 class UInputMappingContext;
 class UInputAction;
 class UPathFollowingComponent;
@@ -61,6 +62,9 @@ protected:
 	TObjectPtr<UInputAction> ToggleBuildAction;
 
 	UPROPERTY(EditAnywhere, Category="Input|Ocean")
+	TObjectPtr<UInputAction> ToggleBackpackAction;
+
+	UPROPERTY(EditAnywhere, Category="Input|Ocean")
 	TObjectPtr<UInputAction> RotateBuildAction;
 
 	UPROPERTY(EditAnywhere, Category="Input|Ocean")
@@ -68,6 +72,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category="Input|Ocean")
 	TObjectPtr<UInputAction> DiveAction;
+
+	UPROPERTY(EditAnywhere, Category="Ocean|UI")
+	TSubclassOf<UOceanHUDRootWidget> HUDRootWidgetClass;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UOceanHUDRootWidget> HUDRootWidget;
 
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
@@ -91,6 +101,8 @@ public:
 
 protected:
 
+	virtual void BeginPlay() override;
+
 	/** Initialize input bindings */
 	virtual void SetupInputComponent() override;
 	
@@ -105,6 +117,7 @@ protected:
 	void OnInteractTriggered(const FInputActionValue& Value);
 	void TryOceanInteract();
 	void OnToggleBuildTriggered(const FInputActionValue& Value);
+	void OnToggleBackpackTriggered(const FInputActionValue& Value);
 	void OnRotateBuildTriggered(const FInputActionValue& Value);
 	void OnJumpStarted(const FInputActionValue& Value);
 	void OnJumpCompleted(const FInputActionValue& Value);
