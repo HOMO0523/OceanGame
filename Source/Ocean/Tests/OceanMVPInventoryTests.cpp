@@ -121,4 +121,66 @@ bool FOceanMVPInventoryUseItemTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanMVPInventoryDragDropTest, "Ocean.MVP.Inventory.DragDropModel", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanMVPInventoryDragDropTest::RunTest(const FString& Parameters)
+{
+	UOceanInventoryComponent* Inventory = NewObject<UOceanInventoryComponent>();
+
+	FOceanItemStack Wood;
+	Wood.ItemId = TEXT("wood");
+	Wood.Quantity = 3;
+	Wood.MaxStack = 8;
+	Wood.Category = EOceanItemCategory::Resource;
+
+	FOceanItemStack Scrap;
+	Scrap.ItemId = TEXT("scrap");
+	Scrap.Quantity = 2;
+	Scrap.MaxStack = 8;
+	Scrap.Category = EOceanItemCategory::Resource;
+
+	TestTrue(TEXT("[TDD] OceanInventory_AddWoodForDrag"), Inventory->AddItem(Wood));
+	TestTrue(TEXT("[TDD] OceanInventory_AddScrapForDrag"), Inventory->AddItem(Scrap));
+	TestEqual(TEXT("[TDD] OceanInventory_DragSwap"), Inventory->MoveOrMergeSlot(0, 1), EOceanInventoryDragDropResult::Swapped);
+	TestEqual(TEXT("[TDD] OceanInventory_SlotZeroAfterSwap"), Inventory->GetSlots()[0].Stack.ItemId, FName(TEXT("scrap")));
+	TestEqual(TEXT("[TDD] OceanInventory_InvalidDragReject"), Inventory->MoveOrMergeSlot(0, 99), EOceanInventoryDragDropResult::Rejected);
+	TestEqual(TEXT("[TDD] OceanInventory_SlotCountAfterInvalidDrag"), Inventory->GetSlots().Num(), 2);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanMVPInventoryDragDropMergeTest, "Ocean.MVP.Inventory.DragDropMerge", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanMVPInventoryDragDropMergeTest::RunTest(const FString& Parameters)
+{
+	UOceanInventoryComponent* Inventory = NewObject<UOceanInventoryComponent>();
+
+	TestTrue(TEXT("[TDD] OceanInventory_AddPartialMergeStack"), Inventory->AddItem(MakeTestItemStack(TEXT("wood"), 8, 8)));
+	TestTrue(TEXT("[TDD] OceanInventory_AddOverflowMergeStack"), Inventory->AddItem(MakeTestItemStack(TEXT("wood"), 3, 8)));
+	TestEqual(TEXT("[TDD] OceanInventory_PreMergeSlotCount"), Inventory->GetSlots().Num(), 2);
+	TArray<FOceanInventorySlot>& MutableSlots = const_cast<TArray<FOceanInventorySlot>&>(Inventory->GetSlots());
+	MutableSlots[0].Stack.Quantity = 5;
+	TestEqual(TEXT("[TDD] OceanInventory_DragMerge"), Inventory->MoveOrMergeSlot(1, 0), EOceanInventoryDragDropResult::Merged);
+	TestEqual(TEXT("[TDD] OceanInventory_MergedTargetQuantity"), Inventory->GetSlots()[0].Stack.Quantity, 8);
+	TestEqual(TEXT("[TDD] OceanInventory_MergedSourceRemoved"), Inventory->GetSlots().Num(), 1);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanMVPInventoryDragDropRejectsLockedTest, "Ocean.MVP.Inventory.DragDropRejectsLocked", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanMVPInventoryDragDropRejectsLockedTest::RunTest(const FString& Parameters)
+{
+	UOceanInventoryComponent* Inventory = NewObject<UOceanInventoryComponent>();
+
+	TestTrue(TEXT("[TDD] OceanInventory_AddLockedWood"), Inventory->AddItem(MakeTestItemStack(TEXT("wood"), 1, 8)));
+	TestTrue(TEXT("[TDD] OceanInventory_AddLockedScrap"), Inventory->AddItem(MakeTestItemStack(TEXT("scrap"), 1, 8)));
+
+	TArray<FOceanInventorySlot>& MutableSlots = const_cast<TArray<FOceanInventorySlot>&>(Inventory->GetSlots());
+	MutableSlots[1].bLocked = true;
+
+	TestEqual(TEXT("[TDD] OceanInventory_LockedDragReject"), Inventory->MoveOrMergeSlot(0, 1), EOceanInventoryDragDropResult::Rejected);
+	TestEqual(TEXT("[TDD] OceanInventory_LockedDragSlotZero"), Inventory->GetSlots()[0].Stack.ItemId, FName(TEXT("wood")));
+	TestEqual(TEXT("[TDD] OceanInventory_LockedDragSlotOne"), Inventory->GetSlots()[1].Stack.ItemId, FName(TEXT("scrap")));
+	return true;
+}
+
 #endif

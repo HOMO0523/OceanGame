@@ -118,6 +118,48 @@ bool UOceanInventoryComponent::TryUseItemAtSlot(int32 SlotIndex, UOceanSurvivalC
 	return true;
 }
 
+EOceanInventoryDragDropResult UOceanInventoryComponent::MoveOrMergeSlot(int32 FromSlotIndex, int32 ToSlotIndex)
+{
+	if (!Slots.IsValidIndex(FromSlotIndex) || !Slots.IsValidIndex(ToSlotIndex) || FromSlotIndex == ToSlotIndex)
+	{
+		return EOceanInventoryDragDropResult::Rejected;
+	}
+
+	FOceanInventorySlot& FromSlot = Slots[FromSlotIndex];
+	FOceanInventorySlot& ToSlot = Slots[ToSlotIndex];
+
+	if (FromSlot.bLocked || ToSlot.bLocked)
+	{
+		return EOceanInventoryDragDropResult::Rejected;
+	}
+
+	if (FromSlot.Stack.ItemId == ToSlot.Stack.ItemId)
+	{
+		const int32 Capacity = ToSlot.Stack.MaxStack - ToSlot.Stack.Quantity;
+		if (Capacity <= 0)
+		{
+			return EOceanInventoryDragDropResult::Rejected;
+		}
+
+		const int32 ToMove = FMath::Min(Capacity, FromSlot.Stack.Quantity);
+		ToSlot.Stack.Quantity += ToMove;
+		FromSlot.Stack.Quantity -= ToMove;
+		if (FromSlot.Stack.Quantity <= 0)
+		{
+			Slots.RemoveAt(FromSlotIndex);
+		}
+
+		for (int32 Index = 0; Index < Slots.Num(); ++Index)
+		{
+			Slots[Index].SlotIndex = Index;
+		}
+		return EOceanInventoryDragDropResult::Merged;
+	}
+
+	Swap(FromSlot.Stack, ToSlot.Stack);
+	return EOceanInventoryDragDropResult::Swapped;
+}
+
 bool UOceanInventoryComponent::CanAcceptResource(FOceanResourceStack Stack) const
 {
 	if (Stack.Amount <= 0)

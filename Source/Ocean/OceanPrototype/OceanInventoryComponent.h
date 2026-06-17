@@ -25,6 +25,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Inventory")
 	bool TryUseItemAtSlot(int32 SlotIndex, UOceanSurvivalComponent* Survival);
 
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Inventory")
+	EOceanInventoryDragDropResult MoveOrMergeSlot(int32 FromSlotIndex, int32 ToSlotIndex);
+
 	UFUNCTION(BlueprintPure, Category = "Ocean|Inventory")
 	bool CanAcceptResource(FOceanResourceStack Stack) const;
 
