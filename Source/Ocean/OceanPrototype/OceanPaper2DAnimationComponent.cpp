@@ -1,9 +1,7 @@
 #include "OceanPrototype/OceanPaper2DAnimationComponent.h"
 
 #include "OceanCharacter.h"
-#include "Camera/PlayerCameraManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "PaperFlipbook.h"
 #include "PaperFlipbookComponent.h"
 
@@ -29,14 +27,6 @@ void UOceanPaper2DAnimationComponent::UpdatePresentation(AOceanCharacter* Charac
 	CurrentState = bHasRequestedState
 		? RequestedState
 		: SelectAnimationState(false, false, false, bIsFalling, GroundSpeed);
-
-	if (UWorld* World = Character->GetWorld())
-	{
-		if (APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(World, 0))
-		{
-			VisualComponent->SetWorldRotation(CalculateCameraFacingRotation(VisualComponent->GetComponentLocation(), CameraManager->GetCameraLocation()));
-		}
-	}
 
 	if (UPaperFlipbook* TargetFlipbook = GetFlipbook(CurrentState, CurrentDirection))
 	{
@@ -64,10 +54,10 @@ EOceanPaper2DDirection UOceanPaper2DAnimationComponent::DirectionFromWorldVector
 
 	if (FMath::Abs(WorldVector.X) >= FMath::Abs(WorldVector.Y))
 	{
-		return WorldVector.X >= 0.0f ? EOceanPaper2DDirection::East : EOceanPaper2DDirection::West;
+		return WorldVector.X >= 0.0f ? EOceanPaper2DDirection::North : EOceanPaper2DDirection::South;
 	}
 
-	return WorldVector.Y >= 0.0f ? EOceanPaper2DDirection::North : EOceanPaper2DDirection::South;
+	return WorldVector.Y >= 0.0f ? EOceanPaper2DDirection::West : EOceanPaper2DDirection::East;
 }
 
 EOceanPaper2DAnimationState UOceanPaper2DAnimationComponent::SelectAnimationState(bool bWantsDiveSuitDive, bool bWantsClimb, bool bWantsSwim, bool bIsFalling, float GroundSpeed, float WalkThreshold)
@@ -93,18 +83,6 @@ EOceanPaper2DAnimationState UOceanPaper2DAnimationComponent::SelectAnimationStat
 	}
 
 	return GroundSpeed > WalkThreshold ? EOceanPaper2DAnimationState::Walk : EOceanPaper2DAnimationState::Idle;
-}
-
-FRotator UOceanPaper2DAnimationComponent::CalculateCameraFacingRotation(const FVector& VisualLocation, const FVector& CameraLocation)
-{
-	FVector ToCamera = CameraLocation - VisualLocation;
-	ToCamera.Z = 0.0f;
-	if (ToCamera.IsNearlyZero())
-	{
-		return FRotator::ZeroRotator;
-	}
-
-	return FRotator(0.0f, ToCamera.Rotation().Yaw, 0.0f);
 }
 
 UPaperFlipbook* UOceanPaper2DAnimationComponent::GetFlipbook(EOceanPaper2DAnimationState State, EOceanPaper2DDirection Direction) const

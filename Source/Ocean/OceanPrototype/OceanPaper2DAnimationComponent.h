@@ -126,9 +126,6 @@ public:
 	UFUNCTION(BlueprintPure, Category="Ocean|Paper2D")
 	static EOceanPaper2DAnimationState SelectAnimationState(bool bWantsDiveSuitDive, bool bWantsClimb, bool bWantsSwim, bool bIsFalling, float GroundSpeed, float WalkThreshold = 5.0f);
 
-	UFUNCTION(BlueprintPure, Category="Ocean|Paper2D")
-	static FRotator CalculateCameraFacingRotation(const FVector& VisualLocation, const FVector& CameraLocation);
-
 	UPaperFlipbook* GetFlipbook(EOceanPaper2DAnimationState State, EOceanPaper2DDirection Direction) const;
 
 private:

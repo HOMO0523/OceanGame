@@ -11,6 +11,7 @@
 #include "FileHelpers.h"
 #include "PackageTools.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/PlayerStart.h"
 #include "PlayInEditorDataTypes.h"
 #include "HAL/IConsoleManager.h"
 #include "Misc/OutputDevice.h"
@@ -82,6 +83,8 @@
 #include "UObject/UnrealType.h"
 
 #define LOCTEXT_NAMESPACE "UnrealBridgeEditor"
+
+DEFINE_LOG_CATEGORY_STATIC(LogUnrealBridgeEditor, Log, All);
 
 namespace BridgeEditorImpl
 {
@@ -462,11 +465,21 @@ bool UUnrealBridgeEditorLibrary::StartPIE()
 	FRequestPlaySessionParams Params;
 	Params.WorldType = EPlaySessionWorldType::PlayInEditor;
 
+	int32 PlayerStartCount = 0;
+	if (const UWorld* EditorWorld = GEditor->GetEditorWorldContext().World())
+	{
+		for (TActorIterator<APlayerStart> It(EditorWorld); It; ++It)
+		{
+			++PlayerStartCount;
+		}
+	}
+	const bool bShouldUseViewportStart = PlayerStartCount == 0;
+
 	// Route PIE into the active level viewport (Play-In-Editor "Selected
-	// Viewport" mode) and forward the viewport camera as the spawn transform.
-	// The StartLocation matters when the level has no PlayerStart — without it
-	// RequestPlaySession spawns at (0,0,0), collides, and the default pawn is
-	// never possessed.
+	// Viewport" mode). Only forward the viewport camera as the spawn transform
+	// for maps without PlayerStart actors; Ocean MVP maps should keep their
+	// authored PlayerStart so PIE does not spawn the pawn underwater at the
+	// editor camera.
 	if (FModuleManager::Get().IsModuleLoaded("LevelEditor"))
 	{
 		FLevelEditorModule& LE = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
@@ -474,11 +487,20 @@ bool UUnrealBridgeEditorLibrary::StartPIE()
 		if (ActiveViewport.IsValid())
 		{
 			Params.DestinationSlateViewport = ActiveViewport;
-			FEditorViewportClient& VC = ActiveViewport->GetAssetViewportClient();
-			Params.StartLocation = VC.GetViewLocation();
-			Params.StartRotation = VC.GetViewRotation();
+			if (bShouldUseViewportStart)
+			{
+				FEditorViewportClient& VC = ActiveViewport->GetAssetViewportClient();
+				Params.StartLocation = VC.GetViewLocation();
+				Params.StartRotation = VC.GetViewRotation();
+			}
 		}
 	}
+	const bool bUsesMapPlayerStart = PlayerStartCount > 0 && !Params.StartLocation.IsSet();
+	UE_LOG(LogUnrealBridgeEditor, Log, TEXT("[TDD] UnrealBridge_StartPIE_PlayerStartPolicy: actual=%d expected=1 player_starts=%d start_location_set=%d result=%s"),
+		bUsesMapPlayerStart ? 1 : 0,
+		PlayerStartCount,
+		Params.StartLocation.IsSet() ? 1 : 0,
+		bUsesMapPlayerStart ? TEXT("PASS") : TEXT("FAIL"));
 
 	GEditor->RequestPlaySession(Params);
 	return true;
