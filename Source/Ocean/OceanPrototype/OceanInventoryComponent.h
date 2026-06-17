@@ -6,6 +6,8 @@
 #include "OceanResourceTypes.h"
 #include "OceanInventoryComponent.generated.h"
 
+class UOceanSurvivalComponent;
+
 UCLASS(ClassGroup = (Ocean), meta = (BlueprintSpawnableComponent))
 class OCEAN_API UOceanInventoryComponent : public UActorComponent
 {
@@ -19,6 +21,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Inventory")
 	bool AddItem(const FOceanItemStack& Stack);
+
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Inventory")
+	bool TryUseItemAtSlot(int32 SlotIndex, UOceanSurvivalComponent* Survival);
 
 	UFUNCTION(BlueprintPure, Category = "Ocean|Inventory")
 	bool CanAcceptResource(FOceanResourceStack Stack) const;

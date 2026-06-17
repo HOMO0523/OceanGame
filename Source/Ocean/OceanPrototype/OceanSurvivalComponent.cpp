@@ -27,6 +27,13 @@ void UOceanSurvivalComponent::SetStats(float NewStamina, float NewHydration, flo
 	Satiety = FMath::Clamp(NewSatiety, 0.0f, 100.0f);
 }
 
+void UOceanSurvivalComponent::ApplyRecovery(float StaminaDelta, float HydrationDelta, float SatietyDelta)
+{
+	Stamina = FMath::Clamp(Stamina + StaminaDelta, 0.0f, 100.0f);
+	Hydration = FMath::Clamp(Hydration + HydrationDelta, 0.0f, 100.0f);
+	Satiety = FMath::Clamp(Satiety + SatietyDelta, 0.0f, 100.0f);
+}
+
 void UOceanSurvivalComponent::SetHydrationDrainPerSecond(float NewHydrationDrainPerSecond)
 {
 	HydrationDrainPerSecond = FMath::Max(0.0f, NewHydrationDrainPerSecond);

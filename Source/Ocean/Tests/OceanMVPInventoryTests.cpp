@@ -3,6 +3,7 @@
 #include "Misc/AutomationTest.h"
 #include "OceanPrototype/OceanInventoryComponent.h"
 #include "OceanPrototype/OceanItemTypes.h"
+#include "OceanPrototype/OceanSurvivalComponent.h"
 
 namespace
 {
@@ -93,6 +94,30 @@ bool FOceanMVPInventoryFailedCapacityAtomicTest::RunTest(const FString& Paramete
 	TestFalse(TEXT("[TDD] OceanInventory_RejectsOverflowAtomically"), Inventory->AddItem(MakeTestItemStack(TEXT("apple"), 2, 8)));
 	TestEqual(TEXT("[TDD] OceanInventory_AtomicPostSlotCount"), Inventory->GetSlots().Num(), 12);
 	TestEqual(TEXT("[TDD] OceanInventory_AtomicPostQuantity"), Inventory->GetSlots()[0].Stack.Quantity, 7);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanMVPInventoryUseItemTest, "Ocean.MVP.Inventory.UseItem", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanMVPInventoryUseItemTest::RunTest(const FString& Parameters)
+{
+	AActor* Owner = NewObject<AActor>();
+	UOceanInventoryComponent* Inventory = NewObject<UOceanInventoryComponent>(Owner);
+	UOceanSurvivalComponent* Survival = NewObject<UOceanSurvivalComponent>(Owner);
+
+	FOceanItemStack Water;
+	Water.ItemId = TEXT("fresh_water");
+	Water.Quantity = 1;
+	Water.MaxStack = 4;
+	Water.Category = EOceanItemCategory::Consumable;
+	Water.UseEffect.HydrationDelta = 100.0f;
+
+	Survival->SetStats(40.0f, 20.0f, 30.0f);
+	TestTrue(TEXT("[TDD] OceanInventory_AddWaterItem"), Inventory->AddItem(Water));
+	TestTrue(TEXT("[TDD] OceanInventory_UseWaterItem"), Inventory->TryUseItemAtSlot(0, Survival));
+	TestEqual(TEXT("[TDD] OceanInventory_HydrationAfterWater"), Survival->GetHydration(), 100.0f);
+	TestEqual(TEXT("[TDD] OceanInventory_WaterSlotConsumed"), Inventory->GetSlots().Num(), 0);
+	TestFalse(TEXT("[TDD] OceanInventory_UseMissingItemFails"), Inventory->TryUseItemAtSlot(0, Survival));
 	return true;
 }
 

@@ -1,4 +1,5 @@
 #include "OceanPrototype/OceanInventoryComponent.h"
+#include "OceanPrototype/OceanSurvivalComponent.h"
 
 UOceanInventoryComponent::UOceanInventoryComponent()
 {
@@ -81,6 +82,37 @@ bool UOceanInventoryComponent::AddItem(const FOceanItemStack& Stack)
 		NewSlot.Stack.Quantity = FMath::Min(Stack.MaxStack, Remaining);
 		Slots.Add(NewSlot);
 		Remaining -= NewSlot.Stack.Quantity;
+	}
+
+	return true;
+}
+
+bool UOceanInventoryComponent::TryUseItemAtSlot(int32 SlotIndex, UOceanSurvivalComponent* Survival)
+{
+	if (!Slots.IsValidIndex(SlotIndex) || !IsValid(Survival))
+	{
+		return false;
+	}
+
+	FOceanInventorySlot& Slot = Slots[SlotIndex];
+	if (Slot.Stack.Category != EOceanItemCategory::Consumable || Slot.Stack.Quantity <= 0)
+	{
+		return false;
+	}
+
+	Survival->ApplyRecovery(
+		Slot.Stack.UseEffect.StaminaDelta,
+		Slot.Stack.UseEffect.HydrationDelta,
+		Slot.Stack.UseEffect.SatietyDelta);
+
+	Slot.Stack.Quantity -= 1;
+	if (Slot.Stack.Quantity <= 0)
+	{
+		Slots.RemoveAt(SlotIndex);
+		for (int32 Index = 0; Index < Slots.Num(); ++Index)
+		{
+			Slots[Index].SlotIndex = Index;
+		}
 	}
 
 	return true;

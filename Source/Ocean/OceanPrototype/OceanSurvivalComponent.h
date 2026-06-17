@@ -21,6 +21,9 @@ public:
 	void SetStats(float NewStamina, float NewHydration, float NewSatiety);
 
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Survival")
+	void ApplyRecovery(float StaminaDelta, float HydrationDelta, float SatietyDelta);
+
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Survival")
 	void SetHydrationDrainPerSecond(float NewHydrationDrainPerSecond);
 
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Survival")
