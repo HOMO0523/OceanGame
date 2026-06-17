@@ -55,8 +55,9 @@
   - `BP_OceanSurvivorCharacter` now has 24 assigned Flipbook references for six actions x four directions.
 - Added HUD/backpack drawer UI verification:
   - `scripts/verify_ocean_ui_assets.py` verifies the 10 Ocean HUD/backpack WBP assets under `/Game/OceanPrototype/UI`.
+  - The script verifies `WBP_OceanHUDRoot_C` loads and `BP_OceanMVPPlayerController.HUDRootWidgetClass` points to it.
   - The script verifies `/Game/OceanPrototype/Maps/L_WaterOcean` loads through Unreal Python.
-  - The optional `--pie` path emits a non-fragile `[TDD] OceanHUDRootPIE` probe while the no-LiveCoding pipeline captures the real HUD creation log.
+  - The optional `--pie` path now fails unless recent logs include the real `[TDD] OceanHUDRootPIE: created=1` line.
 
 ## Verification Snapshot
 
@@ -81,9 +82,9 @@
 - `Ocean.Paper2D` command-line automation finds and passes 3 tests: camera-facing yaw, cardinal direction mapping, and state-priority selection.
 - MVP setup/verify probes now pass `MVPPaper2DAnimComponent` and `MVPPaper2DAnimFlipbooks: actual=24 expected=24`.
 - `python -m py_compile scripts/verify_ocean_ui_assets.py` exits `0`.
-- BridgeClient execution of `scripts/verify_ocean_ui_assets.py` passes: 10/10 WBP assets load and `L_WaterOcean` map load reports `PASS`.
-- BridgeClient execution of `scripts/verify_ocean_ui_assets.py --pie` passes and emits `[TDD] OceanHUDRootPIE: probe=placeholder real_created_log=0 result=PASS`.
-- `python scripts/ue_tdd_pipeline.py --pie-duration 5 --log-lines 24000` succeeds: save gate `save_result=True dirty_before=[] dirty_after=[]`, cold compile succeeds, PIE runs for 5.33s, TDD report shows 21 lines with 19 passed / 0 failed, and logs include `[TDD] OceanHUDRootPIE: created=1 drawer_open=0`.
+- BridgeClient execution of `scripts/verify_ocean_ui_assets.py` passes: 10/10 WBP assets load, `WBP_OceanHUDRoot_C` loads, `HUDRootWidgetClass` binding reports `PASS`, and `L_WaterOcean` map load reports `PASS`.
+- `python scripts/ue_tdd_pipeline.py --pie-duration 5 --log-lines 24000` succeeds: save gate `save_result=True dirty_before=[] dirty_after=[]`, cold compile succeeds, PIE runs for 5.0s, TDD report shows 21 lines with 19 passed / 0 failed, and logs include `[TDD] OceanHUDRootPIE: created=1 drawer_open=0`.
+- BridgeClient execution of `scripts/verify_ocean_ui_assets.py --pie` passes after the PIE run and emits `[TDD] OceanHUDRootPIE: real_created_log=1 result=PASS`.
 
 ## Active Blockers
 
