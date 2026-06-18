@@ -20,6 +20,8 @@ bool FOceanBackpackPanelSlotsTest::RunTest(const FString& Parameters)
     auto* Panel = NewObject<UOceanBackpackPanelWidget>(GetTransientPackage(), UOceanBackpackPanelWidget::StaticClass());
     TestNotNull(TEXT("[TDD] BackpackPanel_Created"), Panel);
 
+    Panel->Initialize();
+
     // TakeWidget triggers RebuildWidget
     Panel->TakeWidget();
 
@@ -53,6 +55,7 @@ bool FOceanBackpackSlotVisualsTest::RunTest(const FString& Parameters)
     auto* Slot = NewObject<UOceanBackpackSlotWidget>(GetTransientPackage(), UOceanBackpackSlotWidget::StaticClass());
     TestNotNull(TEXT("[TDD] BackpackSlot_Created"), Slot);
 
+    Slot->Initialize();
     Slot->TakeWidget();
 
     // Must have a root widget
@@ -83,6 +86,7 @@ bool FOceanBackpackPanelRefreshTest::RunTest(const FString& Parameters)
     auto* Inventory = NewObject<UOceanInventoryComponent>();
     auto* Survival = NewObject<UOceanSurvivalComponent>();
     auto* Panel = NewObject<UOceanBackpackPanelWidget>(GetTransientPackage(), UOceanBackpackPanelWidget::StaticClass());
+    Panel->Initialize();
     Panel->TakeWidget();
     Panel->BindInventory(Inventory, Survival);
 

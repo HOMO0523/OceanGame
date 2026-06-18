@@ -519,7 +519,7 @@
         <div class="decision"><b>Placement Query</b><p>拖拽建造先读取 <code>FOceanPlacementQueryResult</code> 的失败原因，UI 只显示反馈和分发命令，不直接生成 Actor。</p></div>
         <div class="decision"><b>Paper2D Atlas</b><p>角色占位动作集采用“每动作 8x4 单独生成 → 脚本合成 8x20 总 atlas”的流程；五张绿幕源图反推为 222 源定位格，最终用 288 安全格导入，避免 256 切图导致头部/脚蹼裁切。</p></div>
         <div class="decision"><b>Paper2D State</b><p>Paper2D 原生用 <code>Flipbook</code> 播放帧动画，但没有 SkeletalMesh 那种完整 AnimBP；本项目用轻量 C++ 状态组件做相机 billboard、方向判断和 Flipbook 切换。</p></div>
-        <div class="decision"><b>Verification</b><p><code>setup_mvp_survival_loop.py</code> 和 <code>verify_mvp_survival_loop.py</code> 校验 11 个输入映射、控制器绑定、GameMode 默认类、16 个资源节点、Deck 数据、角色建造默认模块和 24 个 Paper2D Flipbook 绑定。</p></div>
+        <div class="decision"><b>Verification</b><p><code>setup_mvp_survival_loop.py</code> 和 <code>verify_mvp_survival_loop.py</code> 校验 13 个输入映射、控制器绑定、<code>AOceanMVPGameMode</code> 父类、16 个资源节点、Deck 数据、角色建造默认模块和 24 个 Paper2D Flipbook 绑定。</p></div>
       </div>
     </section>
 
@@ -533,18 +533,18 @@
         </div>
         <div class="mini">
           <span class="tag green">Automation</span>
-          <h3>建造测试</h3>
-          <p><code>Ocean.Build</code> 找到 8 个自动化测试，<code>Ocean.Paper2D</code> 找到 3 个自动化测试；水边判定、相机朝向、方向映射和状态优先级均完成成功。</p>
+          <h3>项目测试前缀</h3>
+          <p><code>Ocean.Build</code>、<code>Ocean.Resources</code>、<code>Ocean.UI</code>、<code>Ocean.MVP</code>、<code>Ocean.Paper2D</code> 均通过；裸 <code>Automation RunTests Ocean</code> 会误匹配 UE Water 插件测试，不能作为项目验收命令。</p>
         </div>
         <div class="mini">
           <span class="tag green">Bridge</span>
           <h3>资产验证</h3>
-          <p>UnrealBridge 验证地图加载、11 个输入映射、角色建造默认模块、控制器绑定、GameMode、16 个资源节点、Deck 数据资产、Paper2D 状态组件和 24 个 Flipbook。</p>
+          <p>UnrealBridge 验证地图加载、13 个输入映射、角色建造默认模块、控制器绑定、<code>AOceanMVPGameMode</code>、16 个资源节点、Deck 数据资产、Paper2D 状态组件和 24 个 Flipbook。</p>
         </div>
         <div class="mini">
           <span class="tag green">UI PIE</span>
           <h3>背包 HUD 真实日志</h3>
-          <p><code>python scripts/ue_tdd_pipeline.py --pie-duration 5 --log-lines 24000</code> 成功，日志包含 <code>[TDD] OceanHUDRootPIE: created=1 drawer_open=0</code>；严格验证通过 <code>real_created_log=1</code>。</p>
+          <p><code>python scripts/verify_ocean_ui_pie.py</code> 主动加载 <code>L_WaterOcean</code> 并在客户端等待 PIE tick，日志包含 <code>[TDD] OceanHUDRootPIE: created=1 drawer_open=0</code>；严格验证通过 <code>real_created_log=1</code>。</p>
         </div>
       </div>
     </section>
@@ -565,10 +565,11 @@
         <div class="timeline-item"><strong>feat: fix input and import Paper2D experiment</strong><p>修复 WASD 都朝右走，新增 Space 跳跃、E 水边潜水入口，并把 192 帧实验动作导入 UE Paper2D。</p></div>
         <div class="timeline-item"><strong>feat: add Paper2D animation state machine</strong><p>新增相机朝向 billboard、四方向判断、Idle/Walk/Jump 自动切换，并为后续 Swim/Climb/DiveSuitDive 保留视觉状态。</p></div>
         <div class="timeline-item"><strong>docs: sync ocean hud backpack ui evidence</strong><p>记录库存/背包基础、右侧抽屉 WBP、Tab/I 输入、placement query 边界和真实 PIE HUD 验证证据。</p></div>
+        <div class="timeline-item"><strong>fix: harden Ocean MVP validation workflow</strong><p>修复资源节点、背包 WBP、StatusPanel 红测；新增外部 HUD PIE 探针，并明确项目验收必须按 <code>Ocean.Build/Resources/UI/MVP/Paper2D</code> 前缀运行。</p></div>
       </div>
     </section>
 
-    <p class="footer">《洋流》Ocean · UE5.7 · 第一阶段 MVP 答辩材料 · 2026-06-17</p>
+    <p class="footer">《洋流》Ocean · UE5.7 · 第一阶段 MVP 答辩材料 · 2026-06-18</p>
   </main>
 </body>
 </html>

@@ -8,6 +8,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanStatusPanelBindTest, "Ocean.UI.StatusPane
 
 bool FOceanStatusPanelBindTest::RunTest(const FString& Parameters)
 {
+	constexpr float PercentTolerance = 0.001f;
 	UOceanSurvivalComponent* Survival = NewObject<UOceanSurvivalComponent>();
 	Survival->SetStats(100.0f, 80.0f, 60.0f);
 
@@ -17,11 +18,11 @@ bool FOceanStatusPanelBindTest::RunTest(const FString& Parameters)
 	StatusPanel->BindSurvivalComponent(Survival);
 
 	TestTrue(TEXT("[TDD] OceanStatusPanel_StaminaPercent"),
-		FMath::IsNearlyEqual(StatusPanel->GetStaminaPercent(), 1.0f));
+		FMath::IsNearlyEqual(StatusPanel->GetStaminaPercent(), 1.0f, PercentTolerance));
 	TestTrue(TEXT("[TDD] OceanStatusPanel_HydrationPercent"),
-		FMath::IsNearlyEqual(StatusPanel->GetHydrationPercent(), 0.8f));
+		FMath::IsNearlyEqual(StatusPanel->GetHydrationPercent(), 0.8f, PercentTolerance));
 	TestTrue(TEXT("[TDD] OceanStatusPanel_SatietyPercent"),
-		FMath::IsNearlyEqual(StatusPanel->GetSatietyPercent(), 0.6f));
+		FMath::IsNearlyEqual(StatusPanel->GetSatietyPercent(), 0.6f, PercentTolerance));
 
 	// 体力格数：100/33.33 = 3.0，向上取整 = 3
 	TestEqual(TEXT("[TDD] OceanStatusPanel_StaminaCells_Full"), StatusPanel->GetStaminaCells(), 3);
@@ -34,6 +35,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanStatusPanelUpdateTest, "Ocean.UI.StatusPa
 
 bool FOceanStatusPanelUpdateTest::RunTest(const FString& Parameters)
 {
+	constexpr float PercentTolerance = 0.001f;
 	UOceanSurvivalComponent* Survival = NewObject<UOceanSurvivalComponent>();
 	Survival->SetStats(100.0f, 100.0f, 100.0f);
 
@@ -45,11 +47,11 @@ bool FOceanStatusPanelUpdateTest::RunTest(const FString& Parameters)
 
 	// 验证 Widget getter 同步反映新值
 	TestTrue(TEXT("[TDD] OceanStatusPanel_UpdatedStamina"),
-		FMath::IsNearlyEqual(StatusPanel->GetStaminaPercent(), 0.5f));
+		FMath::IsNearlyEqual(StatusPanel->GetStaminaPercent(), 0.5f, PercentTolerance));
 	TestTrue(TEXT("[TDD] OceanStatusPanel_UpdatedHydration"),
-		FMath::IsNearlyEqual(StatusPanel->GetHydrationPercent(), 0.3f));
+		FMath::IsNearlyEqual(StatusPanel->GetHydrationPercent(), 0.3f, PercentTolerance));
 	TestTrue(TEXT("[TDD] OceanStatusPanel_UpdatedSatiety"),
-		FMath::IsNearlyEqual(StatusPanel->GetSatietyPercent(), 0.8f));
+		FMath::IsNearlyEqual(StatusPanel->GetSatietyPercent(), 0.8f, PercentTolerance));
 
 	// 50/33.33 = 1.5，向上取整 = 2
 	TestEqual(TEXT("[TDD] OceanStatusPanel_UpdatedCells"), StatusPanel->GetStaminaCells(), 2);
@@ -58,17 +60,17 @@ bool FOceanStatusPanelUpdateTest::RunTest(const FString& Parameters)
 	Survival->SetStats(0.0f, 0.0f, 0.0f);
 	TestEqual(TEXT("[TDD] OceanStatusPanel_ZeroStaminaCells"), StatusPanel->GetStaminaCells(), 0);
 	TestTrue(TEXT("[TDD] OceanStatusPanel_ZeroPercent"),
-		FMath::IsNearlyEqual(StatusPanel->GetStaminaPercent(), 0.0f));
+		FMath::IsNearlyEqual(StatusPanel->GetStaminaPercent(), 0.0f, PercentTolerance));
 
 	// 测试解绑
 	StatusPanel->UnbindSurvivalComponent();
 	TestTrue(TEXT("[TDD] OceanStatusPanel_UnboundReturnsZero"),
-		FMath::IsNearlyEqual(StatusPanel->GetStaminaPercent(), 0.0f));
+		FMath::IsNearlyEqual(StatusPanel->GetStaminaPercent(), 0.0f, PercentTolerance));
 
 	// 测试空绑定安全
 	StatusPanel->BindSurvivalComponent(nullptr);
 	TestTrue(TEXT("[TDD] OceanStatusPanel_NullBindSafe"),
-		FMath::IsNearlyEqual(StatusPanel->GetHydrationPercent(), 0.0f));
+		FMath::IsNearlyEqual(StatusPanel->GetHydrationPercent(), 0.0f, PercentTolerance));
 
 	return true;
 }

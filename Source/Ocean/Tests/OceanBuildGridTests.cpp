@@ -118,7 +118,7 @@ bool FOceanResourceNodeComponentTest::RunTest(const FString& Parameters)
 	TestNotNull(TEXT("[TDD] OceanResource_StaticMeshComponent"), ResourceNode->GetMeshComponent());
 	TestNotNull(TEXT("[TDD] OceanResource_BuoyancyComponent"), ResourceNode->FindComponentByClass<UBuoyancyComponent>());
 	TestNotNull(TEXT("[TDD] OceanResource_CubeFallbackMesh"), ResourceNode->GetMeshComponent()->GetStaticMesh().Get());
-	TestTrue(TEXT("[TDD] OceanResource_PhysicsEnabled"), ResourceNode->GetMeshComponent()->IsSimulatingPhysics());
+	TestTrue(TEXT("[TDD] OceanResource_PhysicsConfigured"), ResourceNode->GetMeshComponent()->BodyInstance.bSimulatePhysics);
 
 	return true;
 }

@@ -55,7 +55,8 @@
 | `scripts/create_water_ocean_map.py` | Editor Python script that creates `/Game/OceanPrototype/Maps/L_WaterOcean` with WaterZone, WaterBodyOcean, support Landscape, and WaterBrushManager. |
 | `scripts/import_paper2d_experiment.py` | Editor Python script that imports the external `288x288` Paper2D experiment frames as Textures, Sprites, and Flipbooks under `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe`. |
 | `scripts/create_ocean_ui_assets.py` | Editor Python script that creates and saves the 10 HUD/backpack Widget Blueprint assets under `/Game/OceanPrototype/UI`. |
-| `scripts/verify_ocean_ui_assets.py` | UnrealBridge verification for WBP asset load, HUDRootWidgetClass binding, map load, and strict real PIE HUD log presence. |
+| `scripts/verify_ocean_ui_assets.py` | UnrealBridge verification for WBP asset load, HUDRootWidgetClass binding, map load, and recent real PIE HUD log presence. |
+| `scripts/verify_ocean_ui_pie.py` | External Bridge client probe that loads `L_WaterOcean`, starts PIE, waits client-side so the editor can tick, and verifies `[TDD] OceanHUDRootPIE: created=1`. |
 
 ## Gameplay Input Assets
 
@@ -104,6 +105,8 @@
 python scripts/ue_tdd_pipeline.py --pie-duration 5
 python scripts/ue_tdd_pipeline.py --check-only
 python scripts/ue_tdd_pipeline.py --pre-pie-console-command "stat fps" --pie-duration 5
+python scripts/verify_ocean_ui_pie.py
 ```
 
 `--check-only` reads logs only; it is not compile proof.
+For gameplay-map HUD PIE validation, prefer `scripts/verify_ocean_ui_pie.py` because Unreal Python sleeps block editor ticks inside a single Bridge execution.

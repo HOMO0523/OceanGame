@@ -18,7 +18,7 @@ Creates or updates:
     /Game/OceanPrototype/Build/DA_BuildModule_Deck_1x1
     OceanFloatingPlatform_Starter
     OceanResourceField_Starter
-    PlayerStart_MVP
+    PlayerStart_WaterOcean
 """
 
 from __future__ import annotations
@@ -80,7 +80,7 @@ PAPER2D_FLIPBOOK_PROPS = [
 
 STARTER_PLATFORM_LABEL = "OceanFloatingPlatform_Starter"
 STARTER_RESOURCE_FIELD_LABEL = "OceanResourceField_Starter"
-STARTER_PLAYER_START_LABEL = "PlayerStart_MVP"
+STARTER_PLAYER_START_LABEL = "PlayerStart_WaterOcean"
 STARTER_RESOURCE_NODE_PREFIX = "OceanResourceNode_Starter_"
 
 FALLBACK_RESOURCE_COUNT = 16
@@ -868,7 +868,7 @@ def ensure_blueprints_and_data(input_assets) -> None:
     ensure_folder(BLUEPRINT_DIR)
     survivor_bp = ensure_blueprint(SURVIVOR_BP_PATH, "/Script/Ocean.OceanCharacter")
     player_controller_bp = ensure_blueprint(PLAYER_CONTROLLER_BP_PATH, "/Script/Ocean.OceanPlayerController")
-    game_mode_bp = ensure_blueprint(GAMEMODE_BP_PATH, "/Script/Ocean.OceanGameMode")
+    game_mode_bp = ensure_blueprint(GAMEMODE_BP_PATH, "/Script/Ocean.OceanMVPGameMode")
     deck_definition = ensure_deck_definition()
     configure_survivor_build_defaults(survivor_bp, deck_definition)
     configure_survivor_paper2d_defaults(survivor_bp)

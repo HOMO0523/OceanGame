@@ -20,6 +20,8 @@ bool FOceanStatusPanelVisualsTest::RunTest(const FString& Parameters)
     auto* W = NewObject<UOceanStatusPanelWidget>(GetTransientPackage(), UOceanStatusPanelWidget::StaticClass());
     TestNotNull(TEXT("[TDD] StatusPanel_Created"), W);
 
+    W->Initialize();
+
     // TakeWidget triggers RebuildWidget
     W->TakeWidget();
 
@@ -64,6 +66,7 @@ bool FOceanStatusPanelIdempotentTest::RunTest(const FString& Parameters)
     auto* W = NewObject<UOceanStatusPanelWidget>(GetTransientPackage(), UOceanStatusPanelWidget::StaticClass());
 
     // Call TakeWidget twice - should not crash or duplicate
+    W->Initialize();
     W->TakeWidget();
     W->TakeWidget();
 
@@ -77,13 +80,13 @@ bool FOceanStatusPanelIdempotentTest::RunTest(const FString& Parameters)
     }
     TestEqual(TEXT("[TDD] StatusPanel_NoDuplicateBars"), BarCount, 3);
 
-    // Count cell borders - should still be 3, not 6
+    // Count all borders: one background border plus 3 stamina cell borders.
     int32 BorderCount = 0;
     for (UWidget* Widget : All)
     {
         if (Widget && Widget->IsA(UBorder::StaticClass())) BorderCount++;
     }
-    TestEqual(TEXT("[TDD] StatusPanel_NoDuplicateCells"), BorderCount, 3);
+    TestEqual(TEXT("[TDD] StatusPanel_NoDuplicateBorders"), BorderCount, 4);
 
     return true;
 }
@@ -94,6 +97,7 @@ bool FOceanStatusPanelCellFillTest::RunTest(const FString& Parameters)
 {
     auto* Survival = NewObject<UOceanSurvivalComponent>();
     auto* W = NewObject<UOceanStatusPanelWidget>(GetTransientPackage(), UOceanStatusPanelWidget::StaticClass());
+    W->Initialize();
     W->TakeWidget();
 
     // Full stamina = 3 cells

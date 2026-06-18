@@ -10,6 +10,9 @@ Run through UnrealBridge from the project root:
     client.send(Path("scripts/verify_ocean_ui_assets.py").read_text(encoding="utf-8"))
 
 For the optional PIE probe:
+    Run `python scripts/verify_ocean_ui_pie.py` first, or run another external
+    Bridge/Pipeline probe that loads L_WaterOcean and starts PIE.
+
     source = Path("scripts/verify_ocean_ui_assets.py").read_text(encoding="utf-8")
     script = "OCEAN_VERIFY_UI_ARGS = ['--pie']\\n"
     script += "exec(" + repr(source) + ")"

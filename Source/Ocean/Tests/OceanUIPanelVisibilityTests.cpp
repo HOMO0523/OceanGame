@@ -26,6 +26,7 @@ bool FOceanUIPanelVisibilityTest::RunTest(const FString& Parameters)
     {
         auto* W = NewObject<UOceanStatusPanelWidget>(GetTransientPackage(), UOceanStatusPanelWidget::StaticClass());
         TestNotNull(TEXT("[TDD] OceanUIPanel_StatusPanel_Created"), W);
+        W->Initialize();
         TSharedRef<SWidget> Sw = W->TakeWidget();
         TestTrue(TEXT("[TDD] OceanUIPanel_StatusPanel_HasContent"), Sw != SNullWidget::NullWidget);
         TestNotNull(TEXT("[TDD] OceanUIPanel_StatusPanel_RootSet"), W->WidgetTree->RootWidget.Get());
@@ -34,6 +35,7 @@ bool FOceanUIPanelVisibilityTest::RunTest(const FString& Parameters)
     // 2. TimePanel
     {
         auto* W = NewObject<UOceanTimePanelWidget>(GetTransientPackage(), UOceanTimePanelWidget::StaticClass());
+        W->Initialize();
         TSharedRef<SWidget> Sw = W->TakeWidget();
         TestTrue(TEXT("[TDD] OceanUIPanel_Time_HasContent"), Sw != SNullWidget::NullWidget);
         TestNotNull(TEXT("[TDD] OceanUIPanel_Time_RootSet"), W->WidgetTree->RootWidget.Get());
@@ -42,6 +44,7 @@ bool FOceanUIPanelVisibilityTest::RunTest(const FString& Parameters)
     // 3. Toast
     {
         auto* W = NewObject<UOceanToastWidget>(GetTransientPackage(), UOceanToastWidget::StaticClass());
+        W->Initialize();
         TSharedRef<SWidget> Sw = W->TakeWidget();
         TestTrue(TEXT("[TDD] OceanUIPanel_Toast_HasContent"), Sw != SNullWidget::NullWidget);
         TestNotNull(TEXT("[TDD] OceanUIPanel_Toast_RootSet"), W->WidgetTree->RootWidget.Get());
@@ -50,6 +53,7 @@ bool FOceanUIPanelVisibilityTest::RunTest(const FString& Parameters)
     // 4. Backpack
     {
         auto* W = NewObject<UOceanBackpackPanelWidget>(GetTransientPackage(), UOceanBackpackPanelWidget::StaticClass());
+        W->Initialize();
         TSharedRef<SWidget> Sw = W->TakeWidget();
         TestTrue(TEXT("[TDD] OceanUIPanel_Backpack_HasContent"), Sw != SNullWidget::NullWidget);
         TestNotNull(TEXT("[TDD] OceanUIPanel_Backpack_RootSet"), W->WidgetTree->RootWidget.Get());
@@ -58,6 +62,7 @@ bool FOceanUIPanelVisibilityTest::RunTest(const FString& Parameters)
     // 5. Build
     {
         auto* W = NewObject<UOceanBuildPanelWidget>(GetTransientPackage(), UOceanBuildPanelWidget::StaticClass());
+        W->Initialize();
         TSharedRef<SWidget> Sw = W->TakeWidget();
         TestTrue(TEXT("[TDD] OceanUIPanel_Build_HasContent"), Sw != SNullWidget::NullWidget);
         TestNotNull(TEXT("[TDD] OceanUIPanel_Build_RootSet"), W->WidgetTree->RootWidget.Get());
@@ -66,6 +71,7 @@ bool FOceanUIPanelVisibilityTest::RunTest(const FString& Parameters)
     // 6. Modal
     {
         auto* W = NewObject<UOceanItemUseModalWidget>(GetTransientPackage(), UOceanItemUseModalWidget::StaticClass());
+        W->Initialize();
         TSharedRef<SWidget> Sw = W->TakeWidget();
         TestTrue(TEXT("[TDD] OceanUIPanel_Modal_HasContent"), Sw != SNullWidget::NullWidget);
         TestNotNull(TEXT("[TDD] OceanUIPanel_Modal_RootSet"), W->WidgetTree->RootWidget.Get());

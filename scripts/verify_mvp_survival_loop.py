@@ -14,6 +14,7 @@ import unreal
 
 MAP_PATH = "/Game/OceanPrototype/Maps/L_WaterOcean"
 INPUT_CONTEXT_PATH = "/Game/OceanPrototype/Input/IMC_OceanMVP"
+TOGGLE_BACKPACK_ACTION_PATH = "/Game/OceanPrototype/Input/IA_OceanToggleBackpack"
 SURVIVOR_BP_PATH = "/Game/OceanPrototype/Blueprints/BP_OceanSurvivorCharacter"
 PLAYER_CONTROLLER_BP_PATH = "/Game/OceanPrototype/Blueprints/BP_OceanMVPPlayerController"
 GAMEMODE_BP_PATH = "/Game/OceanPrototype/Blueprints/BP_OceanMVPGameMode"
@@ -26,6 +27,7 @@ REQUIRED_ASSETS = [
     "/Game/OceanPrototype/Input/IA_OceanMove",
     "/Game/OceanPrototype/Input/IA_OceanInteract",
     "/Game/OceanPrototype/Input/IA_OceanToggleBuild",
+    TOGGLE_BACKPACK_ACTION_PATH,
     "/Game/OceanPrototype/Input/IA_OceanRotateBuild",
     "/Game/OceanPrototype/Input/IA_OceanJump",
     "/Game/OceanPrototype/Input/IA_OceanDive",
@@ -41,7 +43,7 @@ REQUIRED_ASSETS = [
 REQUIRED_LABELS = [
     "OceanFloatingPlatform_Starter",
     "OceanResourceField_Starter",
-    "PlayerStart_MVP",
+    "PlayerStart_WaterOcean",
 ]
 
 FAILURES: list[str] = []
@@ -275,6 +277,8 @@ def verify_input_context() -> None:
         ("/Game/OceanPrototype/Input/IA_OceanMove", "D"),
         ("/Game/OceanPrototype/Input/IA_OceanInteract", "F"),
         ("/Game/OceanPrototype/Input/IA_OceanToggleBuild", "B"),
+        (TOGGLE_BACKPACK_ACTION_PATH, "Tab"),
+        (TOGGLE_BACKPACK_ACTION_PATH, "I"),
         ("/Game/OceanPrototype/Input/IA_OceanRotateBuild", "R"),
         ("/Game/OceanPrototype/Input/IA_OceanJump", "SpaceBar"),
         ("/Game/OceanPrototype/Input/IA_OceanDive", "E"),
@@ -319,7 +323,7 @@ def verify_input_context() -> None:
 def verify_controller_and_game_mode() -> None:
     survivor_class = verify_blueprint_parent(SURVIVOR_BP_PATH, "/Script/Ocean.OceanCharacter")
     controller_class = verify_blueprint_parent(PLAYER_CONTROLLER_BP_PATH, "/Script/Ocean.OceanPlayerController")
-    game_mode_class = verify_blueprint_parent(GAMEMODE_BP_PATH, "/Script/Ocean.OceanGameMode")
+    game_mode_class = verify_blueprint_parent(GAMEMODE_BP_PATH, "/Script/Ocean.OceanMVPGameMode")
 
     if controller_class is not None:
         controller_cdo = unreal.get_default_object(controller_class)
@@ -330,6 +334,7 @@ def verify_controller_and_game_mode() -> None:
             "MoveAction": same_object(get_prop(controller_cdo, ["move_action", "MoveAction"]), load_asset("/Game/OceanPrototype/Input/IA_OceanMove")),
             "InteractAction": same_object(get_prop(controller_cdo, ["interact_action", "InteractAction"]), load_asset("/Game/OceanPrototype/Input/IA_OceanInteract")),
             "ToggleBuildAction": same_object(get_prop(controller_cdo, ["toggle_build_action", "ToggleBuildAction"]), load_asset("/Game/OceanPrototype/Input/IA_OceanToggleBuild")),
+            "ToggleBackpackAction": same_object(get_prop(controller_cdo, ["toggle_backpack_action", "ToggleBackpackAction"]), load_asset(TOGGLE_BACKPACK_ACTION_PATH)),
             "RotateBuildAction": same_object(get_prop(controller_cdo, ["rotate_build_action", "RotateBuildAction"]), load_asset("/Game/OceanPrototype/Input/IA_OceanRotateBuild")),
             "JumpAction": same_object(get_prop(controller_cdo, ["jump_action", "JumpAction"]), load_asset("/Game/OceanPrototype/Input/IA_OceanJump")),
             "DiveAction": same_object(get_prop(controller_cdo, ["dive_action", "DiveAction"]), load_asset("/Game/OceanPrototype/Input/IA_OceanDive")),

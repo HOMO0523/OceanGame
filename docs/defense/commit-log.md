@@ -135,3 +135,9 @@
 - 做了什么：清理语义文档中残留的 `178x222` / `256x256` 旧导入目标，统一为 `222x222` 源定位格与 `288x288` UE 安全导入格。
 - 证明了什么：文档中的验收目标、测试结论和答辩 HTML 口径一致，不会误导后续 Paper2D 导入。
 - 答辩价值：可展示工程文档不只是记录结果，也会反查并消除规格冲突。
+
+### `fix: harden Ocean MVP validation workflow` — 本次验证硬化提交
+
+- 做了什么：修复资源节点、背包 WBP、StatusPanel 自动化红测；把 MVP 验证脚本同步到 13 个输入映射、`AOceanMVPGameMode` 父类和 `PlayerStart_WaterOcean`；新增外部 HUD PIE 探针。
+- 证明了什么：MVP 不再只靠编译或手动打开地图判断，而是可以通过项目测试前缀、Bridge 资产验证、真实 PIE HUD 日志形成闭环。
+- 答辩价值：可展示“发现红测 → 定位根因 → 修测试/脚本 → 重跑验证 → 写入答辩记录”的工程化过程，并解释为什么不能用裸 `Automation RunTests Ocean` 作为验收命令。
