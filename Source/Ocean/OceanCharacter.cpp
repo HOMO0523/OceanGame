@@ -74,7 +74,51 @@ void AOceanCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// stub
+	if (CameraBoom)
+	{
+		SurfaceCameraArmLength = CameraBoom->TargetArmLength;
+	}
+	RestoreSurfaceCameraState();
+}
+
+void AOceanCharacter::ApplyDiveCameraState()
+{
+	if (CameraBoom)
+	{
+		CameraBoom->TargetArmLength = DiveCameraArmLength;
+	}
+}
+
+void AOceanCharacter::RestoreSurfaceCameraState()
+{
+	if (CameraBoom)
+	{
+		CameraBoom->TargetArmLength = SurfaceCameraArmLength;
+	}
+}
+
+FVector AOceanCharacter::ResolveDiveTargetLocation() const
+{
+	const FVector CurrentLocation = GetActorLocation();
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return FVector(CurrentLocation.X, CurrentLocation.Y, DiveDepthZ);
+	}
+
+	const float CapsuleHalfHeight = GetCapsuleComponent() ? GetCapsuleComponent()->GetScaledCapsuleHalfHeight() : 96.0f;
+	const FVector TraceStart(CurrentLocation.X, CurrentLocation.Y, WaterSurfaceZ + 100.0f);
+	const FVector TraceEnd(CurrentLocation.X, CurrentLocation.Y, WaterSurfaceZ - DiveTraceDepth);
+
+	FHitResult Hit;
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(OceanDiveTarget), false, this);
+	if (World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_WorldStatic, Params))
+	{
+		const float FloorZ = Hit.ImpactPoint.Z + CapsuleHalfHeight + DiveFloorOffset;
+		return FVector(CurrentLocation.X, CurrentLocation.Y, FloorZ);
+	}
+
+	return FVector(CurrentLocation.X, CurrentLocation.Y, DiveDepthZ);
 }
 
 void AOceanCharacter::Tick(float DeltaSeconds)
@@ -258,16 +302,20 @@ bool AOceanCharacter::TryToggleDive()
 
 		// Enter dive
 		bIsDiving = true;
-		FVector Loc = GetActorLocation();
-		SetActorLocation(FVector(Loc.X, Loc.Y, DiveDepthZ), false, nullptr, ETeleportType::TeleportPhysics);
+		bInWater = false;
+		const FVector DiveTargetLocation = ResolveDiveTargetLocation();
+		SetActorLocation(DiveTargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
 
 		if (UCharacterMovementComponent* MC = GetCharacterMovement())
 		{
-			MC->SetMovementMode(MOVE_Swimming);
+			MC->SetMovementMode(MOVE_Walking);
 			MC->Velocity = FVector::ZeroVector;
 		}
 
-		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDive: entered dive at Z=%.0f"), DiveDepthZ);
+		ApplyDiveCameraState();
+
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDive: entered dive at Z=%.0f camera_arm=%.0f"),
+			DiveTargetLocation.Z, CameraBoom ? CameraBoom->TargetArmLength : -1.0f);
 	}
 	else
 	{
@@ -283,10 +331,30 @@ bool AOceanCharacter::TryToggleDive()
 			MC->Velocity = FVector::ZeroVector;
 		}
 
-		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDive: surfaced to Z=%.0f"), WaterSurfaceZ);
+		RestoreSurfaceCameraState();
+
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDive: surfaced to Z=%.0f camera_arm=%.0f"),
+			WaterSurfaceZ, CameraBoom ? CameraBoom->TargetArmLength : -1.0f);
 	}
 
 	return true;
+}
+
+void AOceanCharacter::ForceSurfaceAtSafeLocation(const FVector& SafeLocation)
+{
+	bIsDiving = false;
+	bInWater = false;
+	SetActorLocation(SafeLocation, false, nullptr, ETeleportType::TeleportPhysics);
+
+	if (UCharacterMovementComponent* MC = GetCharacterMovement())
+	{
+		MC->SetMovementMode(MOVE_Walking);
+		MC->Velocity = FVector::ZeroVector;
+	}
+
+	RestoreSurfaceCameraState();
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDive: force_surface_safe loc=(%.0f,%.0f,%.0f) camera_arm=%.0f"),
+		SafeLocation.X, SafeLocation.Y, SafeLocation.Z, CameraBoom ? CameraBoom->TargetArmLength : -1.0f);
 }
 
 bool AOceanCharacter::TryFish()

@@ -43,6 +43,12 @@ public:
 	int32 TotalEventsProcessed = 0;
 
 	UPROPERTY(SaveGame, BlueprintReadWrite, Category = "Ocean|Save|Progress")
+	int32 EventsProcessedToday = 0;
+
+	UPROPERTY(SaveGame, BlueprintReadWrite, Category = "Ocean|Save|Progress")
+	float EventTimer = 0.0f;
+
+	UPROPERTY(SaveGame, BlueprintReadWrite, Category = "Ocean|Save|Progress")
 	int32 GamePhaseInt = 0; // 0=Playing, 1=Won, 2=Lost
 
 	UPROPERTY(SaveGame, BlueprintReadWrite, Category = "Ocean|Save|Progress")

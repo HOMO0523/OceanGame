@@ -544,7 +544,7 @@ void AOceanPlayerController::TogglePauseMenu()
 		bPauseMenuOpen = false;
 		SetPause(false);
 		SetInputMode(FInputModeGameOnly());
-		bShowMouseCursor = false;
+		bShowMouseCursor = true;
 		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanPause: closed"));
 	}
 	else

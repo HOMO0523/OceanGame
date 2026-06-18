@@ -6,6 +6,7 @@
 #include "OceanPrototype/OceanItemPickupActor.h"
 #include "OceanPrototype/OceanDayNightCycleComponent.h"
 #include "OceanPrototype/OceanAutoPlayComponent.h"
+#include "OceanPrototype/OceanSaveManager.h"
 #include "Ocean.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
@@ -197,6 +198,17 @@ void AOceanMVPGameMode::AdvanceTimeOfDay()
 			ScatterComp->ScatterItems(ScatterCenter, 400.0f, 5);
 			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: daily scatter at (%.0f,%.0f,%.0f) day=%d"),
 				ScatterCenter.X, ScatterCenter.Y, ScatterCenter.Z, CurrentDay);
+		}
+
+		if (UGameInstance* GameInstance = GetGameInstance())
+		{
+			if (UOceanSaveManager* SaveManager = GameInstance->GetSubsystem<UOceanSaveManager>())
+			{
+				const int32 SnapshotSlot = SaveManager->GetActiveSnapshotSlot();
+				const bool bSnapshotSaved = SaveManager->SaveDaySnapshotToSlot(SnapshotSlot);
+				UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDaySnapshot: slot=%d day=%d result=%d"),
+					SnapshotSlot, CurrentDay, bSnapshotSaved ? 1 : 0);
+			}
 		}
 		break;
 	}

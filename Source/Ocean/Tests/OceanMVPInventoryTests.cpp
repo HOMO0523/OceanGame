@@ -183,4 +183,45 @@ bool FOceanMVPInventoryDragDropRejectsLockedTest::RunTest(const FString& Paramet
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanMVPInventoryRestoreStateTest, "Ocean.MVP.Inventory.RestoreState", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanMVPInventoryRestoreStateTest::RunTest(const FString& Parameters)
+{
+	UOceanInventoryComponent* Inventory = NewObject<UOceanInventoryComponent>();
+	TestNotNull(TEXT("[TDD] OceanInventory_RestoreComponent"), Inventory);
+
+	TArray<FOceanResourceStack> SavedResources;
+	SavedResources.Add({ EOceanResourceType::Wood, 7 });
+	SavedResources.Add({ EOceanResourceType::Food, 2 });
+
+	TArray<FOceanInventorySlot> SavedSlots;
+	FOceanInventorySlot DiveSuitSlot;
+	DiveSuitSlot.SlotIndex = 9;
+	DiveSuitSlot.Stack.ItemId = FName(TEXT("dive_suit"));
+	DiveSuitSlot.Stack.Quantity = 1;
+	DiveSuitSlot.Stack.MaxStack = 1;
+	DiveSuitSlot.Stack.Category = EOceanItemCategory::KeyItem;
+	DiveSuitSlot.Stack.bKeyItem = true;
+	SavedSlots.Add(DiveSuitSlot);
+
+	FOceanInventorySlot WaterSlot;
+	WaterSlot.SlotIndex = 3;
+	WaterSlot.Stack.ItemId = FName(TEXT("fresh_water"));
+	WaterSlot.Stack.Quantity = 2;
+	WaterSlot.Stack.MaxStack = 4;
+	WaterSlot.Stack.Category = EOceanItemCategory::Consumable;
+	WaterSlot.Stack.UseEffect.HydrationDelta = 35.0f;
+	SavedSlots.Add(WaterSlot);
+
+	TestTrue(TEXT("[TDD] OceanInventory_RestoreStateAccepted"), Inventory->RestoreInventoryState(SavedResources, SavedSlots));
+	TestEqual(TEXT("[TDD] OceanInventory_RestoreWood"), Inventory->GetResourceAmount(EOceanResourceType::Wood), 7);
+	TestEqual(TEXT("[TDD] OceanInventory_RestoreFood"), Inventory->GetResourceAmount(EOceanResourceType::Food), 2);
+	TestEqual(TEXT("[TDD] OceanInventory_RestoreSlotCount"), Inventory->GetSlots().Num(), 2);
+	TestEqual(TEXT("[TDD] OceanInventory_RestoreReindexedFirst"), Inventory->GetSlots()[0].SlotIndex, 0);
+	TestEqual(TEXT("[TDD] OceanInventory_RestoreReindexedSecond"), Inventory->GetSlots()[1].SlotIndex, 1);
+	TestTrue(TEXT("[TDD] OceanInventory_RestoreDiveSuit"), Inventory->HasItem(FName(TEXT("dive_suit"))));
+	TestTrue(TEXT("[TDD] OceanInventory_RestoreFreshWater"), Inventory->HasItem(FName(TEXT("fresh_water"))));
+	return true;
+}
+
 #endif

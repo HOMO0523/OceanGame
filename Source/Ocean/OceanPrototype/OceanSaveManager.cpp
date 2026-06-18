@@ -29,6 +29,12 @@ bool UOceanSaveManager::DoesSlotExist(int32 SlotIndex) const
 	return UGameplayStatics::DoesSaveGameExist(GetSlotName(SlotIndex), GetSlotUserIndex());
 }
 
+void UOceanSaveManager::SetActiveSnapshotSlot(int32 SlotIndex)
+{
+	ActiveSnapshotSlotIndex = FMath::Clamp(SlotIndex, 1, MAX_SLOTS);
+	UE_LOG(LogTemp, Log, TEXT("[TDD] OceanSave: active_snapshot_slot=%d"), ActiveSnapshotSlotIndex);
+}
+
 bool UOceanSaveManager::GetSlotInfo(int32 SlotIndex, int32& OutDay, FString& OutTimestamp, int32& OutEventsProcessed) const
 {
 	if (!DoesSlotExist(SlotIndex)) return false;
@@ -56,6 +62,14 @@ bool UOceanSaveManager::SaveToSlot(int32 SlotIndex)
 		SlotIndex, Save->CurrentDay, bSuccess ? 1 : 0, Save->TotalEventsProcessed);
 
 	if (OnSaveCompleted.IsBound()) OnSaveCompleted.Broadcast(bSuccess);
+	return bSuccess;
+}
+
+bool UOceanSaveManager::SaveDaySnapshotToSlot(int32 SlotIndex)
+{
+	const int32 TargetSlot = FMath::Clamp(SlotIndex, 1, MAX_SLOTS);
+	const bool bSuccess = SaveToSlot(TargetSlot);
+	UE_LOG(LogTemp, Log, TEXT("[TDD] OceanDaySnapshot: slot=%d success=%d"), TargetSlot, bSuccess ? 1 : 0);
 	return bSuccess;
 }
 
@@ -91,6 +105,8 @@ UOceanSaveGame* UOceanSaveManager::CaptureCurrentState()
 		Save->CurrentDay = GM->CurrentDay;
 		Save->TimeOfDayInt = static_cast<int32>(GM->CurrentTimeOfDay);
 		Save->TotalEventsProcessed = GM->TotalEventsProcessed;
+		Save->EventsProcessedToday = GM->EventsProcessedToday;
+		Save->EventTimer = GM->EventTimer;
 		Save->GamePhaseInt = static_cast<int32>(GM->GamePhase);
 
 		if (GM->GetAutoPlay())
@@ -145,6 +161,8 @@ bool UOceanSaveManager::ApplySaveState(UOceanSaveGame* SaveGame)
 		GM->CurrentDay = SaveGame->CurrentDay;
 		GM->CurrentTimeOfDay = SaveGame->GetTimeOfDay();
 		GM->TotalEventsProcessed = SaveGame->TotalEventsProcessed;
+		GM->EventsProcessedToday = SaveGame->EventsProcessedToday;
+		GM->EventTimer = SaveGame->EventTimer;
 		GM->GamePhase = SaveGame->GetGamePhase();
 
 		if (GM->GetAutoPlay())
@@ -163,14 +181,19 @@ bool UOceanSaveManager::ApplySaveState(UOceanSaveGame* SaveGame)
 
 		if (UOceanInventoryComponent* Inventory = PlayerPawn->FindComponentByClass<UOceanInventoryComponent>())
 		{
-			Inventory->SetMaxSlots(12); // ensure capacity
-			// Restore items by clearing and re-adding
-			// (Use internal arrays via reflection-free approach: call public API)
-			// For MVP we just restore slots directly through the inventory API
+			Inventory->SetMaxSlots(12);
+			Inventory->RestoreInventoryState(SaveGame->ResourceStacks, SaveGame->ItemSlots);
 		}
 
-		// Move player to platform location
-		PlayerPawn->SetActorLocation(FVector(SaveGame->PlatformLocation.X, SaveGame->PlatformLocation.Y, SaveGame->PlatformLocation.Z + 100.0f));
+		const FVector SafeSurfaceLocation(SaveGame->PlatformLocation.X, SaveGame->PlatformLocation.Y, SaveGame->PlatformLocation.Z + 100.0f);
+		if (AOceanCharacter* OceanCharacter = Cast<AOceanCharacter>(PlayerPawn))
+		{
+			OceanCharacter->ForceSurfaceAtSafeLocation(SafeSurfaceLocation);
+		}
+		else
+		{
+			PlayerPawn->SetActorLocation(SafeSurfaceLocation);
+		}
 	}
 
 	// Move platform

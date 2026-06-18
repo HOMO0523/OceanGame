@@ -35,7 +35,7 @@ TSharedRef<SWidget> UOceanPauseMenuWidget::RebuildWidget()
 
 	// Save label
 	auto* SaveLabel = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("SaveLabel"));
-	SaveLabel->SetText(FText::FromString(TEXT("Save to slot:")));
+	SaveLabel->SetText(FText::FromString(TEXT("Day snapshot slot:")));
 	SaveLabel->SetColorAndOpacity(FSlateColor(FLinearColor(0.8f, 0.9f, 1.0f)));
 	SaveLabel->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 16));
 	Box->AddChild(SaveLabel);
@@ -103,7 +103,8 @@ void UOceanPauseMenuWidget::BuildSaveSlots()
 	{
 		auto* SlotWidget = WidgetTree->ConstructWidget<UOceanSaveSlotWidget>(UOceanSaveSlotWidget::StaticClass());
 		SlotWidget->SetSlotIndex(i);
-		// Reuse the load button as "save" by hooking into OnLoadClicked (acts as "select slot")
+		SlotWidget->SetSnapshotTargetMode(true);
+		// Reuse the load button as "select day-snapshot slot"; actual save happens when the day rolls over.
 		SlotWidget->OnLoadClicked.AddUniqueDynamic(this, &UOceanPauseMenuWidget::OnSaveSlotClicked);
 		SlotWidget->RefreshInfo();
 		SaveSlotList->AddChild(SlotWidget);
@@ -119,7 +120,7 @@ void UOceanPauseMenuWidget::OnResumeClicked()
 	{
 		PC->SetPause(false);
 		PC->SetInputMode(FInputModeGameOnly());
-		PC->bShowMouseCursor = false;
+		PC->bShowMouseCursor = true;
 	}
 }
 
@@ -158,14 +159,14 @@ void UOceanPauseMenuWidget::OnQuitToMenuClicked()
 
 void UOceanPauseMenuWidget::OnSaveSlotClicked(int32 SlotIndex)
 {
-	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanPauseMenu: save to slot=%d"), SlotIndex);
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanPauseMenu: snapshot target slot=%d"), SlotIndex);
 
 	if (UGameInstance* GI = GetGameInstance())
 	{
 		if (UOceanSaveManager* SM = GI->GetSubsystem<UOceanSaveManager>())
 		{
-			bool bOK = SM->SaveToSlot(SlotIndex);
-			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanSave: result=%d"), bOK ? 1 : 0);
+			SM->SetActiveSnapshotSlot(SlotIndex);
+			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanPauseMenuSnapshotSlot: slot=%d result=PASS"), SlotIndex);
 		}
 	}
 

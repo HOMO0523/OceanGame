@@ -267,4 +267,27 @@ bool FOceanSaveSlotButtonsTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanSaveSlotSnapshotTargetModeTest, "Ocean.UI.SaveSlot.SnapshotTargetMode", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanSaveSlotSnapshotTargetModeTest::RunTest(const FString& Parameters)
+{
+	auto* Slot = NewObject<UOceanSaveSlotWidget>(GetTransientPackage(), UOceanSaveSlotWidget::StaticClass());
+	TestNotNull(TEXT("[TDD] OceanSaveSlot_SnapshotWidgetCreated"), Slot);
+	Slot->SetSnapshotTargetMode(true);
+	Slot->Initialize();
+	Slot->TakeWidget();
+	Slot->SetSlotIndex(2);
+	Slot->RefreshInfo();
+
+	auto* LoadButton = FindWidgetByName<UButton>(Slot, TEXT("LoadButton"));
+	TestNotNull(TEXT("[TDD] OceanSaveSlot_SnapshotButton"), LoadButton);
+	if (LoadButton)
+	{
+		TestTrue(TEXT("[TDD] OceanSaveSlot_SnapshotEmptySlotEnabled"), LoadButton->GetIsEnabled());
+		TestTrue(TEXT("[TDD] OceanSaveSlot_SnapshotButtonBound"), LoadButton->OnClicked.IsBound());
+	}
+
+	return true;
+}
+
 #endif

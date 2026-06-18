@@ -43,6 +43,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Inventory")
 	void SetMaxSlots(int32 NewMaxSlots);
 
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Inventory")
+	bool RestoreInventoryState(const TArray<FOceanResourceStack>& SavedStacks, const TArray<FOceanInventorySlot>& SavedSlots);
+
 	UFUNCTION(BlueprintPure, Category = "Ocean|Inventory")
 	const TArray<FOceanResourceStack>& GetStacks() const { return Stacks; }
 

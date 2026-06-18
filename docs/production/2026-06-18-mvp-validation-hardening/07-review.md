@@ -19,9 +19,12 @@ parallel_lock: Ocean.MVPValidation
 | P2 | UI tests that call `TakeWidget()` on raw `NewObject<UUserWidget>` need `Initialize()`. | Without it, native `RebuildWidget()` sees `WidgetTree == null` and can fatal in commandlets. | Updated tests; future UI tests should use the same lifecycle or `CreateWidget`. |
 | P2 | Existing UI font constructors are deprecated in UE5.7. | Not blocking MVP, but future engine upgrades may break compile. | Track as follow-up cleanup, not part of this validation unit. |
 | P2 | `OceanDayNightCycleComponent` still has C4701 warnings for `Rot` and `Color`. | Non-blocking warning, but it can hide real lighting bugs later. | Record as follow-up hardening. |
+| P2 | Day snapshots are intentionally coarse. | Mid-event underwater position and camera state are not restored, by user decision. | Load forces the survivor back to the saved platform safe point and restores the surface camera. |
+| P2 | X dive is a minimal traversal slice, not final underwater gameplay. | It proves camera/movement state only; oxygen, collection, rewards, and underwater UI remain undefined. | Keep future diving features behind new semantics/tests. |
 | P3 | Untracked `scripts/tmp_*` and `ocean.docx` remain in the workspace. | Risk of staging temporary debugging files. | Do not stage unless explicitly promoted; inspect `git status --short` before commit. |
 
 ## Acceptance State
 
 - Project C++ automation, MVP asset verification, UI asset verification, and gameplay-map HUD PIE probe are green as of 2026-06-18 14:36.
+- Save/dive hardening tests are green as of 2026-06-18 19:38: `Ocean.UI`, `Ocean.MVP.Inventory`, `Ocean.MVP.Dive`, and `Ocean.MVP.Save`.
 - Remaining work before push: final static/doc-sync checks, progress memory update, commit, and remote push.

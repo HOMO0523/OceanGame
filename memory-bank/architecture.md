@@ -27,6 +27,7 @@ Ocean
 | Build placement | `Source/Ocean/OceanPrototype/OceanBuildComponent.*`, `Source/Ocean/OceanPrototype/OceanBuildPlacementTypes.h` | Toggles build mode, rotates previews, consumes inventory cost, auto-resolves the floating platform, and exposes typed placement query reasons before placement spawns actors. |
 | HUD/backpack UI | `Source/Ocean/OceanPrototype/UI/OceanHUDRootWidget.*`, `/Game/OceanPrototype/UI/*` | Low-obstruction HUD root and right-side backpack drawer foundation; UI owns open/closed presentation state and dispatches commands while gameplay components own rules. |
 | Menu / settings UI | `UOceanMainMenuWidget`, `UOceanPauseMenuWidget`, `UOceanSettingsWidget`, `UOceanSaveSlotWidget` | Main-menu and pause-menu command surfaces; widgets bind delegates after C++ WidgetTree construction, save settings through `UOceanSaveManager`, and keep settings overlays above menu/pause layers. |
+| Day snapshots / save-load | `UOceanSaveGame`, `UOceanSaveManager`, `AOceanMVPGameMode::AdvanceTimeOfDay` | Stores day/time/event/stats/inventory/platform/settings snapshots; pause UI selects the next snapshot slot, while actual gameplay saves only when a new day starts. |
 | Module definition | `Source/Ocean/OceanPrototype/OceanBuildModuleDefinition.*` | Data-asset contract for footprint, cost, preview mesh, and actor class. |
 | Module actor | `Source/Ocean/OceanPrototype/OceanBuildModuleActor.*` | Cube-placeholder build module with inherited buoyancy path. |
 | Floating platform | `Source/Ocean/OceanPrototype/OceanFloatingPlatform.*` | Owns stable grid and visual bobbing root. |
@@ -53,9 +54,10 @@ Ocean
 1. `BP_OceanMVPGameMode` spawns `BP_OceanSurvivorCharacter` with `BP_OceanMVPPlayerController`.
 2. `IMC_OceanMVP` binds WASD, F, B, R, SpaceBar, E, Tab, I, left mouse, and touch into one Enhanced Input context; W/A/S use Enhanced Input modifiers so W=(0,+1), A=(-1,0), S=(0,-1), D=(+1,0).
 3. Floating `AOceanResourceNode` actors expose F pickup and feed `UOceanInventoryComponent`.
-4. SpaceBar calls the normal Character jump path; E calls `AOceanCharacter::TryStartDive` and only succeeds when the character is on a platform cell adjacent to unoccupied water.
-5. Build mode consumes inventory resources to place `AOceanBuildModuleActor` cells adjacent to the starter platform.
-6. `BP_OceanMVPPlayerController` creates `WBP_OceanHUDRoot` through `HUDRootWidgetClass`; Tab/I toggles the backpack drawer while B remains build mode.
+4. SpaceBar calls the normal Character jump path; E remains a water-edge dive-entry gate, while raw X toggles the playable MVP dive state when the inventory contains `dive_suit`.
+5. X dive moves the character to an underwater floor/fallback depth, switches to walking for seabed traversal, shortens the camera spring arm, and pressing X again returns to water surface while restoring the original arm length.
+6. Build mode consumes inventory resources to place `AOceanBuildModuleActor` cells adjacent to the starter platform.
+7. `BP_OceanMVPPlayerController` creates `WBP_OceanHUDRoot` through `HUDRootWidgetClass`; Tab/I toggles the backpack drawer while B remains build mode.
 
 ### HUD / Backpack Command Boundary
 
@@ -72,8 +74,17 @@ Ocean
 2. C++-constructed menu widgets create controls in `RebuildWidget`, then bind button/slider delegates in `NativeConstruct`; binding in `NativeOnInitialized` is too early for these runtime-built trees.
 3. `UOceanSettingsWidget` is a shared overlay for main menu and pause menu; it stores BGM/SFX values through `UOceanSaveManager` but does not yet apply audio-mix runtime volume.
 4. Settings overlays open at `ZOrder=60`, above the main menu and pause menu, and their root `CanvasPanelSlot` is centered to avoid top-left/default-canvas placement.
-5. `UOceanSaveSlotWidget` owns only slot-row UI and emits load/delete delegates; main menu interprets load/delete, while pause menu reuses the load delegate as "save to selected slot".
+5. `UOceanSaveSlotWidget` owns only slot-row UI and emits load/delete delegates; main menu interprets load/delete, while pause menu reuses the load delegate as "select day-snapshot slot".
 6. `U` pause input is game-map only; pressing it on `L_MainMenu` is ignored so the start menu cannot stack a pause menu over itself.
+
+### Save / Load Snapshot Boundary
+
+1. `UOceanSaveManager::SetActiveSnapshotSlot` selects which of the three supported slots receives the next day snapshot; the pause menu does not write an immediate manual save.
+2. `AOceanMVPGameMode::AdvanceTimeOfDay` calls `SaveDaySnapshotToSlot` only when Night rolls into the next Morning after incrementing `CurrentDay`.
+3. `UOceanSaveGame` stores day, time-of-day, total events, events processed today, event timer, game phase, autoplay seed, survival stats, resource stacks, item slots, platform location, and audio settings.
+4. `UOceanInventoryComponent::RestoreInventoryState` is the restore boundary for saved resources and item slots; UI widgets must not edit saved arrays directly.
+5. Loading forces `AOceanCharacter` to `ForceSurfaceAtSafeLocation` near the saved platform, clears dive state, restores walking movement, and resets the camera to the surface arm length.
+6. Day snapshots are coarse progress checkpoints; they do not persist exact underwater position or mid-event camera state.
 
 ### Paper2D Presentation
 
@@ -105,5 +116,5 @@ Ocean
 - Missing models use cube placeholders first.
 - Floating actor assets must retain buoyancy components.
 - Water setup is incomplete unless `WaterBodyCollision` exists in `Config/DefaultEngine.ini`.
-- Fishing, full diving, island travel, and cruise intro remain out of MVP scope until the small-boat loop is playable and testable; the current `E` dive button is only a water-edge entry gate, not underwater gameplay.
+- Fishing minigame, oxygen, underwater collection rewards, island travel, and cruise intro remain out of MVP scope until the small-boat loop is playable and testable; the current X dive is a minimal seabed/camera traversal slice, not complete underwater gameplay.
 - HUD/backpack work is currently UI/WBP/interaction infrastructure only: not final art, not full drawer animation, not fishing/diving/island-event UI, and not final item icons.

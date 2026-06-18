@@ -23,11 +23,11 @@ TSharedRef<SWidget> UOceanSaveSlotWidget::RebuildWidget()
 	Row->AddChild(SlotLabel);
 
 	LoadButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("LoadButton"));
-	auto* LText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("LText"));
-	LText->SetText(FText::FromString(TEXT("Load")));
-	LText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
-	LText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 14));
-	LoadButton->AddChild(LText);
+	LoadButtonText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("LText"));
+	LoadButtonText->SetText(FText::FromString(TEXT("Load")));
+	LoadButtonText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+	LoadButtonText->SetFont(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf"), 14));
+	LoadButton->AddChild(LoadButtonText);
 	Row->AddChild(LoadButton);
 
 	DeleteButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("DeleteButton"));
@@ -68,6 +68,12 @@ void UOceanSaveSlotWidget::SetSlotIndex(int32 Index)
 	RefreshInfo();
 }
 
+void UOceanSaveSlotWidget::SetSnapshotTargetMode(bool bEnabled)
+{
+	bSnapshotTargetMode = bEnabled;
+	RefreshInfo();
+}
+
 void UOceanSaveSlotWidget::RefreshInfo()
 {
 	int32 Day = 0;
@@ -95,7 +101,12 @@ void UOceanSaveSlotWidget::RefreshInfo()
 		}
 	}
 
-	if (LoadButton) LoadButton->SetIsEnabled(bExists);
+	if (LoadButtonText)
+	{
+		LoadButtonText->SetText(FText::FromString(bSnapshotTargetMode ? TEXT("Snapshot") : TEXT("Load")));
+	}
+
+	if (LoadButton) LoadButton->SetIsEnabled(bSnapshotTargetMode || bExists);
 	if (DeleteButton) DeleteButton->SetIsEnabled(bExists);
 }
 

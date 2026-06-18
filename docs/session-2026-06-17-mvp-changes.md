@@ -54,8 +54,9 @@
 - **Z 钳制**: 游泳时 Z 不低于 -110（`SwimDepthFloor`）
 - **潜水（X键）**: 
   - 需要背包有 `dive_suit`
-  - 潜水时 Z=-450，动画切换 `DiveSuitDive`
-  - 再按 X 浮出水面 Z=0，回到游泳状态
+  - 潜水时落到海底地形/备用深度，动画切换 `DiveSuitDive`
+  - 潜水时切换到海底 Walking 移动，摄像机弹簧臂缩短，形成真正下潜视角
+  - 再按 X 浮出水面 Z=0，回到游泳状态，并恢复进入潜水前的摄像机臂长
 - **爬上平台（C键）**: 游泳状态 + 靠近平台 → 移到平台上方，切回 Walking
 - **可配置参数**: `WaterSurfaceZ`（默认0）、`SwimDepthFloor`（默认-110）
 - **文件**: `OceanCharacter.h/.cpp`
@@ -81,6 +82,10 @@
 - **存档管理器**: `UOceanSaveManager`（GameInstanceSubsystem）
   - 3 个存档槽位
   - Save/Load/Delete/GetSlotInfo
+  - 暂停菜单只选择“下一次跨天快照槽”，不立即手动写盘
+  - Night → Morning 跨天时自动写入所选槽位快照
+  - 读档强制回到保存的平台安全点，清除潜水状态并恢复水面摄像机
+  - 背包资源栈与物品槽位通过 `RestoreInventoryState` 恢复
   - 设置持久化（BGM/SFX 音量）
 - **文件**: `OceanSaveGame.h/.cpp`, `OceanSaveManager.h/.cpp`
 
@@ -91,7 +96,7 @@
   - Settings → 音量设置
   - Quit → 退出游戏
 - **暂停菜单**（U键呼出）:
-  - Save to 3 slots
+  - 选择 3 个 Day Snapshot 槽位之一
   - Resume / Settings / Quit to Menu
 - **文件**: `OceanMainMenuWidget.h/.cpp`, `OceanPauseMenuWidget.h/.cpp`, `OceanSaveSlotWidget.h/.cpp`, `OceanSettingsWidget.h/.cpp`
 
@@ -159,4 +164,4 @@
 - [ ] 钓鱼动画/计时器（当前即时完成）
 - [ ] 游泳动画 flipbook 资源（当前用占位）
 - [ ] 音量设置实际应用（当前只保存数值）
-- [ ] 存档加载时背包物品完整恢复（当前只恢复属性）
+- [ ] 氧气机制、海底采集奖励、完整潜水 UI（当前只做 X 下潜/浮上与摄像机往返）

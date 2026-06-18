@@ -31,6 +31,9 @@ public:
 	void SetSlotIndex(int32 Index);
 
 	UFUNCTION(BlueprintCallable, Category = "Ocean|SaveSlot")
+	void SetSnapshotTargetMode(bool bEnabled);
+
+	UFUNCTION(BlueprintCallable, Category = "Ocean|SaveSlot")
 	void RefreshInfo();
 
 	UPROPERTY(BlueprintAssignable, Category = "Ocean|SaveSlot")
@@ -43,9 +46,11 @@ protected:
 	UPROPERTY() TObjectPtr<UTextBlock> SlotLabel;
 	UPROPERTY() TObjectPtr<UButton> LoadButton;
 	UPROPERTY() TObjectPtr<UButton> DeleteButton;
+	UPROPERTY() TObjectPtr<UTextBlock> LoadButtonText;
 
 	int32 SlotIndex = 1;
 	bool bIsInitialized = false;
+	bool bSnapshotTargetMode = false;
 
 	UFUNCTION() void OnLoadButtonClicked();
 	UFUNCTION() void OnDeleteButtonClicked();

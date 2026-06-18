@@ -111,6 +111,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Action")
 	bool TryToggleDive();
 
+	/** Force a loaded game back to a safe surface/boat-side point and restore camera. */
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Action")
+	void ForceSurfaceAtSafeLocation(const FVector& SafeLocation);
+
 	/** Try fishing (key). Requires fishing rod in inventory. */
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Action")
 	bool TryFish();
@@ -124,6 +128,18 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ocean|Water")
 	float SwimDepthFloor = -110.0f;
 
+	/** Camera arm length while underwater diving. */
+	UPROPERTY(EditAnywhere, Category = "Ocean|Dive", meta = (ClampMin = "100.0"))
+	float DiveCameraArmLength = 420.0f;
+
+	/** How far below the water surface to look for an underwater floor. */
+	UPROPERTY(EditAnywhere, Category = "Ocean|Dive", meta = (ClampMin = "100.0"))
+	float DiveTraceDepth = 2000.0f;
+
+	/** Capsule clearance over the underwater floor. */
+	UPROPERTY(EditAnywhere, Category = "Ocean|Dive", meta = (ClampMin = "0.0"))
+	float DiveFloorOffset = 8.0f;
+
 private:
 	/** Tracks whether the character is currently in swimming mode. */
 	bool bInWater = false;
@@ -136,5 +152,10 @@ private:
 	/** Platform surface offset above platform Z. */
 	static constexpr float PlatformTopOffset = 80.0f;
 
-};
+	float SurfaceCameraArmLength = 800.0f;
 
+	FVector ResolveDiveTargetLocation() const;
+	void ApplyDiveCameraState();
+	void RestoreSurfaceCameraState();
+
+};

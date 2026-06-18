@@ -28,6 +28,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Save")
 	bool SaveToSlot(int32 SlotIndex);
 
+	/** Select which slot receives the next day-rollover snapshot. */
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Save")
+	void SetActiveSnapshotSlot(int32 SlotIndex);
+
+	UFUNCTION(BlueprintPure, Category = "Ocean|Save")
+	int32 GetActiveSnapshotSlot() const { return ActiveSnapshotSlotIndex; }
+
+	/** Save the day-rollover snapshot to a slot. */
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Save")
+	bool SaveDaySnapshotToSlot(int32 SlotIndex);
+
 	/** Load a save game from a slot. Returns the loaded save game or nullptr. */
 	UFUNCTION(BlueprintCallable, Category = "Ocean|Save")
 	UOceanSaveGame* LoadFromSlot(int32 SlotIndex);
@@ -80,6 +91,7 @@ private:
 
 	float CachedBGMVolume = 0.8f;
 	float CachedSFXVolume = 1.0f;
+	int32 ActiveSnapshotSlotIndex = 1;
 
 	static const FString SETTINGS_SLOT_NAME;
 };

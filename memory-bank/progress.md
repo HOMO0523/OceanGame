@@ -43,8 +43,9 @@
   - click-to-move and touch move remain in the same input context.
 - Added MVP jump and dive-entry controls:
   - `IA_OceanJump` maps to `SpaceBar` and uses the normal `ACharacter::Jump()` path.
-  - `IA_OceanDive` maps to `E`; it only succeeds on floating-platform cells adjacent to water via `AOceanFloatingPlatform::IsWorldLocationAtWaterEdge`.
-  - Full diving ability, oxygen, underwater camera, and underwater collection remain deferred.
+  - `IA_OceanDive` maps to `E` as the water-edge entry-gate probe; raw `X` toggles the MVP dive state when the inventory contains `dive_suit`.
+  - MVP dive now moves the character to the underwater floor/fallback depth, switches movement to walking for seabed traversal, shortens the camera spring arm, and pressing `X` again surfaces the character while restoring the original camera arm length.
+  - Oxygen, underwater collection, underwater event rewards, and final dive UI remain deferred.
 - Enabled Paper2D as an experimental presentation layer:
   - `AOceanCharacter` now owns a `Paper2DVisualComponent` without replacing Ocean gameplay components.
   - Imported 192 experiment PNG frames as Textures, 192 Sprites, and 24 Flipbooks under `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe`.
@@ -79,6 +80,11 @@
   - Root cause was a missing player-facing use entry: `TryUseItemAtSlot` restored stats when called directly, but no runtime backpack-slot input called it.
   - `UOceanBackpackSlotWidget::RequestUse` now routes occupied slot use through the owning backpack panel; right-click uses consumables while left-click drag/drop remains unchanged.
   - Current restorative items are code-generated stacks with `UseEffect` values, not final item DataAssets/icons.
+- Hardened MVP save/load and dive boundaries:
+  - Pause-menu save slots now select the active day-snapshot target slot; they do not write an immediate manual save.
+  - `AOceanMVPGameMode::AdvanceTimeOfDay` writes a day snapshot when Night rolls into the next Morning, using the active snapshot slot.
+  - `UOceanSaveGame` now stores `EventsProcessedToday` and `EventTimer`; `UOceanInventoryComponent::RestoreInventoryState` restores saved resources and item slots.
+  - Loading a save forces the Ocean survivor back to the saved platform safe point through `ForceSurfaceAtSafeLocation`, clears diving state, and restores the surface camera arm.
 
 ## Verification Snapshot
 
@@ -123,6 +129,13 @@
   - Before the fix, the new `Ocean.UI.BackpackSlot.RequestUseRestoresStats` test failed compilation because `UOceanBackpackSlotWidget` exposed no UI use entry.
   - After the fix, `python scripts/ue_tdd_pipeline.py --no-launch --log-lines 12000` cold-compiled successfully.
   - `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.UI; Quit"` found 15 tests and exited 0; logs show `Ocean.UI.BackpackSlot.RequestUseRestoresStats` completed successfully and `[TDD] OceanBackpackSlot: request_use slot=0 item=fresh_water result=PASS`.
+- Day-snapshot save and dive-camera RED/GREEN evidence:
+  - Before the fix, new tests failed compilation because `UOceanInventoryComponent::RestoreInventoryState` and `UOceanSaveSlotWidget::SetSnapshotTargetMode` did not exist.
+  - After implementation, `python scripts/ue_tdd_pipeline.py --no-launch --log-lines 12000` cold-compiled successfully.
+  - `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.UI; Quit"` exits 0 and includes `Ocean.UI.SaveSlot.SnapshotTargetMode`.
+  - `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.MVP.Inventory; Quit"` exits 0 and includes `Ocean.MVP.Inventory.RestoreState`.
+  - `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.MVP.Dive; Quit"` exits 0 and proves X dive shortens/restores camera arm while underwater movement uses `MOVE_Walking`.
+  - `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.MVP.Save; Quit"` exits 0 and proves active day-snapshot slots clamp to the supported three-slot range.
 
 ## Active Blockers
 
@@ -133,7 +146,7 @@
 
 1. Keep the HUD/backpack drawer scope clear: this is UI/WBP/interaction infrastructure, not final art, full drawer animation, fishing/diving/island-event UI, or final item icons.
 2. Sync the defense HTML and commit log with the verified HUD/backpack, corrected WASD, jump, dive-entry gate, and Paper2D import evidence.
-3. Keep fishing, full diving, island travel, and cruise intro as explicitly deferred work.
+3. Keep fishing minigame, oxygen, underwater collection rewards, island travel, and cruise intro as explicitly deferred work; the current X dive is only a minimal seabed/camera traversal slice.
 4. Use `scripts/setup_mvp_survival_loop.py` only for regeneration or repair of starter MVP content.
 5. For Paper2D workflow experiments, use `D:\UE5 demo\Paper2d\Export\OceanSurvivor\atlas_source_ratio_222_pad33_v5_walk_safe\frames_alpha_288x288`; keep final animation-quality acceptance separate from this sandbox.
 6. Next Paper2D slice should add one-shot transition timing and visual event requests for climb / dive-entry, while keeping full diving gameplay deferred.
@@ -151,27 +164,27 @@
 <!-- DOC_SYNC_HOOK:START -->
 ### Doc Sync Hook Snapshot
 
-- generated_at: 2026-06-18T19:18:25
+- generated_at: 2026-06-18T19:47:10
 - phase: `pre-commit`
-- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260618-191825-doc-sync.md`
+- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260618-194710-doc-sync.md`
 - active_units: `2026-06-16-automation-migration`, `2026-06-16-minimal-loop-workflow`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`, `2026-06-17-hud-backpack-drawer-uiux`, `2026-06-17-paper2d-animation-set`, `2026-06-17-paper2d-state-machine`, `2026-06-17-paperzd-pie-visibility`, `2026-06-18-mvp-validation-hardening`
-- doc_targets: `memory-bank/architecture.md`, `memory-bank/progress.md`, `memory-bank/tech-stack.md`
+- doc_targets: `docs/production`, `docs/superpowers/specs`, `memory-bank/architecture.md`, `memory-bank/progress.md`, `memory-bank/tech-stack.md`
 - validator: success=`True` errors=`0` warnings=`0`
 
 **Video flow status:**
-- 00 context and rules: covered
-- 01 production unit split: covered
-- 02 semantic freeze: covered
+- 00 context and rules: touched
+- 01 production unit split: touched
+- 02 semantic freeze: touched
 - 03 infrastructure audit: touched
 - 04 implementation plan: covered
-- 05 test design: covered
+- 05 test design: touched
 - 06 implementation log: touched
 - 07 verification and repair: touched
-- 08 review: covered
+- 08 review: touched
 - 09 memory and registry update: covered
 
 **Next documentation actions:**
-- Tie code changes to an active `docs/production/*` unit or create one.
+- Confirm changed code belongs to exactly one active `parallel_lock`; multiple active locks require coordinator routing.
 - For UE C++ changes, confirm `[TDD]` logs were added before implementation and run the UE TDD pipeline.
 - Production docs validate; keep `07-review.md` decision aligned with actual test evidence.
 <!-- DOC_SYNC_HOOK:END -->

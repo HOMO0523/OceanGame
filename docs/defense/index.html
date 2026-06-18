@@ -376,7 +376,7 @@
 
     <section class="card">
       <h2>第一阶段 MVP</h2>
-      <p>目标不是完整开放世界，而是让玩家能在小船平台上移动、维持三条状态、拾取漂浮资源、消耗资源扩展平台。当前版本已经落成到 <code>L_WaterOcean</code>：starter 平台、16 个漂浮资源节点、MVP 输入资产、角色/控制器/GameMode 蓝图、1x1 Deck 数据资产、Space 跳跃、E 水边潜水入口和 Paper2D 实验状态机均可脚本验证。</p>
+      <p>目标不是完整开放世界，而是让玩家能在小船平台上移动、维持三条状态、拾取漂浮资源、消耗资源扩展平台。当前版本已经落成到 <code>L_WaterOcean</code>：starter 平台、16 个漂浮资源节点、MVP 输入资产、角色/控制器/GameMode 蓝图、1x1 Deck 数据资产、Space 跳跃、E 水边入口、X 潜水/浮上摄像机往返和 Paper2D 实验状态机均可脚本验证。</p>
       <div class="loop">
         <div class="loop-step"><strong>出生</strong><p>玩家带初始物资出现在海面小船平台。</p></div>
         <div class="loop-step"><strong>移动</strong><p>左键点地 + 已修正方向的 WASD 精细移动并存。</p></div>
@@ -439,7 +439,7 @@
         <div class="mini">
           <span class="tag red">暂不做</span>
           <h3>钓鱼 / 完整潜水后移</h3>
-          <p>钓鱼能力、钓鱼交互、水下相机、氧气机制和海底采集不进入第一阶段；当前只保留 E 键水边潜水入口，作为后续事件系统扩展点。</p>
+          <p>当前已做 X 键最小潜水：角色下到海底/备用深度、摄像机跟随下沉，再按 X 回到水面并还原摄像机。氧气、海底采集、潜水奖励和完整事件 UI 仍后移。</p>
         </div>
       </div>
     </section>
@@ -498,7 +498,7 @@
         <div class="mini">
           <span class="tag red">TODO-Diving</span>
           <h3>潜水系统</h3>
-          <p>潜水入口已保留为 E 键水边门槛；水下场景、氧气机制、水下移动和水下资源采集暂不进入第一阶段。</p>
+          <p>潜水已有最小可玩切片：X 键下潜/浮上、海底 Walking 移动和摄像机臂长往返。完整氧气、海底采集和潜水事件奖励暂不进入第一阶段。</p>
         </div>
         <div class="mini">
           <span class="tag red">TODO-EventExpansion</span>
@@ -562,7 +562,8 @@
         <div class="timeline-item"><strong>docs: define Ocean minimal loop workflow</strong><p>根据《洋流》策划文档整理 Pawn 风险、饥饿/脱水回复、背包、合成、拖拽、事件、放置区域、漂流终点和 GPT/DS 自动化分工。</p></div>
         <div class="timeline-item"><strong>docs: add WASD and Paper2D gates</strong><p>补充 WASD Axis2D 根因调查、Paper2D/HD2D 角色表现边界和后续测试门。</p></div>
         <div class="timeline-item"><strong>docs: document Paper2D animation atlas workflow</strong><p>生成六组四方向八帧占位动作，并记录从单次大图失败到分动作合成 atlas 的资产管线取舍。</p></div>
-        <div class="timeline-item"><strong>feat: fix input and import Paper2D experiment</strong><p>修复 WASD 都朝右走，新增 Space 跳跃、E 水边潜水入口，并把 192 帧实验动作导入 UE Paper2D。</p></div>
+        <div class="timeline-item"><strong>feat: fix input and import Paper2D experiment</strong><p>修复 WASD 都朝右走，新增 Space 跳跃、E 水边入口，并把 192 帧实验动作导入 UE Paper2D。</p></div>
+        <div class="timeline-item"><strong>fix: add day snapshots and dive camera toggle</strong><p>把暂停菜单存档槽改为跨天快照槽，读档回到平台安全点；X 潜水会让摄像机下沉，再按 X 还原。</p></div>
         <div class="timeline-item"><strong>feat: add Paper2D animation state machine</strong><p>新增相机朝向 billboard、四方向判断、Idle/Walk/Jump 自动切换，并为后续 Swim/Climb/DiveSuitDive 保留视觉状态。</p></div>
         <div class="timeline-item"><strong>docs: sync ocean hud backpack ui evidence</strong><p>记录库存/背包基础、右侧抽屉 WBP、Tab/I 输入、placement query 边界和真实 PIE HUD 验证证据。</p></div>
         <div class="timeline-item"><strong>fix: harden Ocean MVP validation workflow</strong><p>修复资源节点、背包 WBP、StatusPanel 红测；新增外部 HUD PIE 探针，并明确项目验收必须按 <code>Ocean.Build/Resources/UI/MVP/Paper2D</code> 前缀运行。</p></div>

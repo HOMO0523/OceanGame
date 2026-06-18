@@ -69,7 +69,17 @@
 | `IA_OceanToggleBackpack` | `Tab`, `I` | Right-side backpack drawer toggle through `UOceanHUDRootWidget`; closes back to game input. |
 | `IA_OceanRotateBuild` | `R` | Build preview rotation. |
 | `IA_OceanJump` | `SpaceBar` | Character jump using `ACharacter::Jump()`. |
-| `IA_OceanDive` | `E` | Water-edge dive-entry attempt; not full underwater gameplay. |
+| `IA_OceanDive` | `E` | Water-edge dive-entry gate probe. |
+| Raw fallback keys | `C`, `X`, `G`, `U` | Climb platform, toggle MVP dive/camera, fish placeholder, and pause menu; these remain C++ key binds until promoted into final Enhanced Input assets. |
+
+## Save / Load Runtime
+
+| Runtime Type | Purpose |
+|---|---|
+| `UOceanSaveGame` | Day snapshot payload for progression, event counters, survival stats, resource stacks, item slots, platform safe point, autoplay seed, and settings. |
+| `UOceanSaveManager` | Three-slot save/load/delete/settings subsystem plus active day-snapshot slot selection. |
+| `AOceanMVPGameMode::AdvanceTimeOfDay` | Writes a snapshot only when Night rolls into the next Morning. |
+| `AOceanCharacter::ForceSurfaceAtSafeLocation` | Load-time safety reset that clears dive state and restores the surface camera arm instead of restoring exact underwater coordinates. |
 
 ## Paper2D Animation Runtime
 
@@ -108,6 +118,8 @@ python scripts/ue_tdd_pipeline.py --check-only
 python scripts/ue_tdd_pipeline.py --pre-pie-console-command "stat fps" --pie-duration 5
 python scripts/verify_ocean_ui_pie.py
 python scripts/verify_main_menu_navigation.py
+& "{UE_ROOT}\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "{ProjectRoot}\Ocean.uproject" -unattended -nop4 -nosplash -NullRHI -ExecCmds="Automation RunTests Ocean.MVP.Save; Quit" -TestExit="Automation Test Queue Empty"
+& "{UE_ROOT}\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "{ProjectRoot}\Ocean.uproject" -unattended -nop4 -nosplash -NullRHI -ExecCmds="Automation RunTests Ocean.MVP.Dive; Quit" -TestExit="Automation Test Queue Empty"
 ```
 
 `--check-only` reads logs only; it is not compile proof.

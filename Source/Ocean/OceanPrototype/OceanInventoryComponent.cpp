@@ -1,4 +1,5 @@
 #include "OceanPrototype/OceanInventoryComponent.h"
+#include "Ocean.h"
 #include "OceanPrototype/OceanSurvivalComponent.h"
 
 UOceanInventoryComponent::UOceanInventoryComponent()
@@ -243,6 +244,42 @@ int32 UOceanInventoryComponent::GetResourceAmount(EOceanResourceType ResourceTyp
 void UOceanInventoryComponent::SetMaxSlots(int32 NewMaxSlots)
 {
 	MaxSlots = FMath::Max(1, NewMaxSlots);
+}
+
+bool UOceanInventoryComponent::RestoreInventoryState(const TArray<FOceanResourceStack>& SavedStacks, const TArray<FOceanInventorySlot>& SavedSlots)
+{
+	Stacks.Reset();
+	Slots.Reset();
+
+	for (const FOceanResourceStack& SavedStack : SavedStacks)
+	{
+		if (SavedStack.Amount <= 0)
+		{
+			continue;
+		}
+		AddResource(SavedStack);
+	}
+
+	for (const FOceanInventorySlot& SavedSlot : SavedSlots)
+	{
+		if (SavedSlot.Stack.ItemId.IsNone() || SavedSlot.Stack.Quantity <= 0 || SavedSlot.Stack.MaxStack <= 0)
+		{
+			continue;
+		}
+
+		if (Slots.Num() >= MaxItemSlots)
+		{
+			UE_LOG(LogOcean, Warning, TEXT("[TDD] OceanInventoryRestore: truncated at max_item_slots=%d"), MaxItemSlots);
+			break;
+		}
+
+		FOceanInventorySlot RestoredSlot = SavedSlot;
+		RestoredSlot.SlotIndex = Slots.Num();
+		Slots.Add(RestoredSlot);
+	}
+
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanInventoryRestore: resources=%d slots=%d result=PASS"), Stacks.Num(), Slots.Num());
+	return true;
 }
 
 FOceanResourceStack* UOceanInventoryComponent::FindMutableStack(EOceanResourceType ResourceType)
