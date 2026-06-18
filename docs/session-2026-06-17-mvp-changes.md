@@ -57,6 +57,7 @@
   - 潜水时落到海底地形/备用深度，动画切换 `DiveSuitDive`
   - 潜水时切换到海底 Walking 移动，摄像机弹簧臂缩短，形成真正下潜视角
   - 再按 X 浮出水面 Z=0，回到游泳状态，并恢复进入潜水前的摄像机臂长
+- **Paper2D 表现层 Z**: 状态切换只改 `Paper2DVisualComponent` 相对 Z，不移动胶囊或 Gameplay Pawn：陆地/行走 `Z=-115`，水面/游泳 `Z=5`，潜水 `Z=300`
 - **爬上平台（C键）**: 游泳状态 + 靠近平台 → 移到平台上方，切回 Walking
 - **可配置参数**: `WaterSurfaceZ`（默认0）、`SwimDepthFloor`（默认-110）
 - **文件**: `OceanCharacter.h/.cpp`

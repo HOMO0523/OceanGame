@@ -60,7 +60,7 @@ AOceanCharacter::AOceanCharacter()
 	OceanBuildComponent = CreateDefaultSubobject<UOceanBuildComponent>(TEXT("OceanBuild"));
 	Paper2DVisualComponent = CreateDefaultSubobject<UPaperFlipbookComponent>(TEXT("Paper2DVisual"));
 	Paper2DVisualComponent->SetupAttachment(RootComponent);
-	Paper2DVisualComponent->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
+	Paper2DVisualComponent->SetRelativeLocation(FVector(0.0f, 0.0f, Paper2DVisualLandZ));
 	Paper2DVisualComponent->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
 	Paper2DVisualComponent->SetLooping(true);
 	OceanPaper2DAnimationComponent = CreateDefaultSubobject<UOceanPaper2DAnimationComponent>(TEXT("OceanPaper2DAnimation"));
@@ -79,6 +79,7 @@ void AOceanCharacter::BeginPlay()
 		SurfaceCameraArmLength = CameraBoom->TargetArmLength;
 	}
 	RestoreSurfaceCameraState();
+	ApplyPaper2DVisualStateOffset(Paper2DVisualLandZ);
 }
 
 void AOceanCharacter::ApplyDiveCameraState()
@@ -95,6 +96,21 @@ void AOceanCharacter::RestoreSurfaceCameraState()
 	{
 		CameraBoom->TargetArmLength = SurfaceCameraArmLength;
 	}
+}
+
+void AOceanCharacter::ApplyPaper2DVisualStateOffset(float TargetZ)
+{
+	if (!Paper2DVisualComponent)
+	{
+		return;
+	}
+
+	FVector RelativeLocation = Paper2DVisualComponent->GetRelativeLocation();
+	RelativeLocation.Z = TargetZ;
+	Paper2DVisualComponent->SetRelativeLocation(RelativeLocation);
+
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanPaper2DVisualOffset: x=%.0f y=%.0f z=%.0f"),
+		RelativeLocation.X, RelativeLocation.Y, RelativeLocation.Z);
 }
 
 FVector AOceanCharacter::ResolveDiveTargetLocation() const
@@ -128,6 +144,7 @@ void AOceanCharacter::Tick(float DeltaSeconds)
 	// If diving, stay in dive state — don't auto-switch movement mode
 	if (bIsDiving)
 	{
+		ApplyPaper2DVisualStateOffset(Paper2DVisualDiveZ);
 		if (OceanPaper2DAnimationComponent)
 		{
 			OceanPaper2DAnimationComponent->SetVisualStateRequest(EOceanPaper2DAnimationState::DiveSuitDive, true);
@@ -172,10 +189,12 @@ void AOceanCharacter::Tick(float DeltaSeconds)
 	{
 		if (bInWater)
 		{
+			ApplyPaper2DVisualStateOffset(Paper2DVisualSwimZ);
 			OceanPaper2DAnimationComponent->SetVisualStateRequest(EOceanPaper2DAnimationState::Swim, true);
 		}
 		else
 		{
+			ApplyPaper2DVisualStateOffset(Paper2DVisualLandZ);
 			OceanPaper2DAnimationComponent->SetVisualStateRequest(EOceanPaper2DAnimationState::Swim, false);
 		}
 
@@ -250,6 +269,7 @@ bool AOceanCharacter::TryClimbPlatform()
 				MC->Velocity = FVector::ZeroVector;
 			}
 			bInWater = false;
+			ApplyPaper2DVisualStateOffset(Paper2DVisualLandZ);
 
 			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanClimb: climbed to platform loc=(%.0f,%.0f,%.0f)"), NewLoc.X, NewLoc.Y, NewLoc.Z);
 			return true;
@@ -313,6 +333,7 @@ bool AOceanCharacter::TryToggleDive()
 		}
 
 		ApplyDiveCameraState();
+		ApplyPaper2DVisualStateOffset(Paper2DVisualDiveZ);
 
 		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDive: entered dive at Z=%.0f camera_arm=%.0f"),
 			DiveTargetLocation.Z, CameraBoom ? CameraBoom->TargetArmLength : -1.0f);
@@ -332,6 +353,7 @@ bool AOceanCharacter::TryToggleDive()
 		}
 
 		RestoreSurfaceCameraState();
+		ApplyPaper2DVisualStateOffset(Paper2DVisualSwimZ);
 
 		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDive: surfaced to Z=%.0f camera_arm=%.0f"),
 			WaterSurfaceZ, CameraBoom ? CameraBoom->TargetArmLength : -1.0f);
@@ -353,6 +375,7 @@ void AOceanCharacter::ForceSurfaceAtSafeLocation(const FVector& SafeLocation)
 	}
 
 	RestoreSurfaceCameraState();
+	ApplyPaper2DVisualStateOffset(Paper2DVisualLandZ);
 	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDive: force_surface_safe loc=(%.0f,%.0f,%.0f) camera_arm=%.0f"),
 		SafeLocation.X, SafeLocation.Y, SafeLocation.Z, CameraBoom ? CameraBoom->TargetArmLength : -1.0f);
 }

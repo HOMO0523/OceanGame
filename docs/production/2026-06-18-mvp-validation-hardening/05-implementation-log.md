@@ -22,3 +22,5 @@ parallel_lock: Ocean.MVPValidation
 - 2026-06-18 19:33: Implemented day-snapshot slot selection, cross-day snapshot writes, inventory restore, safe load-to-surface behavior, pause cursor restoration, and X dive camera arm down/up restore.
 - 2026-06-18 19:36: Fixed the dive automation test world setup after a duplicate `WorldSettings` commandlet crash; `Ocean.MVP.Dive.CameraToggle` then passed.
 - 2026-06-18 19:38: Added `Ocean.MVP.Save.SnapshotSlotClamp` and corrected the subsystem test outer to `UGameInstance`.
+- 2026-06-18 20:18: Added `Ocean.MVP.Dive.Paper2DVisualOffsets` red test for land/swim/dive/surface visual Z; the test failed because the BP component stayed at relative `Z=300`.
+- 2026-06-18 20:23: Implemented `AOceanCharacter::ApplyPaper2DVisualStateOffset` so only `Paper2DVisualComponent` relative Z changes per state: land `-115`, swim `5`, dive `300`, preserving the Blueprint X/Y transform.

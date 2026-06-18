@@ -35,7 +35,7 @@ Ocean
 | Resource field | `Source/Ocean/OceanPrototype/OceanResourceField.*` | Owns PCG component and deterministic fallback spawn positions. |
 | Debug HUD | `Source/Ocean/OceanPrototype/OceanSurvivalHUD.*` | Draws survival stats, inventory counts, build state, and nearest interaction prompt for MVP debugging. |
 | MVP map content | `scripts/setup_mvp_survival_loop.py`, `scripts/verify_mvp_survival_loop.py` | Generates and verifies `L_WaterOcean` starter platform, resource field, input assets, Blueprint classes, and the 1x1 deck data asset. |
-| Paper2D visual layer | `AOceanCharacter::Paper2DVisualComponent`, `UOceanPaper2DAnimationComponent`, `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe/*` | Adds a camera-facing Paper2D Flipbook presentation layer and lightweight visual state machine to `BP_OceanSurvivorCharacter` without replacing capsule, movement, survival, inventory, interaction, or build components. |
+| Paper2D visual layer | `AOceanCharacter::Paper2DVisualComponent`, `UOceanPaper2DAnimationComponent`, `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe/*` | Adds a Paper2D Flipbook presentation layer, lightweight visual state machine, and state-specific visual Z offsets to `BP_OceanSurvivorCharacter` without replacing capsule, movement, survival, inventory, interaction, or build components. |
 
 ## 3. Data Flow
 
@@ -55,7 +55,7 @@ Ocean
 2. `IMC_OceanMVP` binds WASD, F, B, R, SpaceBar, E, Tab, I, left mouse, and touch into one Enhanced Input context; W/A/S use Enhanced Input modifiers so W=(0,+1), A=(-1,0), S=(0,-1), D=(+1,0).
 3. Floating `AOceanResourceNode` actors expose F pickup and feed `UOceanInventoryComponent`.
 4. SpaceBar calls the normal Character jump path; E remains a water-edge dive-entry gate, while raw X toggles the playable MVP dive state when the inventory contains `dive_suit`.
-5. X dive moves the character to an underwater floor/fallback depth, switches to walking for seabed traversal, shortens the camera spring arm, and pressing X again returns to water surface while restoring the original arm length.
+5. X dive moves the character to an underwater floor/fallback depth, switches to walking for seabed traversal, shortens the camera spring arm, raises the Paper2D visual to dive `Z=300`, and pressing X again returns to water surface while restoring the original arm length and swim visual `Z=5`.
 6. Build mode consumes inventory resources to place `AOceanBuildModuleActor` cells adjacent to the starter platform.
 7. `BP_OceanMVPPlayerController` creates `WBP_OceanHUDRoot` through `HUDRootWidgetClass`; Tab/I toggles the backpack drawer while B remains build mode.
 
@@ -93,6 +93,7 @@ Ocean
 3. `scripts/import_paper2d_experiment.py` imports the external `288x288` experiment frames as Textures, Sprites, and Flipbooks under `/Game/OceanPrototype/Paper2D/Experiment/V5WalkSafe`.
 4. `scripts/setup_mvp_survival_loop.py` assigns all 24 imported Flipbooks to `OceanPaper2DAnimationComponent`.
 5. Each character tick updates only the Paper2D visual: it faces the active camera and chooses `Idle`, `Walk`, or `Jump` from movement state; `Swim`, `Climb`, and `DiveSuitDive` are assignable visual states for future event systems.
+6. `AOceanCharacter` owns visual-depth placement and preserves the Blueprint component's X/Y transform while changing only relative Z: land/walk `-115`, water/swim `5`, and dive `300`.
 
 ### Resource Spawn
 

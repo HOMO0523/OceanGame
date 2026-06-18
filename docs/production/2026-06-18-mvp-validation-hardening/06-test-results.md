@@ -21,6 +21,11 @@ parallel_lock: Ocean.MVPValidation
 | T-007 | PASS | `python scripts/verify_ocean_ui_pie.py` emitted `real_created_log=1 world_time=3.33 result=PASS`; Bridge `verify_ocean_ui_assets.py --pie` then emitted `OceanUIVerification: assets=10 result=PASS`. |
 | T-008 | PASS | `python scripts/ue_tdd_pipeline.py --no-build --pie-duration 1 --log-lines 1000` launched editor, ran PIE, and captured `[TDD]` logs with 0 failed lines on the default main menu smoke. |
 | T-009 | PASS | `python -m py_compile` for changed scripts exited 0; `harness_state_validator.py --json` exited 0 with 0 errors / 0 warnings; `doc_sync_hook.py --phase pre-commit --apply-memory --history --quiet` exited 0; `git diff --check` exited 0. |
+| T-010 | PASS | `Automation RunTests Ocean.UI.SaveSlot.SnapshotTargetMode` exited 0 and verified empty pause-menu save-slot rows can be selected as day-snapshot targets. |
+| T-011 | PASS | `Automation RunTests Ocean.MVP.Inventory.RestoreState` exited 0 and verified saved resources/item slots restore with reindexed slots. |
+| T-012 | PASS | `Automation RunTests Ocean.MVP.Dive` exited 0 and verified `CameraToggle` plus `Paper2DVisualOffsets`. |
+| T-013 | PASS | `Automation RunTests Ocean.MVP.Save` exited 0 and verified snapshot slot clamp behavior. |
+| T-014 | PASS | `Automation RunTests Ocean.MVP.Dive.Paper2DVisualOffsets` exited 0 after a preceding red failure; land/swim/dive/surface offsets are `-115`, `5`, `300`, and `5`. |
 
 Non-blocking warnings still observed:
 

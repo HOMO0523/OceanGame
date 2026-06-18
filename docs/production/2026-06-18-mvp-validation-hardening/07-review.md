@@ -21,10 +21,12 @@ parallel_lock: Ocean.MVPValidation
 | P2 | `OceanDayNightCycleComponent` still has C4701 warnings for `Rot` and `Color`. | Non-blocking warning, but it can hide real lighting bugs later. | Record as follow-up hardening. |
 | P2 | Day snapshots are intentionally coarse. | Mid-event underwater position and camera state are not restored, by user decision. | Load forces the survivor back to the saved platform safe point and restores the surface camera. |
 | P2 | X dive is a minimal traversal slice, not final underwater gameplay. | It proves camera/movement state only; oxygen, collection, rewards, and underwater UI remain undefined. | Keep future diving features behind new semantics/tests. |
+| P2 | Paper2D visual Z is presentation-only. | Adjusting relative Z must not move the capsule, gameplay pawn, camera, inventory, or interaction traces. | `AOceanCharacter` changes only `Paper2DVisualComponent` relative Z and preserves the Blueprint X/Y transform. |
 | P3 | Untracked `scripts/tmp_*` and `ocean.docx` remain in the workspace. | Risk of staging temporary debugging files. | Do not stage unless explicitly promoted; inspect `git status --short` before commit. |
 
 ## Acceptance State
 
 - Project C++ automation, MVP asset verification, UI asset verification, and gameplay-map HUD PIE probe are green as of 2026-06-18 14:36.
 - Save/dive hardening tests are green as of 2026-06-18 19:38: `Ocean.UI`, `Ocean.MVP.Inventory`, `Ocean.MVP.Dive`, and `Ocean.MVP.Save`.
+- Paper2D visual-depth state switching is green as of 2026-06-18 20:23: `Ocean.MVP.Dive.Paper2DVisualOffsets`, `Ocean.MVP.Dive`, and `Ocean.Paper2D.Animation`.
 - Remaining work before push: final static/doc-sync checks, progress memory update, commit, and remote push.

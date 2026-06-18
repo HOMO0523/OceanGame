@@ -87,6 +87,7 @@
 |---|---|
 | `UPaperFlipbookComponent` | Plays the currently selected imported sprite animation. |
 | `UOceanPaper2DAnimationComponent` | Keeps the Flipbook visual facing the active camera and selects state/direction Flipbooks. |
+| `AOceanCharacter::ApplyPaper2DVisualStateOffset` | Runtime-only visual-depth switch that preserves `Paper2DVisualComponent` X/Y while setting land `Z=-115`, swim `Z=5`, and dive `Z=300`. |
 | `EOceanPaper2DAnimationState` | Visual states: `Idle`, `Walk`, `Jump`, `Swim`, `Climb`, `DiveSuitDive`. |
 | `EOceanPaper2DDirection` | Cardinal visual directions: `South`, `West`, `East`, `North`. |
 
@@ -120,6 +121,7 @@ python scripts/verify_ocean_ui_pie.py
 python scripts/verify_main_menu_navigation.py
 & "{UE_ROOT}\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "{ProjectRoot}\Ocean.uproject" -unattended -nop4 -nosplash -NullRHI -ExecCmds="Automation RunTests Ocean.MVP.Save; Quit" -TestExit="Automation Test Queue Empty"
 & "{UE_ROOT}\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "{ProjectRoot}\Ocean.uproject" -unattended -nop4 -nosplash -NullRHI -ExecCmds="Automation RunTests Ocean.MVP.Dive; Quit" -TestExit="Automation Test Queue Empty"
+& "{UE_ROOT}\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "{ProjectRoot}\Ocean.uproject" -unattended -nop4 -nosplash -NullRHI -ExecCmds="Automation RunTests Ocean.Paper2D.Animation; Quit" -TestExit="Automation Test Queue Empty"
 ```
 
 `--check-only` reads logs only; it is not compile proof.

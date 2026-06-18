@@ -376,7 +376,7 @@
 
     <section class="card">
       <h2>第一阶段 MVP</h2>
-      <p>目标不是完整开放世界，而是让玩家能在小船平台上移动、维持三条状态、拾取漂浮资源、消耗资源扩展平台。当前版本已经落成到 <code>L_WaterOcean</code>：starter 平台、16 个漂浮资源节点、MVP 输入资产、角色/控制器/GameMode 蓝图、1x1 Deck 数据资产、Space 跳跃、E 水边入口、X 潜水/浮上摄像机往返和 Paper2D 实验状态机均可脚本验证。</p>
+      <p>目标不是完整开放世界，而是让玩家能在小船平台上移动、维持三条状态、拾取漂浮资源、消耗资源扩展平台。当前版本已经落成到 <code>L_WaterOcean</code>：starter 平台、16 个漂浮资源节点、MVP 输入资产、角色/控制器/GameMode 蓝图、1x1 Deck 数据资产、Space 跳跃、E 水边入口、X 潜水/浮上摄像机往返和 Paper2D 实验状态机/视觉深度偏移均可脚本验证。</p>
       <div class="loop">
         <div class="loop-step"><strong>出生</strong><p>玩家带初始物资出现在海面小船平台。</p></div>
         <div class="loop-step"><strong>移动</strong><p>左键点地 + 已修正方向的 WASD 精细移动并存。</p></div>
@@ -439,7 +439,7 @@
         <div class="mini">
           <span class="tag red">暂不做</span>
           <h3>钓鱼 / 完整潜水后移</h3>
-          <p>当前已做 X 键最小潜水：角色下到海底/备用深度、摄像机跟随下沉，再按 X 回到水面并还原摄像机。氧气、海底采集、潜水奖励和完整事件 UI 仍后移。</p>
+          <p>当前已做 X 键最小潜水：角色下到海底/备用深度、摄像机跟随下沉，再按 X 回到水面并还原摄像机；Paper2D 表现层同步切到潜水 <code>Z=300</code>。氧气、海底采集、潜水奖励和完整事件 UI 仍后移。</p>
         </div>
       </div>
     </section>
@@ -465,7 +465,7 @@
         <div class="mini">
           <span class="tag yellow">HD2D</span>
           <h3>Paper2D 只换表现层</h3>
-          <p>角色走 Paper2D / HD2D 表现层，但仍以 <code>BP_OceanSurvivorCharacter</code> 作为 Gameplay Pawn；已导入 192 帧、192 Sprites、24 Flipbooks，并接入相机朝向与 Idle/Walk/Jump 状态切换。</p>
+          <p>角色走 Paper2D / HD2D 表现层，但仍以 <code>BP_OceanSurvivorCharacter</code> 作为 Gameplay Pawn；已导入 192 帧、192 Sprites、24 Flipbooks，并接入相机朝向、动画状态和陆地/水面/潜水三档视觉 Z 偏移。</p>
         </div>
       </div>
     </section>
@@ -518,7 +518,7 @@
         <div class="decision"><b>HUD / Backpack</b><p>已生成 10 个 <code>/Game/OceanPrototype/UI</code> WBP 资产；<code>WBP_OceanHUDRoot</code> 继承 <code>UOceanHUDRootWidget</code>，控制器绑定到 <code>WBP_OceanHUDRoot_C</code>，并通过真实 PIE 日志验证创建。</p></div>
         <div class="decision"><b>Placement Query</b><p>拖拽建造先读取 <code>FOceanPlacementQueryResult</code> 的失败原因，UI 只显示反馈和分发命令，不直接生成 Actor。</p></div>
         <div class="decision"><b>Paper2D Atlas</b><p>角色占位动作集采用“每动作 8x4 单独生成 → 脚本合成 8x20 总 atlas”的流程；五张绿幕源图反推为 222 源定位格，最终用 288 安全格导入，避免 256 切图导致头部/脚蹼裁切。</p></div>
-        <div class="decision"><b>Paper2D State</b><p>Paper2D 原生用 <code>Flipbook</code> 播放帧动画，但没有 SkeletalMesh 那种完整 AnimBP；本项目用轻量 C++ 状态组件做相机 billboard、方向判断和 Flipbook 切换。</p></div>
+        <div class="decision"><b>Paper2D State</b><p>Paper2D 原生用 <code>Flipbook</code> 播放帧动画，但没有 SkeletalMesh 那种完整 AnimBP；本项目用轻量 C++ 状态组件做方向判断和 Flipbook 切换，角色类只改表现层相对 Z：陆地 -115、水面 5、潜水 300。</p></div>
         <div class="decision"><b>Verification</b><p><code>setup_mvp_survival_loop.py</code> 和 <code>verify_mvp_survival_loop.py</code> 校验 13 个输入映射、控制器绑定、<code>AOceanMVPGameMode</code> 父类、16 个资源节点、Deck 数据、角色建造默认模块和 24 个 Paper2D Flipbook 绑定。</p></div>
       </div>
     </section>
@@ -546,6 +546,11 @@
           <h3>背包 HUD 真实日志</h3>
           <p><code>python scripts/verify_ocean_ui_pie.py</code> 主动加载 <code>L_WaterOcean</code> 并在客户端等待 PIE tick，日志包含 <code>[TDD] OceanHUDRootPIE: created=1 drawer_open=0</code>；严格验证通过 <code>real_created_log=1</code>。</p>
         </div>
+        <div class="mini">
+          <span class="tag green">Paper2D Z</span>
+          <h3>状态视觉深度</h3>
+          <p><code>Ocean.MVP.Dive.Paper2DVisualOffsets</code> 验证陆地 <code>Z=-115</code>、水面 <code>Z=5</code>、潜水 <code>Z=300</code>，只改变表现层，不移动 Gameplay Pawn。</p>
+        </div>
       </div>
     </section>
 
@@ -567,6 +572,7 @@
         <div class="timeline-item"><strong>feat: add Paper2D animation state machine</strong><p>新增相机朝向 billboard、四方向判断、Idle/Walk/Jump 自动切换，并为后续 Swim/Climb/DiveSuitDive 保留视觉状态。</p></div>
         <div class="timeline-item"><strong>docs: sync ocean hud backpack ui evidence</strong><p>记录库存/背包基础、右侧抽屉 WBP、Tab/I 输入、placement query 边界和真实 PIE HUD 验证证据。</p></div>
         <div class="timeline-item"><strong>fix: harden Ocean MVP validation workflow</strong><p>修复资源节点、背包 WBP、StatusPanel 红测；新增外部 HUD PIE 探针，并明确项目验收必须按 <code>Ocean.Build/Resources/UI/MVP/Paper2D</code> 前缀运行。</p></div>
+        <div class="timeline-item"><strong>fix: sync Paper2D visual depth offsets</strong><p>把陆地、水面、潜水三种状态映射到 <code>Paper2DVisualComponent</code> 相对 Z，并用潜水专项自动化测试锁定。</p></div>
       </div>
     </section>
 

@@ -54,6 +54,7 @@
   - `UOceanPaper2DAnimationComponent` keeps the Paper2D visual facing the active camera without rotating the gameplay actor.
   - The component auto-selects `Idle`, `Walk`, and `Jump` from movement/falling state and exposes `Swim`, `Climb`, and `DiveSuitDive` as future visual states.
   - `BP_OceanSurvivorCharacter` now has 24 assigned Flipbook references for six actions x four directions.
+  - `AOceanCharacter` applies state-specific `Paper2DVisualComponent` relative Z offsets while preserving the Blueprint X/Y transform: land/walk `Z=-115`, water/swim `Z=5`, dive `Z=300`.
 - Added HUD/backpack drawer UI verification:
   - `scripts/verify_ocean_ui_assets.py` verifies the 10 Ocean HUD/backpack WBP assets under `/Game/OceanPrototype/UI`.
   - The script verifies `WBP_OceanHUDRoot_C` loads and `BP_OceanMVPPlayerController.HUDRootWidgetClass` points to it.
@@ -136,6 +137,12 @@
   - `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.MVP.Inventory; Quit"` exits 0 and includes `Ocean.MVP.Inventory.RestoreState`.
   - `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.MVP.Dive; Quit"` exits 0 and proves X dive shortens/restores camera arm while underwater movement uses `MOVE_Walking`.
   - `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.MVP.Save; Quit"` exits 0 and proves active day-snapshot slots clamp to the supported three-slot range.
+- Paper2D visual depth RED/GREEN evidence:
+  - Before the fix, `Ocean.MVP.Dive.Paper2DVisualOffsets` failed because the BP visual component stayed at its previous relative `Z=300` across land and swim states.
+  - After implementation, `python scripts/ue_tdd_pipeline.py --no-launch --log-lines 12000` cold-compiled successfully.
+  - `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.MVP.Dive.Paper2DVisualOffsets; Quit"` exits 0 and verifies land `Z=-115`, swim `Z=5`, dive `Z=300`, and surfacing back to swim `Z=5`.
+  - `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.MVP.Dive; Quit"` exits 0 and preserves the existing dive-camera regression coverage.
+  - `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.Paper2D.Animation; Quit"` exits 0 and preserves direction/state-priority animation tests.
 
 ## Active Blockers
 
@@ -164,17 +171,17 @@
 <!-- DOC_SYNC_HOOK:START -->
 ### Doc Sync Hook Snapshot
 
-- generated_at: 2026-06-18T19:47:10
+- generated_at: 2026-06-18T20:33:55
 - phase: `pre-commit`
-- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260618-194710-doc-sync.md`
+- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260618-203355-doc-sync.md`
 - active_units: `2026-06-16-automation-migration`, `2026-06-16-minimal-loop-workflow`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`, `2026-06-17-hud-backpack-drawer-uiux`, `2026-06-17-paper2d-animation-set`, `2026-06-17-paper2d-state-machine`, `2026-06-17-paperzd-pie-visibility`, `2026-06-18-mvp-validation-hardening`
-- doc_targets: `docs/production`, `docs/superpowers/specs`, `memory-bank/architecture.md`, `memory-bank/progress.md`, `memory-bank/tech-stack.md`
+- doc_targets: `docs/production`, `memory-bank/architecture.md`, `memory-bank/progress.md`, `memory-bank/tech-stack.md`
 - validator: success=`True` errors=`0` warnings=`0`
 
 **Video flow status:**
-- 00 context and rules: touched
+- 00 context and rules: covered
 - 01 production unit split: touched
-- 02 semantic freeze: touched
+- 02 semantic freeze: covered
 - 03 infrastructure audit: touched
 - 04 implementation plan: covered
 - 05 test design: touched

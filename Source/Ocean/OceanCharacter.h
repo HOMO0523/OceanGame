@@ -140,6 +140,15 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ocean|Dive", meta = (ClampMin = "0.0"))
 	float DiveFloorOffset = 8.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Ocean|Paper2D")
+	float Paper2DVisualLandZ = -115.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Ocean|Paper2D")
+	float Paper2DVisualSwimZ = 5.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Ocean|Paper2D")
+	float Paper2DVisualDiveZ = 300.0f;
+
 private:
 	/** Tracks whether the character is currently in swimming mode. */
 	bool bInWater = false;
@@ -157,5 +166,6 @@ private:
 	FVector ResolveDiveTargetLocation() const;
 	void ApplyDiveCameraState();
 	void RestoreSurfaceCameraState();
+	void ApplyPaper2DVisualStateOffset(float TargetZ);
 
 };

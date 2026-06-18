@@ -25,3 +25,4 @@ parallel_lock: Ocean.MVPValidation
 | T-011 | Saved inventory restore | `Automation RunTests Ocean.MVP.Inventory.RestoreState` | Saved resource stacks and item slots restore into the runtime inventory with reindexed slots. |
 | T-012 | Dive camera toggle | `Automation RunTests Ocean.MVP.Dive.CameraToggle` | X dive enters underwater walking mode, shortens camera arm, and a second X exits dive while restoring the original camera arm. |
 | T-013 | Snapshot slot clamp | `Automation RunTests Ocean.MVP.Save.SnapshotSlotClamp` | The active day-snapshot target is clamped to the supported three-slot range. |
+| T-014 | Paper2D visual state offsets | `Automation RunTests Ocean.MVP.Dive.Paper2DVisualOffsets` | `Paper2DVisualComponent` preserves X/Y and applies land `Z=-115`, swim `Z=5`, dive `Z=300`, then surfacing back to swim `Z=5`. |
