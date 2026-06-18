@@ -36,6 +36,8 @@ void UOceanTimePanelWidget::SetTimeOfDay(EOceanTimeOfDay NewTimeOfDay)
 void UOceanTimePanelWidget::SetDayAndTime(int32 NewDay, EOceanTimeOfDay NewTimeOfDay)
 {
 	NewDay = FMath::Max(1, NewDay);
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanTimePanel: SetDayAndTime called day=%d time=%d (was day=%d time=%d)"),
+		NewDay, static_cast<int32>(NewTimeOfDay), Day, static_cast<int32>(TimeOfDay));
 	if (Day != NewDay || TimeOfDay != NewTimeOfDay) { Day = NewDay; TimeOfDay = NewTimeOfDay; RefreshText(); }
 }
 

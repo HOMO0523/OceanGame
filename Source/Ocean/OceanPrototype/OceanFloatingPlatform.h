@@ -6,6 +6,8 @@
 
 class UOceanBuildGridComponent;
 class USceneComponent;
+class UStaticMeshComponent;
+class UBoxComponent;
 
 UCLASS(Blueprintable)
 class OCEAN_API AOceanFloatingPlatform : public AActor
@@ -30,12 +32,22 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ocean|Platform")
 	bool IsWorldLocationAtWaterEdge(const FVector& WorldLocation) const;
 
+	/** Check whether a world location is within the platform deck footprint (X/Y bounds). */
+	UFUNCTION(BlueprintPure, Category = "Ocean|Platform")
+	bool IsWorldLocationOverPlatform(const FVector& WorldLocation, float ZTolerance = 300.0f) const;
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ocean|Platform")
 	TObjectPtr<USceneComponent> SceneRoot;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ocean|Platform")
 	TObjectPtr<USceneComponent> VisualRoot;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ocean|Platform")
+	TObjectPtr<UStaticMeshComponent> PlatformMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ocean|Platform")
+	TObjectPtr<UBoxComponent> PlatformCollision;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ocean|Platform")
 	TObjectPtr<UOceanBuildGridComponent> BuildGrid;

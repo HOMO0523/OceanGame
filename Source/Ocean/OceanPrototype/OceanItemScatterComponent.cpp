@@ -19,6 +19,19 @@ TArray<AOceanItemPickupActor*> UOceanItemScatterComponent::GetLastSpawnedPickups
 	return Result;
 }
 
+void UOceanItemScatterComponent::ClearSpawnedPickups()
+{
+	for (TObjectPtr<AOceanItemPickupActor>& P : LastSpawnedPickups)
+	{
+		if (P && IsValid(P))
+		{
+			P->Destroy();
+		}
+	}
+	LastSpawnedPickups.Reset();
+	UE_LOG(LogTemp, Log, TEXT("[TDD] OceanItemScatter: cleared spawned pickups"));
+}
+
 int32 UOceanItemScatterComponent::ScatterItems(FVector Center, float Radius, int32 Count)
 {
 	return ScatterItemsSeeded(Center, Radius, Count, DefaultSeed);

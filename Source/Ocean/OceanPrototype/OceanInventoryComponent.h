@@ -49,6 +49,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ocean|Inventory")
 	const TArray<FOceanInventorySlot>& GetSlots() const { return Slots; }
 
+	/** Check if the inventory contains at least one item with the given ItemId. */
+	UFUNCTION(BlueprintPure, Category = "Ocean|Inventory")
+	bool HasItem(FName ItemId) const;
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Ocean|Inventory", meta = (ClampMin = "1"))
 	int32 MaxSlots = 8;

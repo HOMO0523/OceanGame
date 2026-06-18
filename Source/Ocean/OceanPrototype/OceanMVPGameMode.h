@@ -10,6 +10,7 @@ class UOceanInventoryComponent;
 class AOceanFloatingPlatform;
 class UOceanDayNightCycleComponent;
 class UOceanAutoPlayComponent;
+class UOceanItemScatterComponent;
 
 UENUM(BlueprintType)
 enum class EOceanGamePhase : uint8
@@ -95,13 +96,38 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ocean|GameLoop")
 	int32 GetRemainingEvents() const { return GetTotalEventNodes() - TotalEventsProcessed; }
 
+	UFUNCTION(BlueprintPure, Category = "Ocean|GameLoop")
+	UOceanAutoPlayComponent* GetAutoPlay() const { return AutoPlay; }
+
+	/** Has the game started? False while main menu is showing. */
+	UFUNCTION(BlueprintPure, Category = "Ocean|GameLoop")
+	bool IsGameStarted() const { return bGameStarted; }
+
+	/** Start the game (called when player clicks New Game or loads a save). */
+	UFUNCTION(BlueprintCallable, Category = "Ocean|GameLoop")
+	void StartGame();
+
 protected:
 	void ApplyEventNodeSurvivalDrain();
 	void CheckGameEndConditions();
+
+	/** Initializes game systems (DayNight, AutoPlay, scatter). Called from StartGame. */
+	void InitGameSystems();
 
 	UPROPERTY(Transient)
 	TObjectPtr<UOceanDayNightCycleComponent> DayNightCycle;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UOceanAutoPlayComponent> AutoPlay;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UOceanItemScatterComponent> ScatterComp;
+
+	/** False until player clicks New Game / Continue. Tick is skipped while false. */
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Ocean|GameLoop")
+	bool bGameStarted = false;
+
+	/** True if InitGameSystems already ran (avoid double-init on load). */
+	UPROPERTY(Transient)
+	bool bSystemsInitialized = false;
 };

@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "OceanCharacter.h"
+#include "Ocean.h"
 #include "OceanPrototype/OceanBuildComponent.h"
 #include "OceanPrototype/OceanFloatingPlatform.h"
 #include "OceanPrototype/OceanInteractionComponent.h"
@@ -80,8 +81,60 @@ void AOceanCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 
+	// If diving, stay in dive state — don't auto-switch movement mode
+	if (bIsDiving)
+	{
+		if (OceanPaper2DAnimationComponent)
+		{
+			OceanPaper2DAnimationComponent->SetVisualStateRequest(EOceanPaper2DAnimationState::DiveSuitDive, true);
+			OceanPaper2DAnimationComponent->UpdatePresentation(this, Paper2DVisualComponent.Get(), DeltaSeconds);
+		}
+		return;
+	}
+
+	// Detect water: character is in water when Z < WaterSurfaceZ (default 0).
+	const float CharZ = GetActorLocation().Z;
+	const bool bShouldSwim = CharZ < WaterSurfaceZ;
+
+	UCharacterMovementComponent* MC = GetCharacterMovement();
+	if (MC)
+	{
+		if (bShouldSwim && !bInWater)
+		{
+			MC->SetMovementMode(MOVE_Swimming);
+			bInWater = true;
+		}
+		else if (!bShouldSwim && bInWater)
+		{
+			MC->SetMovementMode(MOVE_Walking);
+			bInWater = false;
+		}
+	}
+
+	// While in water (not diving), clamp Z to swim depth floor
+	if (bInWater && MC && !bIsDiving)
+	{
+		FVector Loc = GetActorLocation();
+		if (Loc.Z < SwimDepthFloor)
+		{
+			SetActorLocation(FVector(Loc.X, Loc.Y, SwimDepthFloor), false, nullptr, ETeleportType::TeleportPhysics);
+			FVector V = MC->Velocity;
+			if (V.Z < 0.0f) V.Z = 0.0f;
+			MC->Velocity = V;
+		}
+	}
+
 	if (OceanPaper2DAnimationComponent)
 	{
+		if (bInWater)
+		{
+			OceanPaper2DAnimationComponent->SetVisualStateRequest(EOceanPaper2DAnimationState::Swim, true);
+		}
+		else
+		{
+			OceanPaper2DAnimationComponent->SetVisualStateRequest(EOceanPaper2DAnimationState::Swim, false);
+		}
+
 		OceanPaper2DAnimationComponent->UpdatePresentation(this, Paper2DVisualComponent.Get(), DeltaSeconds);
 	}
 }
@@ -110,11 +163,175 @@ bool AOceanCharacter::TryStartDive(FText& OutMessage)
 {
 	if (!CanStartDiveAtCurrentLocation())
 	{
-		OutMessage = NSLOCTEXT("Ocean", "DiveRequiresWaterEdge", "需要在水边才能潜水");
+		OutMessage = NSLOCTEXT("Ocean", "DiveRequiresWaterEdge", "Need to be at water edge to dive");
 		return false;
 	}
 
-	OutMessage = NSLOCTEXT("Ocean", "DiveEntryRequested", "潜水入口已触发");
+	OutMessage = NSLOCTEXT("Ocean", "DiveEntryRequested", "Dive entry triggered");
 	OnDiveRequested();
+	return true;
+}
+
+bool AOceanCharacter::TryClimbPlatform()
+{
+	// Only works when in water (swimming)
+	if (!bInWater || bIsDiving)
+	{
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanClimb: not in water, ignored"));
+		return false;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World) return false;
+
+	// Find nearest platform and check if player is near it
+	for (TActorIterator<AOceanFloatingPlatform> It(World); It; ++It)
+	{
+		AOceanFloatingPlatform* Platform = *It;
+		if (!Platform) continue;
+
+		FVector PlayerLoc = GetActorLocation();
+		FVector PlatformLoc = Platform->GetActorLocation();
+		float DistXY = FVector::DistXY(PlayerLoc, PlatformLoc);
+
+		// If within platform radius + some margin, snap player onto platform
+		if (DistXY < 300.0f)
+		{
+			FVector NewLoc(PlatformLoc.X, PlatformLoc.Y, PlatformLoc.Z + PlatformTopOffset);
+			SetActorLocation(NewLoc, false, nullptr, ETeleportType::TeleportPhysics);
+
+			if (UCharacterMovementComponent* MC = GetCharacterMovement())
+			{
+				MC->SetMovementMode(MOVE_Walking);
+				MC->Velocity = FVector::ZeroVector;
+			}
+			bInWater = false;
+
+			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanClimb: climbed to platform loc=(%.0f,%.0f,%.0f)"), NewLoc.X, NewLoc.Y, NewLoc.Z);
+			return true;
+		}
+	}
+
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanClimb: no platform nearby"));
+	return false;
+}
+
+bool AOceanCharacter::TryToggleDive()
+{
+	// Check inventory for diving suit
+	UOceanInventoryComponent* Inventory = GetInventoryComponent();
+	if (!Inventory || !Inventory->HasItem(FName(TEXT("dive_suit"))))
+	{
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDive: no dive suit in inventory"));
+		return false;
+	}
+
+	if (!bIsDiving)
+	{
+		// Enter dive: must be swimming OR on platform + over water
+		bool bCanDive = bInWater;
+
+		if (!bCanDive)
+		{
+			// Check if on platform and over water (downward trace)
+			UWorld* World = GetWorld();
+			if (World)
+			{
+				FVector Start = GetActorLocation();
+				FVector End = Start - FVector(0, 0, 500);
+				FHitResult Hit;
+				FCollisionQueryParams Params;
+				Params.AddIgnoredActor(this);
+				if (World->LineTraceSingleByChannel(Hit, Start, End, ECC_WorldStatic, Params))
+				{
+					// Hit platform = on platform; if platform is over water (Z near 0), can dive
+					bCanDive = true;
+				}
+			}
+		}
+
+		if (!bCanDive)
+		{
+			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDive: cannot dive here (not in water / not on platform over water)"));
+			return false;
+		}
+
+		// Enter dive
+		bIsDiving = true;
+		FVector Loc = GetActorLocation();
+		SetActorLocation(FVector(Loc.X, Loc.Y, DiveDepthZ), false, nullptr, ETeleportType::TeleportPhysics);
+
+		if (UCharacterMovementComponent* MC = GetCharacterMovement())
+		{
+			MC->SetMovementMode(MOVE_Swimming);
+			MC->Velocity = FVector::ZeroVector;
+		}
+
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDive: entered dive at Z=%.0f"), DiveDepthZ);
+	}
+	else
+	{
+		// Exit dive: rise to water surface
+		bIsDiving = false;
+		FVector Loc = GetActorLocation();
+		SetActorLocation(FVector(Loc.X, Loc.Y, WaterSurfaceZ), false, nullptr, ETeleportType::TeleportPhysics);
+
+		bInWater = true;
+		if (UCharacterMovementComponent* MC = GetCharacterMovement())
+		{
+			MC->SetMovementMode(MOVE_Swimming);
+			MC->Velocity = FVector::ZeroVector;
+		}
+
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanDive: surfaced to Z=%.0f"), WaterSurfaceZ);
+	}
+
+	return true;
+}
+
+bool AOceanCharacter::TryFish()
+{
+	// Check inventory for fishing rod
+	UOceanInventoryComponent* Inventory = GetInventoryComponent();
+	if (!Inventory || !Inventory->HasItem(FName(TEXT("fishing_rod"))))
+	{
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanFish: no fishing rod in inventory"));
+		return false;
+	}
+
+	// Must be on platform + over water (downward trace hits platform, platform is over water)
+	UWorld* World = GetWorld();
+	if (!World) return false;
+
+	FVector Start = GetActorLocation();
+	FVector End = Start - FVector(0, 0, 500);
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	if (!World->LineTraceSingleByChannel(Hit, Start, End, ECC_WorldStatic, Params))
+	{
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanFish: not standing on platform"));
+		return false;
+	}
+
+	// Fishing success: gain food resource + small stamina cost
+	if (UOceanSurvivalComponent* Survival = GetSurvivalComponent())
+	{
+		Survival->ApplyRecovery(-1.0f, 0.0f, 15.0f, 0.0f); // -1 stamina, +15 food
+	}
+
+	// Add fish to inventory
+	if (Inventory)
+	{
+		FOceanItemStack FishStack;
+		FishStack.ItemId = FName(TEXT("fish"));
+		FishStack.Quantity = 1;
+		FishStack.MaxStack = 10;
+		FishStack.Category = EOceanItemCategory::Consumable;
+		FishStack.UseEffect.SatietyDelta = 20.0f;
+		Inventory->AddItem(FishStack);
+	}
+
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanFish: caught a fish! food+15, fish added to inventory"));
 	return true;
 }

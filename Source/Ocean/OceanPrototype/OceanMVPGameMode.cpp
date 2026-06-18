@@ -20,9 +20,30 @@ void AOceanMVPGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: start day=1 phase=Playing total_events=%d"), GetTotalEventNodes());
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: BeginPlay (waiting for StartGame) total_events=%d"), GetTotalEventNodes());
 
-	// Find or create DayNightCycle component on this actor
+	// Do NOT init game systems here — wait for player to click New Game / Continue.
+}
+
+void AOceanMVPGameMode::StartGame()
+{
+	if (bGameStarted) return;
+
+	InitGameSystems();
+
+	bGameStarted = true;
+	GamePhase = EOceanGamePhase::Playing;
+
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: StartGame day=%d time=%d events=%d"),
+		CurrentDay, static_cast<int32>(CurrentTimeOfDay), TotalEventsProcessed);
+}
+
+void AOceanMVPGameMode::InitGameSystems()
+{
+	if (bSystemsInitialized) return;
+	bSystemsInitialized = true;
+
+	// Find or create DayNightCycle component
 	DayNightCycle = FindComponentByClass<UOceanDayNightCycleComponent>();
 	if (!DayNightCycle)
 	{
@@ -46,19 +67,44 @@ void AOceanMVPGameMode::BeginPlay()
 		DayNightCycle->SetTimeOfDay(CurrentTimeOfDay);
 	}
 
-	// Scatter test items on the floating platform
+	// Scatter initial items on the floating platform
 	for (TActorIterator<AOceanFloatingPlatform> It(GetWorld()); It; ++It)
 	{
 		AOceanFloatingPlatform* Platform = *It;
 		if (!Platform) continue;
 
-		UOceanItemScatterComponent* Scatter = Platform->FindComponentByClass<UOceanItemScatterComponent>();
-		if (Scatter)
+		ScatterComp = Platform->FindComponentByClass<UOceanItemScatterComponent>();
+		if (ScatterComp)
 		{
-			Scatter->ScatterItems(Platform->GetActorLocation(), 300.0f, 5);
-			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: scattered items at platform"));
+			ScatterComp->ScatterItems(Platform->GetActorLocation(), 300.0f, 5);
+			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: scattered items at platform (day %d)"), CurrentDay);
 		}
 		break;
+	}
+
+	// Give player starting items: fishing rod + dive suit
+	if (APawn* PlayerPawn = GetWorld()->GetFirstPlayerController() ? GetWorld()->GetFirstPlayerController()->GetPawn() : nullptr)
+	{
+		if (UOceanInventoryComponent* Inventory = PlayerPawn->FindComponentByClass<UOceanInventoryComponent>())
+		{
+			FOceanItemStack FishingRod;
+			FishingRod.ItemId = FName(TEXT("fishing_rod"));
+			FishingRod.Quantity = 1;
+			FishingRod.MaxStack = 1;
+			FishingRod.Category = EOceanItemCategory::KeyItem;
+			FishingRod.bKeyItem = true;
+			Inventory->AddItem(FishingRod);
+			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: gave fishing_rod to player"));
+
+			FOceanItemStack DiveSuit;
+			DiveSuit.ItemId = FName(TEXT("dive_suit"));
+			DiveSuit.Quantity = 1;
+			DiveSuit.MaxStack = 1;
+			DiveSuit.Category = EOceanItemCategory::KeyItem;
+			DiveSuit.bKeyItem = true;
+			Inventory->AddItem(DiveSuit);
+			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: gave dive_suit to player"));
+		}
 	}
 }
 
@@ -66,6 +112,8 @@ void AOceanMVPGameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	// Don't run game loop until the player has started the game
+	if (!bGameStarted) return;
 	if (GamePhase != EOceanGamePhase::Playing) return;
 
 	EventTimer += DeltaSeconds;
@@ -126,6 +174,30 @@ void AOceanMVPGameMode::AdvanceTimeOfDay()
 		CurrentDay++;
 		EventsProcessedToday = 0;
 		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: new_day=%d"), CurrentDay);
+
+		// New day: clear yesterday's resources and scatter fresh ones around the player
+		if (ScatterComp)
+		{
+			ScatterComp->ClearSpawnedPickups();
+
+			FVector ScatterCenter = FVector::ZeroVector;
+			if (APawn* PlayerPawn = GetWorld()->GetFirstPlayerController() ? GetWorld()->GetFirstPlayerController()->GetPawn() : nullptr)
+			{
+				ScatterCenter = PlayerPawn->GetActorLocation();
+			}
+			else
+			{
+				for (TActorIterator<AOceanFloatingPlatform> It(GetWorld()); It; ++It)
+				{
+					ScatterCenter = It->GetActorLocation();
+					break;
+				}
+			}
+
+			ScatterComp->ScatterItems(ScatterCenter, 400.0f, 5);
+			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMVPGameMode: daily scatter at (%.0f,%.0f,%.0f) day=%d"),
+				ScatterCenter.X, ScatterCenter.Y, ScatterCenter.Z, CurrentDay);
+		}
 		break;
 	}
 

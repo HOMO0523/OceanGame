@@ -260,3 +260,15 @@ const FOceanResourceStack* UOceanInventoryComponent::FindStack(EOceanResourceTyp
 		return Stack.ResourceType == ResourceType;
 	});
 }
+
+bool UOceanInventoryComponent::HasItem(FName ItemId) const
+{
+	for (const FOceanInventorySlot& Slot : Slots)
+	{
+		if (Slot.Stack.ItemId == ItemId && Slot.Stack.Quantity > 0)
+		{
+			return true;
+		}
+	}
+	return false;
+}

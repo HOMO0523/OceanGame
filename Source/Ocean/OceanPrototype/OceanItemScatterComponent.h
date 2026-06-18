@@ -62,6 +62,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ocean|Scatter")
 	TArray<AOceanItemPickupActor*> GetLastSpawnedPickups() const;
 
+	/** Destroy all previously spawned pickup actors. */
+	UFUNCTION(BlueprintCallable, Category = "Ocean|Scatter")
+	void ClearSpawnedPickups();
+
 private:
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<AOceanItemPickupActor>> LastSpawnedPickups;

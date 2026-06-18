@@ -11,6 +11,8 @@
 class UNiagaraSystem;
 class UOceanBuildComponent;
 class UOceanHUDRootWidget;
+class UOceanPauseMenuWidget;
+class UOceanMainMenuWidget;
 class UInputMappingContext;
 class UInputAction;
 class UPathFollowingComponent;
@@ -71,14 +73,29 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input|Ocean")
 	TObjectPtr<UInputAction> JumpAction;
 
+	/** Dive Action */
 	UPROPERTY(EditAnywhere, Category="Input|Ocean")
 	TObjectPtr<UInputAction> DiveAction;
+
+	/** Pause / Menu toggle (ESC) */
+	UPROPERTY(EditAnywhere, Category="Input|Ocean")
+	TObjectPtr<UInputAction> PauseAction;
 
 	UPROPERTY(EditAnywhere, Category="Ocean|UI")
 	TSubclassOf<UOceanHUDRootWidget> HUDRootWidgetClass;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UOceanHUDRootWidget> HUDRootWidget;
+
+	/** Pause menu widget (created on demand) */
+	UPROPERTY(Transient)
+	TObjectPtr<UOceanPauseMenuWidget> PauseMenuWidget;
+
+	/** Main menu widget (shown on game start) */
+	UPROPERTY(Transient)
+	TObjectPtr<UOceanMainMenuWidget> MainMenuWidget;
+
+	bool bPauseMenuOpen = false;
 
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
@@ -99,6 +116,9 @@ public:
 
 	/** Constructor */
 	AOceanPlayerController();
+
+	/** Create the in-game HUD (called when game starts via New Game / Continue). */
+	void CreateHUD();
 
 protected:
 
@@ -123,6 +143,11 @@ protected:
 	void OnJumpStarted(const FInputActionValue& Value);
 	void OnJumpCompleted(const FInputActionValue& Value);
 	void OnDiveTriggered(const FInputActionValue& Value);
+	void OnPauseTriggered(const FInputActionValue& Value);
+	void TogglePauseMenu();
+	void OnClimbTriggered();
+	void OnToggleDiveTriggered();
+	void OnFishTriggered();
 
 	// Game phase change handler (bound to GameMode delegate)
 	UFUNCTION() void OnGamePhaseChanged(EOceanGamePhase Phase);

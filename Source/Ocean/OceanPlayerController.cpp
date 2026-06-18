@@ -5,6 +5,10 @@
 #include "OceanPrototype/OceanInputMath.h"
 #include "OceanPrototype/OceanInteractionComponent.h"
 #include "OceanPrototype/UI/OceanHUDRootWidget.h"
+#include "OceanPrototype/UI/OceanMainMenuWidget.h"
+#include "OceanPrototype/UI/OceanPauseMenuWidget.h"
+#include "OceanPrototype/UI/OceanSaveSlotWidget.h"
+#include "OceanPrototype/OceanSaveManager.h"
 #include "OceanPrototype/OceanSurvivalComponent.h"
 #include "OceanPrototype/OceanInventoryComponent.h"
 #include "OceanPrototype/OceanMVPGameMode.h"
@@ -43,7 +47,69 @@ void AOceanPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (IsLocalPlayerController() && HUDRootWidgetClass)
+	if (!IsLocalPlayerController()) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	const FName CurrentLevelName = World->GetFName();
+	const bool bIsMenuLevel = (CurrentLevelName.ToString().Contains(TEXT("MainMenu")));
+
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanPlayerController: BeginPlay level=%s isMenu=%d"), *CurrentLevelName.ToString(), bIsMenuLevel ? 1 : 0);
+
+	if (bIsMenuLevel)
+	{
+		// Menu level: show main menu
+		MainMenuWidget = CreateWidget<UOceanMainMenuWidget>(this, UOceanMainMenuWidget::StaticClass());
+		if (MainMenuWidget)
+		{
+			MainMenuWidget->AddToViewport(30);
+			bShowMouseCursor = true;
+			FInputModeUIOnly InputMode;
+			InputMode.SetWidgetToFocus(MainMenuWidget->TakeWidget());
+			SetInputMode(InputMode);
+			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMainMenu: shown on menu level"));
+		}
+	}
+	else
+	{
+		// Game level: start game + create HUD directly
+		if (AOceanMVPGameMode* GM = Cast<AOceanMVPGameMode>(World->GetAuthGameMode()))
+		{
+			GM->StartGame();
+		}
+
+		CreateHUD();
+
+		// Apply pending save if any
+		if (UOceanSaveSlotWidget::PendingLoadSlot > 0)
+		{
+			int32 SlotToLoad = UOceanSaveSlotWidget::PendingLoadSlot;
+			UOceanSaveSlotWidget::PendingLoadSlot = 0;
+
+			if (UGameInstance* GI = GetGameInstance())
+			{
+				if (UOceanSaveManager* SM = GI->GetSubsystem<UOceanSaveManager>())
+				{
+					if (UOceanSaveGame* Save = SM->LoadFromSlot(SlotToLoad))
+					{
+						SM->ApplySaveState(Save);
+						UE_LOG(LogOcean, Log, TEXT("[TDD] OceanLoad: applied slot=%d"), SlotToLoad);
+					}
+				}
+			}
+		}
+
+		SetInputMode(FInputModeGameOnly());
+		bShowMouseCursor = true;  // top-down needs mouse for movement
+	}
+}
+
+void AOceanPlayerController::CreateHUD()
+{
+	if (HUDRootWidget) return; // already created
+
+	if (HUDRootWidgetClass)
 	{
 		HUDRootWidget = CreateWidget<UOceanHUDRootWidget>(this, HUDRootWidgetClass);
 		if (HUDRootWidget)
@@ -51,44 +117,38 @@ void AOceanPlayerController::BeginPlay()
 			HUDRootWidget->AddToViewport();
 			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanHUDRootPIE: created=1 drawer_open=%d"), HUDRootWidget->IsBackpackOpen() ? 1 : 0);
 
-			// 自动绑定所有组件到子面板
+			// Bind components to sub-panels
 			APawn* ControlledPawn = GetPawn();
 			if (ControlledPawn)
 			{
-				// StatusPanel ← SurvivalComponent
 				if (UOceanSurvivalComponent* Survival = ControlledPawn->FindComponentByClass<UOceanSurvivalComponent>())
 				{
 					HUDRootWidget->BindSurvivalToStatusPanel(Survival);
 				}
 
-				// BackpackPanel ← InventoryComponent + SurvivalComponent
 				if (UOceanInventoryComponent* Inventory = ControlledPawn->FindComponentByClass<UOceanInventoryComponent>())
 				{
 					UOceanSurvivalComponent* Survival = ControlledPawn->FindComponentByClass<UOceanSurvivalComponent>();
 					HUDRootWidget->BindInventoryToBackpackPanel(Inventory, Survival);
 				}
 
-				// BuildPanel ← BuildComponent
 				if (UOceanBuildComponent* Build = ControlledPawn->FindComponentByClass<UOceanBuildComponent>())
 				{
 					HUDRootWidget->BindBuildToBuildPanel(Build);
 				}
 			}
 
-			// Initialize welcome toast
 			HUDRootWidget->ShowToast(FText::FromString(TEXT("Day 1 - Adrift at Sea")), 3.0f);
 
 			// Bind GameMode delegates to HUD
 			if (AOceanMVPGameMode* GM = Cast<AOceanMVPGameMode>(GetWorld()->GetAuthGameMode()))
 			{
-				// Day changed → update TimePanel
 				if (UOceanTimePanelWidget* TimePanel = HUDRootWidget->GetTimePanel())
 				{
 					GM->OnDayChanged.AddDynamic(TimePanel, &UOceanTimePanelWidget::SetDayAndTime);
 					TimePanel->SetDayAndTime(GM->CurrentDay, GM->CurrentTimeOfDay);
 				}
 
-				// Game phase changed → show win/lose toast
 				GM->OnGamePhaseChanged.AddDynamic(this, &AOceanPlayerController::OnGamePhaseChanged);
 
 				UE_LOG(LogOcean, Log, TEXT("[TDD] OceanGameMode: bound_to_HUD day=%d"), GM->CurrentDay);
@@ -164,6 +224,11 @@ void AOceanPlayerController::SetupInputComponent()
 			{
 				EnhancedInputComponent->BindAction(DiveAction, ETriggerEvent::Started, this, &AOceanPlayerController::OnDiveTriggered);
 			}
+
+			if (PauseAction)
+			{
+				EnhancedInputComponent->BindAction(PauseAction, ETriggerEvent::Started, this, &AOceanPlayerController::OnPauseTriggered);
+			}
 		}
 		else
 		{
@@ -174,6 +239,18 @@ void AOceanPlayerController::SetupInputComponent()
 		{
 			InputComponent->BindKey(EKeys::F, IE_Pressed, this, &AOceanPlayerController::TryOceanInteract);
 		}
+
+		if (!PauseAction && InputComponent)
+		{
+			InputComponent->BindKey(EKeys::U, IE_Pressed, this, &AOceanPlayerController::TogglePauseMenu);
+		}
+
+		// C: climb platform from water
+		InputComponent->BindKey(EKeys::C, IE_Pressed, this, &AOceanPlayerController::OnClimbTriggered);
+		// X: toggle dive
+		InputComponent->BindKey(EKeys::X, IE_Pressed, this, &AOceanPlayerController::OnToggleDiveTriggered);
+		// G: fish (needs fishing rod)
+		InputComponent->BindKey(EKeys::G, IE_Pressed, this, &AOceanPlayerController::OnFishTriggered);
 	}
 }
 
@@ -434,4 +511,66 @@ void AOceanPlayerController::OnGamePhaseChanged(EOceanGamePhase Phase)
 	}
 
 	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanGameEnd: phase=%d"), static_cast<int32>(Phase));
+}
+
+void AOceanPlayerController::OnPauseTriggered(const FInputActionValue& Value)
+{
+	TogglePauseMenu();
+}
+
+void AOceanPlayerController::TogglePauseMenu()
+{
+	if (bPauseMenuOpen && PauseMenuWidget)
+	{
+		// Close pause menu
+		PauseMenuWidget->RemoveFromParent();
+		PauseMenuWidget = nullptr;
+		bPauseMenuOpen = false;
+		SetPause(false);
+		SetInputMode(FInputModeGameOnly());
+		bShowMouseCursor = false;
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanPause: closed"));
+	}
+	else
+	{
+		// Open pause menu
+		PauseMenuWidget = CreateWidget<UOceanPauseMenuWidget>(this, UOceanPauseMenuWidget::StaticClass());
+		if (PauseMenuWidget)
+		{
+			PauseMenuWidget->AddToViewport(20);
+			bPauseMenuOpen = true;
+			SetPause(true);
+			FInputModeGameAndUI InputMode;
+			InputMode.SetWidgetToFocus(PauseMenuWidget->TakeWidget());
+			InputMode.SetHideCursorDuringCapture(false);
+			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+			SetInputMode(InputMode);
+			bShowMouseCursor = true;
+			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanPause: opened"));
+		}
+	}
+}
+
+void AOceanPlayerController::OnClimbTriggered()
+{
+	if (AOceanCharacter* Char = Cast<AOceanCharacter>(GetPawn()))
+	{
+		Char->TryClimbPlatform();
+	}
+}
+
+void AOceanPlayerController::OnToggleDiveTriggered()
+{
+	if (AOceanCharacter* Char = Cast<AOceanCharacter>(GetPawn()))
+	{
+		Char->TryToggleDive();
+	}
+}
+
+void AOceanPlayerController::OnFishTriggered()
+{
+	if (AOceanCharacter* Char = Cast<AOceanCharacter>(GetPawn()))
+	{
+		Char->TryFish();
+	}
 }

@@ -67,6 +67,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ocean|AutoPlay")
 	FText GetLastEncounterText() const { return LastEncounterText; }
 
+	UFUNCTION(BlueprintPure, Category = "Ocean|AutoPlay")
+	int32 GetRandomSeed() const { return RandomSeed; }
+
+	UFUNCTION(BlueprintCallable, Category = "Ocean|AutoPlay")
+	void SetRandomSeed(int32 NewSeed) { RandomSeed = NewSeed; }
+
 protected:
 	UPROPERTY(Transient)
 	TWeakObjectPtr<AOceanMVPGameMode> GameMode;
