@@ -42,6 +42,22 @@ Use this loop for gameplay systems:
 
 For Ocean phase one, preferred early tests are C++ automation tests for grid math, footprint rotation, overlap checks, and resource-cost validation. PIE or bridge tests should cover map, Water, PCG, and component presence once editor asset generation is available.
 
+For menu-to-game routing, run:
+
+```powershell
+python scripts/verify_main_menu_navigation.py
+```
+
+This probe starts PIE on `L_MainMenu`, confirms the runtime `NewGameButton` delegate is bound, broadcasts the click, and verifies the active PIE world travels to `L_WaterOcean`.
+
+For menu/settings/pause regression checks, run:
+
+```powershell
+& 'D:\UE_5.7\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' 'D:\UE5 demo\Ocean\Ocean.uproject' -unattended -nop4 -nosplash -NullRHI -NoSound -NoLiveCoding -ExecCmds='Automation RunTests Ocean.UI; Quit' -TestExit='Automation Test Queue Empty'
+```
+
+Expected evidence includes 18 completed `Ocean.UI` tests plus `[TDD] OceanSettingsBindings: bgm=1 sfx=1 save=1 close=1 centered=1`, `[TDD] OceanPauseMenuBindings: resume=1 settings=1 quit=1 save_list=1`, and `[TDD] OceanSaveSlotBindings: slot=1 load=1 delete=1`.
+
 ## GPT / DS Handoff Workflow
 
 Use this workflow when the user asks GPT to clarify scope and stop before code:
@@ -106,6 +122,7 @@ The following reference-project automation pieces have been migrated and Ocean-a
 
 - `scripts/ue_tdd_bridge.py`: bridge client for endpoint discovery, PIE control, and log capture.
 - `scripts/ue_tdd_pipeline.py`: full save, cold compile, launch, PIE, capture, analyze loop for `OceanEditor`.
+- `scripts/verify_main_menu_navigation.py`: real PIE main-menu New Game binding and level-travel verifier.
 - `scripts/harness_state_validator.py`: validates production unit state files and parallel locks.
 - `scripts/doc_sync_hook.py`: explicit pre-commit or manual documentation drift detector.
 - `Plugins/UnrealBridge`: editor-only TCP/Python bridge source plugin, copied without generated binaries.

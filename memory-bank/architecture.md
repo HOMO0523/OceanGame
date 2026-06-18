@@ -26,6 +26,7 @@ Ocean
 | Build grid | `Source/Ocean/OceanPrototype/OceanBuildGridComponent.*` | Stable logical cells, footprint rotation, overlap, adjacency checks, and edge-cell detection for water-only actions. |
 | Build placement | `Source/Ocean/OceanPrototype/OceanBuildComponent.*`, `Source/Ocean/OceanPrototype/OceanBuildPlacementTypes.h` | Toggles build mode, rotates previews, consumes inventory cost, auto-resolves the floating platform, and exposes typed placement query reasons before placement spawns actors. |
 | HUD/backpack UI | `Source/Ocean/OceanPrototype/UI/OceanHUDRootWidget.*`, `/Game/OceanPrototype/UI/*` | Low-obstruction HUD root and right-side backpack drawer foundation; UI owns open/closed presentation state and dispatches commands while gameplay components own rules. |
+| Menu / settings UI | `UOceanMainMenuWidget`, `UOceanPauseMenuWidget`, `UOceanSettingsWidget`, `UOceanSaveSlotWidget` | Main-menu and pause-menu command surfaces; widgets bind delegates after C++ WidgetTree construction, save settings through `UOceanSaveManager`, and keep settings overlays above menu/pause layers. |
 | Module definition | `Source/Ocean/OceanPrototype/OceanBuildModuleDefinition.*` | Data-asset contract for footprint, cost, preview mesh, and actor class. |
 | Module actor | `Source/Ocean/OceanPrototype/OceanBuildModuleActor.*` | Cube-placeholder build module with inherited buoyancy path. |
 | Floating platform | `Source/Ocean/OceanPrototype/OceanFloatingPlatform.*` | Owns stable grid and visual bobbing root. |
@@ -60,9 +61,19 @@ Ocean
 
 1. `UOceanHUDRootWidget` keeps the drawer open/closed state and logs the initial PIE state as `[TDD] OceanHUDRootPIE: created=1 drawer_open=0`.
 2. WBP assets live under `/Game/OceanPrototype/UI`; `WBP_OceanHUDRoot` is parented to `UOceanHUDRootWidget`, while panels, slots, drag visual, placement overlay, modal, and toast stack are `UserWidget` children.
-3. Widgets may dispatch commands such as use item, move/merge slot, toggle drawer, or request placement preview.
+3. Left-click on occupied backpack slots remains drag/drop; right-click calls `UOceanBackpackSlotWidget::RequestUse`, which routes through the owning `UOceanBackpackPanelWidget` into `UOceanInventoryComponent::TryUseItemAtSlot`.
 4. Inventory mutation remains in `UOceanInventoryComponent`; survival recovery remains in `UOceanSurvivalComponent`.
-5. Build placement UI must call `QuerySelectedModulePlacement` and read `FOceanPlacementQueryResult` before any final placement command; widgets must not directly spawn build actors.
+5. Widgets may dispatch commands such as use item, move/merge slot, toggle drawer, or request placement preview, but they do not own gameplay rules.
+6. Build placement UI must call `QuerySelectedModulePlacement` and read `FOceanPlacementQueryResult` before any final placement command; widgets must not directly spawn build actors.
+
+### Menu / Settings Command Boundary
+
+1. `AOceanPlayerController::BeginPlay` treats `L_MainMenu` as UI-only and creates `UOceanMainMenuWidget` at `ZOrder=30`; game maps create the HUD and allow gameplay input.
+2. C++-constructed menu widgets create controls in `RebuildWidget`, then bind button/slider delegates in `NativeConstruct`; binding in `NativeOnInitialized` is too early for these runtime-built trees.
+3. `UOceanSettingsWidget` is a shared overlay for main menu and pause menu; it stores BGM/SFX values through `UOceanSaveManager` but does not yet apply audio-mix runtime volume.
+4. Settings overlays open at `ZOrder=60`, above the main menu and pause menu, and their root `CanvasPanelSlot` is centered to avoid top-left/default-canvas placement.
+5. `UOceanSaveSlotWidget` owns only slot-row UI and emits load/delete delegates; main menu interprets load/delete, while pause menu reuses the load delegate as "save to selected slot".
+6. `U` pause input is game-map only; pressing it on `L_MainMenu` is ignored so the start menu cannot stack a pause menu over itself.
 
 ### Paper2D Presentation
 

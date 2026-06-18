@@ -57,6 +57,7 @@
 | `scripts/create_ocean_ui_assets.py` | Editor Python script that creates and saves the 10 HUD/backpack Widget Blueprint assets under `/Game/OceanPrototype/UI`. |
 | `scripts/verify_ocean_ui_assets.py` | UnrealBridge verification for WBP asset load, HUDRootWidgetClass binding, map load, and recent real PIE HUD log presence. |
 | `scripts/verify_ocean_ui_pie.py` | External Bridge client probe that loads `L_WaterOcean`, starts PIE, waits client-side so the editor can tick, and verifies `[TDD] OceanHUDRootPIE: created=1`. |
+| `scripts/verify_main_menu_navigation.py` | External Bridge client probe that starts PIE on `L_MainMenu`, verifies `NewGameButton` is bound, broadcasts the click, and confirms travel to `L_WaterOcean`. |
 
 ## Gameplay Input Assets
 
@@ -106,7 +107,9 @@ python scripts/ue_tdd_pipeline.py --pie-duration 5
 python scripts/ue_tdd_pipeline.py --check-only
 python scripts/ue_tdd_pipeline.py --pre-pie-console-command "stat fps" --pie-duration 5
 python scripts/verify_ocean_ui_pie.py
+python scripts/verify_main_menu_navigation.py
 ```
 
 `--check-only` reads logs only; it is not compile proof.
 For gameplay-map HUD PIE validation, prefer `scripts/verify_ocean_ui_pie.py` because Unreal Python sleeps block editor ticks inside a single Bridge execution.
+For main-menu navigation validation, use `scripts/verify_main_menu_navigation.py`; it checks the runtime UMG delegate before testing the `New Game` level travel.

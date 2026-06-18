@@ -20,6 +20,7 @@ public:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 
 	virtual void NativeOnInitialized() override;
+	virtual void NativeConstruct() override;
 
 protected:
 	UPROPERTY() TObjectPtr<UButton> ResumeButton;

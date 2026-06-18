@@ -520,6 +520,22 @@ void AOceanPlayerController::OnPauseTriggered(const FInputActionValue& Value)
 
 void AOceanPlayerController::TogglePauseMenu()
 {
+	if (UWorld* World = GetWorld())
+	{
+		if (World->GetFName().ToString().Contains(TEXT("MainMenu")))
+		{
+			UE_LOG(LogOcean, Log, TEXT("[TDD] OceanPause: ignored_on_main_menu level=%s"), *World->GetFName().ToString());
+			return;
+		}
+	}
+
+	if (bPauseMenuOpen && (!PauseMenuWidget || !PauseMenuWidget->IsInViewport()))
+	{
+		PauseMenuWidget = nullptr;
+		bPauseMenuOpen = false;
+		SetPause(false);
+	}
+
 	if (bPauseMenuOpen && PauseMenuWidget)
 	{
 		// Close pause menu

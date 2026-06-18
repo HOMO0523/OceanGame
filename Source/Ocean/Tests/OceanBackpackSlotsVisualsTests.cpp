@@ -108,4 +108,54 @@ bool FOceanBackpackPanelRefreshTest::RunTest(const FString& Parameters)
     return true;
 }
 
+// TDD: An occupied consumable slot must expose a UI use action that reaches
+// the bound survival component, not only the lower-level inventory API.
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanBackpackSlotRequestUseRestoresStatsTest, "Ocean.UI.BackpackSlot.RequestUseRestoresStats", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanBackpackSlotRequestUseRestoresStatsTest::RunTest(const FString& Parameters)
+{
+    auto* Inventory = NewObject<UOceanInventoryComponent>();
+    auto* Survival = NewObject<UOceanSurvivalComponent>();
+    auto* Panel = NewObject<UOceanBackpackPanelWidget>(GetTransientPackage(), UOceanBackpackPanelWidget::StaticClass());
+    Panel->Initialize();
+    Panel->TakeWidget();
+    Panel->BindInventory(Inventory, Survival);
+
+    FOceanItemStack Water;
+    Water.ItemId = TEXT("fresh_water");
+    Water.Quantity = 1;
+    Water.MaxStack = 8;
+    Water.Category = EOceanItemCategory::Consumable;
+    Water.UseEffect.HydrationDelta = 100.0f;
+
+    Survival->SetStats(40.0f, 20.0f, 30.0f);
+    TestTrue(TEXT("[TDD] BackpackSlotUse_AddWater"), Inventory->AddItem(Water));
+    Panel->RefreshSlots();
+
+    TArray<UWidget*> AllWidgets;
+    Panel->WidgetTree->GetAllWidgets(AllWidgets);
+    UOceanBackpackSlotWidget* FirstSlotWidget = nullptr;
+    for (UWidget* Widget : AllWidgets)
+    {
+        auto* SlotWidget = Cast<UOceanBackpackSlotWidget>(Widget);
+        if (SlotWidget && SlotWidget->GetSlotIndex() == 0)
+        {
+            FirstSlotWidget = SlotWidget;
+            break;
+        }
+    }
+
+    TestNotNull(TEXT("[TDD] BackpackSlotUse_FirstSlotWidget"), FirstSlotWidget);
+    if (!FirstSlotWidget)
+    {
+        return false;
+    }
+
+    TestTrue(TEXT("[TDD] BackpackSlotUse_RequestUse"), FirstSlotWidget->RequestUse());
+    TestEqual(TEXT("[TDD] BackpackSlotUse_HydrationAfterUse"), Survival->GetHydration(), 100.0f);
+    TestEqual(TEXT("[TDD] BackpackSlotUse_SlotConsumed"), Inventory->GetSlots().Num(), 0);
+    return true;
+}
+
 #endif

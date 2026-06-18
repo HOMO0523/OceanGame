@@ -7,6 +7,7 @@
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/CanvasPanel.h"
+#include "Components/CanvasPanelSlot.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/GameInstance.h"
 #include "Ocean.h"
@@ -20,7 +21,11 @@ TSharedRef<SWidget> UOceanPauseMenuWidget::RebuildWidget()
 	WidgetTree->RootWidget = Root;
 
 	auto* Box = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("Box"));
-	Root->AddChild(Box);
+	UCanvasPanelSlot* BoxSlot = Root->AddChildToCanvas(Box);
+	BoxSlot->SetAnchors(FAnchors(0.5f, 0.5f, 0.5f, 0.5f));
+	BoxSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+	BoxSlot->SetPosition(FVector2D::ZeroVector);
+	BoxSlot->SetSize(FVector2D(460.0f, 440.0f));
 
 	auto* Title = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("Title"));
 	Title->SetText(FText::FromString(TEXT("Paused")));
@@ -69,13 +74,24 @@ void UOceanPauseMenuWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	if (ResumeButton) ResumeButton->OnClicked.AddDynamic(this, &UOceanPauseMenuWidget::OnResumeClicked);
-	if (SettingsButton) SettingsButton->OnClicked.AddDynamic(this, &UOceanPauseMenuWidget::OnSettingsClicked);
-	if (QuitToMenuButton) QuitToMenuButton->OnClicked.AddDynamic(this, &UOceanPauseMenuWidget::OnQuitToMenuClicked);
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanPauseMenu: initialized"));
+}
+
+void UOceanPauseMenuWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	if (ResumeButton) ResumeButton->OnClicked.AddUniqueDynamic(this, &UOceanPauseMenuWidget::OnResumeClicked);
+	if (SettingsButton) SettingsButton->OnClicked.AddUniqueDynamic(this, &UOceanPauseMenuWidget::OnSettingsClicked);
+	if (QuitToMenuButton) QuitToMenuButton->OnClicked.AddUniqueDynamic(this, &UOceanPauseMenuWidget::OnQuitToMenuClicked);
 
 	BuildSaveSlots();
 
-	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanPauseMenu: initialized"));
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanPauseMenuBindings: resume=%d settings=%d quit=%d save_list=%d"),
+		(ResumeButton && ResumeButton->OnClicked.IsBound()) ? 1 : 0,
+		(SettingsButton && SettingsButton->OnClicked.IsBound()) ? 1 : 0,
+		(QuitToMenuButton && QuitToMenuButton->OnClicked.IsBound()) ? 1 : 0,
+		SaveSlotList ? 1 : 0);
 }
 
 void UOceanPauseMenuWidget::BuildSaveSlots()
@@ -88,7 +104,7 @@ void UOceanPauseMenuWidget::BuildSaveSlots()
 		auto* SlotWidget = WidgetTree->ConstructWidget<UOceanSaveSlotWidget>(UOceanSaveSlotWidget::StaticClass());
 		SlotWidget->SetSlotIndex(i);
 		// Reuse the load button as "save" by hooking into OnLoadClicked (acts as "select slot")
-		SlotWidget->OnLoadClicked.AddDynamic(this, &UOceanPauseMenuWidget::OnSaveSlotClicked);
+		SlotWidget->OnLoadClicked.AddUniqueDynamic(this, &UOceanPauseMenuWidget::OnSaveSlotClicked);
 		SlotWidget->RefreshInfo();
 		SaveSlotList->AddChild(SlotWidget);
 	}
@@ -111,7 +127,19 @@ void UOceanPauseMenuWidget::OnSettingsClicked()
 {
 	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanPauseMenu: settings"));
 	auto* SettingsWidget = CreateWidget<UOceanSettingsWidget>(GetOwningPlayer(), UOceanSettingsWidget::StaticClass());
-	if (SettingsWidget) SettingsWidget->AddToViewport(10);
+	if (SettingsWidget)
+	{
+		SettingsWidget->AddToViewport(60);
+		if (APlayerController* PC = GetOwningPlayer())
+		{
+			FInputModeGameAndUI InputMode;
+			InputMode.SetWidgetToFocus(SettingsWidget->TakeWidget());
+			InputMode.SetHideCursorDuringCapture(false);
+			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+			PC->SetInputMode(InputMode);
+			PC->bShowMouseCursor = true;
+		}
+	}
 }
 
 void UOceanPauseMenuWidget::OnQuitToMenuClicked()

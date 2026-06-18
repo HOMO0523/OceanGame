@@ -66,6 +66,19 @@
   - `UOceanHUDRootWidget` owns drawer open/closed state; `Tab` and `I` toggle backpack input while `B` remains build mode.
   - Created 10 Widget Blueprint assets under `/Game/OceanPrototype/UI`; `WBP_OceanHUDRoot` inherits `UOceanHUDRootWidget`, and the other nine inherit `UserWidget`.
   - `BP_OceanMVPPlayerController.HUDRootWidgetClass` is bound to `/Game/OceanPrototype/UI/WBP_OceanHUDRoot.WBP_OceanHUDRoot_C`.
+- Fixed the main-menu `New Game` route:
+  - Root cause was runtime button delegates binding in `NativeOnInitialized` before the C++-constructed WidgetTree buttons existed.
+  - `UOceanMainMenuWidget` now binds `NewGame`, `Settings`, and `Quit` in `NativeConstruct` and refreshes save slots after the WidgetTree is built.
+  - Added `scripts/verify_main_menu_navigation.py` to inspect the real PIE `NewGameButton` delegate, broadcast the click, and assert travel to `L_WaterOcean`.
+- Fixed the menu/settings/pause button chain:
+  - Root cause was the same WidgetTree timing issue in `UOceanSettingsWidget`, `UOceanPauseMenuWidget`, and `UOceanSaveSlotWidget`; their runtime controls are created in `RebuildWidget`, so delegates must bind in `NativeConstruct`.
+  - Settings and pause panel root boxes now use centered `CanvasPanelSlot` anchors/alignment instead of a default top-left canvas child.
+  - Pause menu `Settings` now opens above the pause overlay (`ZOrder=60` vs pause `ZOrder=20`) so the settings UI is clickable instead of hidden behind the paused menu.
+  - `AOceanPlayerController::TogglePauseMenu` now ignores `L_MainMenu` and recovers stale pause state if the widget was removed by its own buttons.
+- Fixed consumable item recovery from the backpack UI:
+  - Root cause was a missing player-facing use entry: `TryUseItemAtSlot` restored stats when called directly, but no runtime backpack-slot input called it.
+  - `UOceanBackpackSlotWidget::RequestUse` now routes occupied slot use through the owning backpack panel; right-click uses consumables while left-click drag/drop remains unchanged.
+  - Current restorative items are code-generated stacks with `UseEffect` values, not final item DataAssets/icons.
 
 ## Verification Snapshot
 
@@ -94,8 +107,22 @@
 - `python scripts/verify_ocean_ui_pie.py` passes: loads `L_WaterOcean`, starts PIE, reaches `world_time=3.33`, and emits `[TDD] OceanHUDRootPIE: real_created_log=1 result=PASS`.
 - BridgeClient execution of `scripts/verify_ocean_ui_assets.py --pie` passes after the external PIE probe and emits `[TDD] OceanHUDRootPIE: real_created_log=1 result=PASS`.
 - `python scripts/ue_tdd_pipeline.py --no-build --pie-duration 1 --log-lines 1000` succeeds as the default main-menu smoke with 24 `[TDD]` lines and 0 failed lines.
-- Project automation should be run by project-owned prefixes, not bare `Automation RunTests Ocean`: `Ocean.Build` (8 tests), `Ocean.Resources` (2 tests), `Ocean.UI` (14 tests), `Ocean.MVP`, and `Ocean.Paper2D` (2 tests) all passed on 2026-06-18. Bare `Automation RunTests Ocean` also matches unrelated UE Water plugin tests containing “Ocean”.
+- Project automation should be run by project-owned prefixes, not bare `Automation RunTests Ocean`: `Ocean.Build` (8 tests), `Ocean.Resources` (2 tests), `Ocean.UI` (18 tests as of the menu/settings repair), `Ocean.MVP`, and `Ocean.Paper2D` (2 tests) all passed on 2026-06-18. Bare `Automation RunTests Ocean` also matches unrelated UE Water plugin tests containing “Ocean”.
 - Key commits for the UI foundation: `8738a06` atomic item adds, `ed21f77` recovery items, `76ba3dc` drag/drop model, `2c70e1f` placement-query failure coverage, `43bad35` HUD root state model, `0e8ec78` game-input restoration after backpack close, `e7a8f4c` WBP parent-tag verification, and `1f8068e` real PIE log requirement.
+- Main menu navigation RED/GREEN evidence:
+  - Before the fix, `python scripts/verify_main_menu_navigation.py --inspect-only --leave-pie-running` failed with `[TDD] MainMenuNewGameButtonBound: actual=0 expected=1 result=FAIL`.
+  - After the fix, `python scripts/ue_tdd_pipeline.py --pie-duration 5 --log-lines 24000` cold-compiled and passed with `[TDD] OceanMainMenuBindings: new_game=1 settings=1 quit=1 slot_list=1`.
+  - `python scripts/verify_main_menu_navigation.py` passed: button bound, broadcast clicked, and PIE world changed to `L_WaterOcean`.
+  - `python scripts/verify_ocean_ui_pie.py` still passes after the menu fix and verifies the gameplay HUD on `L_WaterOcean`.
+- Menu/settings/pause RED/GREEN evidence:
+  - Before the fix, `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.UI; Quit"` exited `255`; `Ocean.UI.PauseMenu.ButtonsBound`, `Ocean.UI.SaveSlot.ButtonsBound`, and `Ocean.UI.Settings.ButtonsAndLayout` failed because delegates were unbound and Settings `Box` was not centered.
+  - After the fix, `python scripts/ue_tdd_pipeline.py --no-launch --log-lines 12000` cold-compiled successfully.
+  - `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.UI; Quit"` completed 18 `Ocean.UI` tests and exited `0`; logs include `[TDD] OceanPauseMenuBindings: resume=1 settings=1 quit=1 save_list=1`, `[TDD] OceanSaveSlotBindings: slot=1 load=1 delete=1`, and `[TDD] OceanSettingsBindings: bgm=1 sfx=1 save=1 close=1 centered=1`.
+  - `python scripts/verify_main_menu_navigation.py` still passes after the repair, and a Bridge runtime probe confirms main-menu `SettingsButton` opens a settings widget with bound BGM/SFX sliders plus Save/Close buttons.
+- Backpack consumable recovery RED/GREEN evidence:
+  - Before the fix, the new `Ocean.UI.BackpackSlot.RequestUseRestoresStats` test failed compilation because `UOceanBackpackSlotWidget` exposed no UI use entry.
+  - After the fix, `python scripts/ue_tdd_pipeline.py --no-launch --log-lines 12000` cold-compiled successfully.
+  - `UnrealEditor-Cmd.exe ... -ExecCmds="Automation RunTests Ocean.UI; Quit"` found 15 tests and exited 0; logs show `Ocean.UI.BackpackSlot.RequestUseRestoresStats` completed successfully and `[TDD] OceanBackpackSlot: request_use slot=0 item=fresh_water result=PASS`.
 
 ## Active Blockers
 
@@ -124,16 +151,16 @@
 <!-- DOC_SYNC_HOOK:START -->
 ### Doc Sync Hook Snapshot
 
-- generated_at: 2026-06-18T14:49:42
+- generated_at: 2026-06-18T19:18:25
 - phase: `pre-commit`
-- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260618-144942-doc-sync.md`
+- latest_report: `{ProjectRoot}/Saved/HarnessReports/20260618-191825-doc-sync.md`
 - active_units: `2026-06-16-automation-migration`, `2026-06-16-minimal-loop-workflow`, `2026-06-16-mvp-survival-loop`, `2026-06-16-water-ocean-bootstrap`, `2026-06-17-hud-backpack-drawer-uiux`, `2026-06-17-paper2d-animation-set`, `2026-06-17-paper2d-state-machine`, `2026-06-17-paperzd-pie-visibility`, `2026-06-18-mvp-validation-hardening`
-- doc_targets: `docs/production`, `memory-bank/architecture.md`, `memory-bank/progress.md`, `memory-bank/tech-stack.md`
+- doc_targets: `memory-bank/architecture.md`, `memory-bank/progress.md`, `memory-bank/tech-stack.md`
 - validator: success=`True` errors=`0` warnings=`0`
 
 **Video flow status:**
 - 00 context and rules: covered
-- 01 production unit split: touched
+- 01 production unit split: covered
 - 02 semantic freeze: covered
 - 03 infrastructure audit: touched
 - 04 implementation plan: covered
@@ -144,8 +171,7 @@
 - 09 memory and registry update: covered
 
 **Next documentation actions:**
-- Check whether `memory-bank/architecture.md` needs subsystem/data-flow updates.
-- Confirm changed code belongs to exactly one active `parallel_lock`; multiple active locks require coordinator routing.
+- Tie code changes to an active `docs/production/*` unit or create one.
 - For UE C++ changes, confirm `[TDD]` logs were added before implementation and run the UE TDD pipeline.
 - Production docs validate; keep `07-review.md` decision aligned with actual test evidence.
 <!-- DOC_SYNC_HOOK:END -->

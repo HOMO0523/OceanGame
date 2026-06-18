@@ -6,9 +6,40 @@
 #include "OceanPrototype/UI/OceanBuildPanelWidget.h"
 #include "OceanPrototype/UI/OceanTimePanelWidget.h"
 #include "OceanPrototype/UI/OceanItemUseModalWidget.h"
+#include "OceanPrototype/UI/OceanPauseMenuWidget.h"
+#include "OceanPrototype/UI/OceanSaveSlotWidget.h"
+#include "OceanPrototype/UI/OceanSettingsWidget.h"
 #include "OceanPrototype/OceanInventoryComponent.h"
 #include "OceanPrototype/OceanSurvivalComponent.h"
 #include "OceanPrototype/OceanBuildComponent.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Button.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Components/Slider.h"
+#include "Components/Widget.h"
+
+namespace
+{
+template <typename WidgetType>
+WidgetType* FindWidgetByName(UUserWidget* RootWidget, const TCHAR* WidgetName)
+{
+	if (!RootWidget || !RootWidget->WidgetTree)
+	{
+		return nullptr;
+	}
+
+	TArray<UWidget*> AllWidgets;
+	RootWidget->WidgetTree->GetAllWidgets(AllWidgets);
+	for (UWidget* Widget : AllWidgets)
+	{
+		if (Widget && Widget->GetFName() == FName(WidgetName))
+		{
+			return Cast<WidgetType>(Widget);
+		}
+	}
+	return nullptr;
+}
+}
 
 // --- BackpackSlot ---
 
@@ -118,6 +149,120 @@ bool FOceanItemUseModalFlowTest::RunTest(const FString& Parameters)
 	Modal->ShowConfirmation(2, Item);
 	Modal->Reject();
 	TestEqual(TEXT("[TDD] OceanItemUseModal_AfterReject"), Modal->GetPendingSlotIndex(), INDEX_NONE);
+
+	return true;
+}
+
+// --- Menu Buttons ---
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanSettingsWidgetButtonsAndLayoutTest, "Ocean.UI.Settings.ButtonsAndLayout", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanSettingsWidgetButtonsAndLayoutTest::RunTest(const FString& Parameters)
+{
+	auto* Settings = NewObject<UOceanSettingsWidget>(GetTransientPackage(), UOceanSettingsWidget::StaticClass());
+	TestNotNull(TEXT("[TDD] OceanSettings_WidgetCreated"), Settings);
+	Settings->Initialize();
+	Settings->TakeWidget();
+
+	auto* BGMSlider = FindWidgetByName<USlider>(Settings, TEXT("BGMSlider"));
+	auto* SFXSlider = FindWidgetByName<USlider>(Settings, TEXT("SFXSlider"));
+	auto* SaveButton = FindWidgetByName<UButton>(Settings, TEXT("SaveButton"));
+	auto* CloseButton = FindWidgetByName<UButton>(Settings, TEXT("CloseButton"));
+	auto* Box = FindWidgetByName<UWidget>(Settings, TEXT("Box"));
+
+	TestNotNull(TEXT("[TDD] OceanSettings_BGMSlider"), BGMSlider);
+	TestNotNull(TEXT("[TDD] OceanSettings_SFXSlider"), SFXSlider);
+	TestNotNull(TEXT("[TDD] OceanSettings_SaveButton"), SaveButton);
+	TestNotNull(TEXT("[TDD] OceanSettings_CloseButton"), CloseButton);
+	TestNotNull(TEXT("[TDD] OceanSettings_Box"), Box);
+
+	if (BGMSlider)
+	{
+		TestTrue(TEXT("[TDD] OceanSettings_BGMSliderBound"), BGMSlider->OnValueChanged.IsBound());
+	}
+	if (SFXSlider)
+	{
+		TestTrue(TEXT("[TDD] OceanSettings_SFXSliderBound"), SFXSlider->OnValueChanged.IsBound());
+	}
+	if (SaveButton)
+	{
+		TestTrue(TEXT("[TDD] OceanSettings_SaveButtonBound"), SaveButton->OnClicked.IsBound());
+	}
+	if (CloseButton)
+	{
+		TestTrue(TEXT("[TDD] OceanSettings_CloseButtonBound"), CloseButton->OnClicked.IsBound());
+	}
+	if (Box)
+	{
+		auto* CanvasSlot = Cast<UCanvasPanelSlot>(Box->Slot);
+		TestNotNull(TEXT("[TDD] OceanSettings_BoxCanvasSlot"), CanvasSlot);
+		if (CanvasSlot)
+		{
+			TestEqual(TEXT("[TDD] OceanSettings_BoxAnchorMin"), CanvasSlot->GetAnchors().Minimum, FVector2D(0.5f, 0.5f));
+			TestEqual(TEXT("[TDD] OceanSettings_BoxAnchorMax"), CanvasSlot->GetAnchors().Maximum, FVector2D(0.5f, 0.5f));
+			TestEqual(TEXT("[TDD] OceanSettings_BoxAlignment"), CanvasSlot->GetAlignment(), FVector2D(0.5f, 0.5f));
+			TestEqual(TEXT("[TDD] OceanSettings_BoxPosition"), CanvasSlot->GetPosition(), FVector2D(0.0f, 0.0f));
+		}
+	}
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanPauseMenuButtonsTest, "Ocean.UI.PauseMenu.ButtonsBound", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanPauseMenuButtonsTest::RunTest(const FString& Parameters)
+{
+	auto* PauseMenu = NewObject<UOceanPauseMenuWidget>(GetTransientPackage(), UOceanPauseMenuWidget::StaticClass());
+	TestNotNull(TEXT("[TDD] OceanPauseMenu_WidgetCreated"), PauseMenu);
+	PauseMenu->Initialize();
+	PauseMenu->TakeWidget();
+
+	auto* ResumeButton = FindWidgetByName<UButton>(PauseMenu, TEXT("ResumeButton"));
+	auto* SettingsButton = FindWidgetByName<UButton>(PauseMenu, TEXT("SettingsButton"));
+	auto* QuitButton = FindWidgetByName<UButton>(PauseMenu, TEXT("QuitToMenuButton"));
+
+	TestNotNull(TEXT("[TDD] OceanPauseMenu_ResumeButton"), ResumeButton);
+	TestNotNull(TEXT("[TDD] OceanPauseMenu_SettingsButton"), SettingsButton);
+	TestNotNull(TEXT("[TDD] OceanPauseMenu_QuitButton"), QuitButton);
+
+	if (ResumeButton)
+	{
+		TestTrue(TEXT("[TDD] OceanPauseMenu_ResumeBound"), ResumeButton->OnClicked.IsBound());
+	}
+	if (SettingsButton)
+	{
+		TestTrue(TEXT("[TDD] OceanPauseMenu_SettingsBound"), SettingsButton->OnClicked.IsBound());
+	}
+	if (QuitButton)
+	{
+		TestTrue(TEXT("[TDD] OceanPauseMenu_QuitBound"), QuitButton->OnClicked.IsBound());
+	}
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOceanSaveSlotButtonsTest, "Ocean.UI.SaveSlot.ButtonsBound", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FOceanSaveSlotButtonsTest::RunTest(const FString& Parameters)
+{
+	auto* Slot = NewObject<UOceanSaveSlotWidget>(GetTransientPackage(), UOceanSaveSlotWidget::StaticClass());
+	TestNotNull(TEXT("[TDD] OceanSaveSlot_WidgetCreated"), Slot);
+	Slot->Initialize();
+	Slot->TakeWidget();
+
+	auto* LoadButton = FindWidgetByName<UButton>(Slot, TEXT("LoadButton"));
+	auto* DeleteButton = FindWidgetByName<UButton>(Slot, TEXT("DeleteButton"));
+
+	TestNotNull(TEXT("[TDD] OceanSaveSlot_LoadButton"), LoadButton);
+	TestNotNull(TEXT("[TDD] OceanSaveSlot_DeleteButton"), DeleteButton);
+	if (LoadButton)
+	{
+		TestTrue(TEXT("[TDD] OceanSaveSlot_LoadBound"), LoadButton->OnClicked.IsBound());
+	}
+	if (DeleteButton)
+	{
+		TestTrue(TEXT("[TDD] OceanSaveSlot_DeleteBound"), DeleteButton->OnClicked.IsBound());
+	}
 
 	return true;
 }

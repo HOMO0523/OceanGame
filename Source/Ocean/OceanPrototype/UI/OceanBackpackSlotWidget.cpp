@@ -1,4 +1,5 @@
 ﻿#include "OceanPrototype/UI/OceanBackpackSlotWidget.h"
+#include "OceanPrototype/UI/OceanBackpackPanelWidget.h"
 #include "Ocean.h"
 #include "Blueprint/WidgetTree.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
@@ -93,6 +94,32 @@ void UOceanBackpackSlotWidget::UpdateVisuals()
 	}
 }
 
+bool UOceanBackpackSlotWidget::RequestUse()
+{
+	const int32 RequestedSlotIndex = SlotIndex;
+	const FName RequestedItemId = CachedStack.ItemId;
+
+	if (!bOccupied || RequestedSlotIndex == INDEX_NONE)
+	{
+		UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBackpackSlot: use_rejected slot=%d occupied=%d"), RequestedSlotIndex, bOccupied ? 1 : 0);
+		return false;
+	}
+
+	UOceanBackpackPanelWidget* OwningPanel = GetTypedOuter<UOceanBackpackPanelWidget>();
+	if (!OwningPanel)
+	{
+		UE_LOG(LogOcean, Warning, TEXT("[TDD] OceanBackpackSlot: use_rejected slot=%d reason=no_panel"), RequestedSlotIndex);
+		return false;
+	}
+
+	const bool bUsed = OwningPanel->TryUseItemAtSlot(RequestedSlotIndex);
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanBackpackSlot: request_use slot=%d item=%s result=%s"),
+		RequestedSlotIndex,
+		*RequestedItemId.ToString(),
+		bUsed ? TEXT("PASS") : TEXT("FAIL"));
+	return bUsed;
+}
+
 FReply UOceanBackpackSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && bOccupied)
@@ -100,6 +127,13 @@ FReply UOceanBackpackSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeom
 		FEventReply Reply = UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton);
 		return Reply.NativeReply;
 	}
+
+	if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton && bOccupied)
+	{
+		RequestUse();
+		return FReply::Handled();
+	}
+
 	return FReply::Handled();
 }
 

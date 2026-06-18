@@ -7,6 +7,8 @@
 #include "Components/VerticalBox.h"
 #include "Components/HorizontalBox.h"
 #include "Components/CanvasPanel.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Components/Widget.h"
 #include "Engine/GameInstance.h"
 #include "Ocean.h"
 
@@ -19,7 +21,11 @@ TSharedRef<SWidget> UOceanSettingsWidget::RebuildWidget()
 	WidgetTree->RootWidget = Root;
 
 	auto* Box = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("Box"));
-	Root->AddChild(Box);
+	UCanvasPanelSlot* BoxSlot = Root->AddChildToCanvas(Box);
+	BoxSlot->SetAnchors(FAnchors(0.5f, 0.5f, 0.5f, 0.5f));
+	BoxSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+	BoxSlot->SetPosition(FVector2D::ZeroVector);
+	BoxSlot->SetSize(FVector2D(480.0f, 260.0f));
 
 	// Title
 	auto* Title = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("Title"));
@@ -92,6 +98,13 @@ void UOceanSettingsWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanSettings: initialized"));
+}
+
+void UOceanSettingsWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
 	// Load current values
 	float BGM = 0.8f, SFX = 1.0f;
 	if (UGameInstance* GI = GetGameInstance())
@@ -106,19 +119,34 @@ void UOceanSettingsWidget::NativeOnInitialized()
 	if (BGMSlider)
 	{
 		BGMSlider->SetValue(BGM);
-		BGMSlider->OnValueChanged.AddDynamic(this, &UOceanSettingsWidget::OnBGMChanged);
+		BGMSlider->OnValueChanged.AddUniqueDynamic(this, &UOceanSettingsWidget::OnBGMChanged);
 	}
 	if (SFXSlider)
 	{
 		SFXSlider->SetValue(SFX);
-		SFXSlider->OnValueChanged.AddDynamic(this, &UOceanSettingsWidget::OnSFXChanged);
+		SFXSlider->OnValueChanged.AddUniqueDynamic(this, &UOceanSettingsWidget::OnSFXChanged);
 	}
-	if (SaveButton) SaveButton->OnClicked.AddDynamic(this, &UOceanSettingsWidget::OnSaveClicked);
-	if (CloseButton) CloseButton->OnClicked.AddDynamic(this, &UOceanSettingsWidget::OnCloseClicked);
+	if (SaveButton) SaveButton->OnClicked.AddUniqueDynamic(this, &UOceanSettingsWidget::OnSaveClicked);
+	if (CloseButton) CloseButton->OnClicked.AddUniqueDynamic(this, &UOceanSettingsWidget::OnCloseClicked);
 
 	UpdateValueLabels();
 
-	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanSettings: initialized bgm=%.2f sfx=%.2f"), BGM, SFX);
+	const UWidget* Box = WidgetTree ? WidgetTree->FindWidget(TEXT("Box")) : nullptr;
+	const UCanvasPanelSlot* BoxSlot = Box ? Cast<UCanvasPanelSlot>(Box->Slot) : nullptr;
+	const bool bBoxCentered = BoxSlot
+		&& BoxSlot->GetAnchors().Minimum.Equals(FVector2D(0.5f, 0.5f))
+		&& BoxSlot->GetAnchors().Maximum.Equals(FVector2D(0.5f, 0.5f))
+		&& BoxSlot->GetAlignment().Equals(FVector2D(0.5f, 0.5f))
+		&& BoxSlot->GetPosition().Equals(FVector2D::ZeroVector);
+
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanSettingsBindings: bgm=%d sfx=%d save=%d close=%d centered=%d values=%.2f/%.2f"),
+		(BGMSlider && BGMSlider->OnValueChanged.IsBound()) ? 1 : 0,
+		(SFXSlider && SFXSlider->OnValueChanged.IsBound()) ? 1 : 0,
+		(SaveButton && SaveButton->OnClicked.IsBound()) ? 1 : 0,
+		(CloseButton && CloseButton->OnClicked.IsBound()) ? 1 : 0,
+		bBoxCentered ? 1 : 0,
+		BGM,
+		SFX);
 }
 
 void UOceanSettingsWidget::OnBGMChanged(float Value)

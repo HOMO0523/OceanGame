@@ -12,6 +12,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
+#include "GameFramework/PlayerController.h"
 #include "Ocean.h"
 
 	TSharedRef<SWidget> UOceanMainMenuWidget::RebuildWidget()
@@ -84,13 +85,38 @@ void UOceanMainMenuWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	if (NewGameButton) NewGameButton->OnClicked.AddDynamic(this, &UOceanMainMenuWidget::OnNewGameClicked);
-	if (SettingsButton) SettingsButton->OnClicked.AddDynamic(this, &UOceanMainMenuWidget::OnSettingsClicked);
-	if (QuitButton) QuitButton->OnClicked.AddDynamic(this, &UOceanMainMenuWidget::OnQuitClicked);
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMainMenu: initialized"));
+}
+
+void UOceanMainMenuWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	if (NewGameButton)
+	{
+		NewGameButton->OnClicked.AddUniqueDynamic(this, &UOceanMainMenuWidget::OnNewGameClicked);
+	}
+
+	if (SettingsButton)
+	{
+		SettingsButton->OnClicked.AddUniqueDynamic(this, &UOceanMainMenuWidget::OnSettingsClicked);
+	}
+
+	if (QuitButton)
+	{
+		QuitButton->OnClicked.AddUniqueDynamic(this, &UOceanMainMenuWidget::OnQuitClicked);
+	}
 
 	RefreshSlots();
 
-	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMainMenu: initialized"));
+	const bool bNewGameBound = NewGameButton && NewGameButton->OnClicked.IsBound();
+	const bool bSettingsBound = SettingsButton && SettingsButton->OnClicked.IsBound();
+	const bool bQuitBound = QuitButton && QuitButton->OnClicked.IsBound();
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanMainMenuBindings: new_game=%d settings=%d quit=%d slot_list=%d"),
+		bNewGameBound ? 1 : 0,
+		bSettingsBound ? 1 : 0,
+		bQuitBound ? 1 : 0,
+		SlotList ? 1 : 0);
 }
 
 void UOceanMainMenuWidget::RefreshSlots()
@@ -127,7 +153,14 @@ void UOceanMainMenuWidget::OnSettingsClicked()
 	auto* SettingsWidget = CreateWidget<UOceanSettingsWidget>(GetOwningPlayer(), UOceanSettingsWidget::StaticClass());
 	if (SettingsWidget)
 	{
-		SettingsWidget->AddToViewport(10);
+		SettingsWidget->AddToViewport(60);
+		if (APlayerController* PC = GetOwningPlayer())
+		{
+			FInputModeUIOnly InputMode;
+			InputMode.SetWidgetToFocus(SettingsWidget->TakeWidget());
+			PC->SetInputMode(InputMode);
+			PC->bShowMouseCursor = true;
+		}
 	}
 }
 

@@ -28,6 +28,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ocean|UI|Backpack")
 	bool IsOccupied() const { return bOccupied; }
 
+	UFUNCTION(BlueprintCallable, Category = "Ocean|UI|Backpack")
+	bool RequestUse();
+
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;

@@ -41,6 +41,27 @@ TSharedRef<SWidget> UOceanSaveSlotWidget::RebuildWidget()
 	return Super::RebuildWidget();
 }
 
+void UOceanSaveSlotWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	if (LoadButton)
+	{
+		LoadButton->OnClicked.AddUniqueDynamic(this, &UOceanSaveSlotWidget::OnLoadButtonClicked);
+	}
+	if (DeleteButton)
+	{
+		DeleteButton->OnClicked.AddUniqueDynamic(this, &UOceanSaveSlotWidget::OnDeleteButtonClicked);
+	}
+
+	RefreshInfo();
+
+	UE_LOG(LogOcean, Log, TEXT("[TDD] OceanSaveSlotBindings: slot=%d load=%d delete=%d"),
+		SlotIndex,
+		(LoadButton && LoadButton->OnClicked.IsBound()) ? 1 : 0,
+		(DeleteButton && DeleteButton->OnClicked.IsBound()) ? 1 : 0);
+}
+
 void UOceanSaveSlotWidget::SetSlotIndex(int32 Index)
 {
 	SlotIndex = FMath::Clamp(Index, 1, 3);

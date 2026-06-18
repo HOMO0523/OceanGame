@@ -25,6 +25,7 @@ public:
 	static int32 PendingLoadSlot;
 
 	virtual TSharedRef<SWidget> RebuildWidget() override;
+	virtual void NativeConstruct() override;
 
 	UFUNCTION(BlueprintCallable, Category = "Ocean|SaveSlot")
 	void SetSlotIndex(int32 Index);
